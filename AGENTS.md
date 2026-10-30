@@ -1,5 +1,43 @@
 # Instructions for AI agents
 
+## Fork notes
+
+This tree is a modified fork of [aqmangge/glass-tv-home](https://github.com/aqmangge/glass-tv-home): upstream's
+history with a few commits of local changes on top. When upstream releases a new version, take its new commit
+and replay this diff onto it rather than editing by hand. `git log --oneline --first-parent` shows where these
+commits start, and `git diff <that upstream commit>..HEAD` lists every local change.
+
+What differs from upstream in this build:
+
+- **English only.** `AppLanguage` answers English whatever the TV reports; the Malay and Indonesian strings stay
+  in the file but are never chosen.
+- **Prayer and azan features off.** `PrayerTimes.PRAYER_DISABLED = true`, and `Azan.AZAN_DISABLED` follows it:
+  no prayer fetching, no azan popup, the Islamic shelf and the nightstand prayer and Hijri rows are hidden.
+- **Default location Lahore, Pakistan** (`AppLocationManager`: 31.5204 / 74.3587, station `PK01`, Asia/Karachi).
+  A location set on the TV still wins over this default, and still wins over a theme's coordinates.
+- **The self-updater is off.** `AppUpdateManager.UPDATES_ENABLED = false`: no release feed is read and no update
+  prompt appears. Updates are built and pushed by hand.
+- **No media polling.** `NowPlayingManager.NOW_PLAYING_POLL_ENABLED = false`.
+- **Restart TV and Turn Off TV open the system power dialog** (`performGlobalAction(GLOBAL_ACTION_POWER_DIALOG)`)
+  instead of a launcher popup, so both rows can show the same dialog. The privileged fallbacks (reboot broadcast,
+  `input keyevent 223`) are still in the file but no longer reachable from those rows.
+- **Four-column grid**, a dock of the apps on these TVs, and a hero title that uses the full width, so a long
+  wallpaper name is not cut with an ellipsis.
+
+Three things must be done **by hand on every TV** after installing:
+
+1. **Turn the accessibility service on in Settings** (Settings → Accessibility → this launcher → On), then press
+   Home. The grant below is not enough on firmware that blocks service auto-start: check with
+   `dumpsys accessibility | grep -i bound` — if the service is not bound, the power rows only show a toast
+   pointing at that switch.
+2. **One adb grant:** `adb shell pm grant <pkg> android.permission.WRITE_SECURE_SETTINGS` (step 6's cache
+   cleaning and the launcher's own settings writes need it). `<pkg>` is the `applicationId` in
+   `launcher/app/build.gradle`.
+3. **Disable the stock launcher, never uninstall it** (`pm disable-user --user 0 <pkg>`, ground rule 2), so the
+   restore script can put the TV back exactly as it was.
+
+Everything below is upstream's playbook, unchanged.
+
 You are helping someone set up **Glass TV** on their own TV: on Android TV and Google TV, debloat it and install
 this launcher as the home screen, with pictures of places behind it; on LG webOS, install the webOS app. This file is the playbook. It is written for any brand and for any
 AI model, large or small. Follow it in order, and read [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
