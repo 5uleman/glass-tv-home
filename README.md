@@ -9,8 +9,12 @@ every week. This edition is the English-only, prayer-free build I use on my own 
 
 ## Download
 
-Builds live on the [Releases page](https://github.com/5uleman/glass-tv-home/releases). The current build is
-**3.3.0** (`versionCode 18`), about 630 KB, package id **`com.suleman.glasstv`**.
+The current build is **3.3.0** (`versionCode 18`), 628 KB, package id **`com.suleman.glasstv`**:
+**[`release/glass-tv-home-3.3.0.apk`](https://github.com/5uleman/glass-tv-home/raw/clean-english-edition/release/glass-tv-home-3.3.0.apk)**
+
+SHA-256 `66e200356b50e18fac9e1e9c174b3f67a3c112ac18dc4d4657fa506daaf947eb`, tagged
+`v3.3.0-clean-english`. Anything newer will be on the
+[Releases page](https://github.com/5uleman/glass-tv-home/releases).
 
 ```bash
 adb install -r glass-tv-home-3.3.0.apk
