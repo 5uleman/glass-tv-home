@@ -22,13 +22,14 @@ public class AppLocationManager {
     public static final String KEY_LATITUDE = "latitude";
     public static final String KEY_LONGITUDE = "longitude";
 
-    // Defaults to Malaysia (Putrajaya DOE CA17W)
-    public static final String DEFAULT_REGION = "Malaysia";
-    public static final String DEFAULT_STATION_ID = "CA17W";
-    public static final String DEFAULT_LOCATION_NAME = "Putrajaya";
-    public static final String DEFAULT_STATION_PLACE = "SK Putrajaya Presint 18 (2)";
-    public static final double DEFAULT_LATITUDE = 2.9158;
-    public static final double DEFAULT_LONGITUDE = 101.6909;
+    // A fresh install defaults to Lahore, Pakistan (PK01) for weather and AQI.
+    public static final String DEFAULT_REGION = "Pakistan";
+    public static final String DEFAULT_STATION_ID = "PK01";
+    public static final String DEFAULT_LOCATION_NAME = "Lahore";
+    public static final String DEFAULT_STATION_PLACE = "Lahore City";
+    public static final double DEFAULT_LATITUDE = 31.5204;
+    public static final double DEFAULT_LONGITUDE = 74.3587;
+    public static final String DEFAULT_TIMEZONE = "Asia/Karachi";
 
     public static class Station {
         public final String id;
@@ -38,8 +39,13 @@ public class AppLocationManager {
         public final String place;
         public final double lat;
         public final double lon;
+        public final String timezone;
 
         public Station(String id, String name, String state, String country, String place, double lat, double lon) {
+            this(id, name, state, country, place, lat, lon, "Asia/Kuala_Lumpur");
+        }
+
+        public Station(String id, String name, String state, String country, String place, double lat, double lon, String timezone) {
             this.id = id;
             this.name = name;
             this.state = state != null ? state : "";
@@ -47,6 +53,7 @@ public class AppLocationManager {
             this.place = place != null ? place : "";
             this.lat = lat;
             this.lon = lon;
+            this.timezone = timezone != null ? timezone : "Asia/Kuala_Lumpur";
         }
 
         public String getDisplayName() {
@@ -190,6 +197,12 @@ public class AppLocationManager {
         waStations.add(new Station("WA04", "Doha", "Ad-Dawhah", "Qatar", "Corniche, Doha", 25.2854, 51.5310));
         REGION_STATIONS.put("Arab Saudi & UAE", waStations);
         ALL_STATIONS.addAll(waStations);
+
+        // --- 🇵🇰 Pakistan ---
+        List<Station> pkStations = new ArrayList<>();
+        pkStations.add(new Station("PK01", "Lahore", "Punjab", "Pakistan", "Lahore City", 31.5204, 74.3587, "Asia/Karachi"));
+        REGION_STATIONS.put("Pakistan", pkStations);
+        ALL_STATIONS.addAll(pkStations);
     }
 
     public static List<String> getAvailableRegions() {
@@ -221,6 +234,24 @@ public class AppLocationManager {
     public static String getStationId(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         return prefs.getString(KEY_STATION_ID, DEFAULT_STATION_ID);
+    }
+
+    /** "Lahore, Pakistan" style label for the weather header. */
+    public static String getLocationLabel(Context context) {
+        String name = getLocationName(context);
+        String country = getActiveRegion(context);
+        if (name == null || name.isEmpty()) return country;
+        if (country == null || country.isEmpty() || country.equalsIgnoreCase(name)) return name;
+        return name + ", " + country;
+    }
+
+    /** Timezone of the chosen station, for the Open-Meteo forecast times. */
+    public static String getTimezone(Context context) {
+        String id = getStationId(context);
+        for (Station s : ALL_STATIONS) {
+            if (s.id.equalsIgnoreCase(id)) return s.timezone;
+        }
+        return DEFAULT_TIMEZONE;
     }
 
     public static String getLocationName(Context context) {

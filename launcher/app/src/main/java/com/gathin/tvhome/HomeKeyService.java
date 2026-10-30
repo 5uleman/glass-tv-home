@@ -104,6 +104,36 @@ public class HomeKeyService extends AccessibilityService {
         return false;
     }
 
+    /**
+     * The system power dialog — the same shutdown/restart pane the remote's power key holds up — asked
+     * of the accessibility service with {@code GLOBAL_ACTION_POWER_DIALOG}. Both Settings-menu power rows
+     * use it, because a dialog the system itself draws needs no permission the launcher does not have.
+     * The old fallbacks (reboot/shutdown broadcasts, {@code reboot}, {@code input keyevent 223}) never
+     * worked from an ordinary app, so {@link #restartTv} and {@link #turnOffTv} are no longer reached
+     * from those rows; the code stays.
+     *
+     * <p>With no service running there is nothing that can raise the dialog: say so in a toast and open
+     * the Accessibility settings screen, rather than failing silently.
+     */
+    public static boolean showSystemPowerDialog(Context context) {
+        if (instance != null) {
+            Log.i(TAG, "Opening the system power dialog via the accessibility service");
+            if (instance.performGlobalAction(GLOBAL_ACTION_POWER_DIALOG)) return true;
+        }
+        Log.w(TAG, "HomeKeyService is not running: cannot raise the system power dialog");
+        try {
+            android.widget.Toast.makeText(context, AppLanguage.strEnableA11yService(context),
+                    android.widget.Toast.LENGTH_LONG).show();
+        } catch (Exception ignored) {}
+        try {
+            context.startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } catch (Exception e) {
+            Log.w(TAG, "This TV has no Accessibility settings screen to open", e);
+        }
+        return false;
+    }
+
     public static void forceStopApp(Context context, String pkg) {
         if (pkg == null || pkg.isEmpty() || pkg.equals(context.getPackageName())) return;
         

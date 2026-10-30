@@ -15,6 +15,14 @@ android {
     }
 
     buildTypes {
+        // -PsideBySide installs this build next to the one already on the TV (applicationId
+        // com.gathin.tvhome.debug) rather than over it. Without the flag nothing changes.
+        if (project.hasProperty('sideBySide')) {
+            debug {
+                applicationIdSuffix '.debug'
+                versionNameSuffix '-side-by-side'
+            }
+        }
         release {
             // R8 strips and optimises the code (AndroidX included): smaller APK, faster start on a slow TV CPU.
             minifyEnabled true

@@ -34,6 +34,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public final class NowPlayingManager {
     private static final String TAG = "TvHome.NowPlaying";
 
+    /**
+     * Off in this build. While false the home screen never schedules the nowPlayingPoll and
+     * updateCurrentMedia returns before any work, so getActiveSessions() and the synchronized media
+     * query never run on the main thread or from a timer. The card simply keeps its default empty
+     * MediaInfo and stays hidden. Code is kept, only gated (see AppUpdateManager.UPDATES_ENABLED).
+     */
+    static final boolean NOW_PLAYING_POLL_ENABLED = false;
+
     public static boolean isAllowedMusicApp(String pkg) {
         if (pkg == null) return false;
         return pkg.equals("com.spotify.tv.android")
@@ -177,6 +185,7 @@ public final class NowPlayingManager {
     }
 
     public static synchronized void updateCurrentMedia(Context context) {
+        if (!NOW_PLAYING_POLL_ENABLED) return;   // gated off in this build: no media-session query anywhere
         if (context == null) return;
         if (appContext == null) appContext = context.getApplicationContext();
 

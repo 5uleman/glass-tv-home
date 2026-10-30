@@ -4,9 +4,13 @@ tools/adbkey/
 *.key
 *.pub
 __pycache__/
-launcher/.gradle/
-launcher/build/
-launcher/app/build/
+# Gradle output and machine state anywhere in the tree (app, installer, and any module added later).
+build/
+.gradle/
+local.properties
+*.log
+*.keystore
+*.jks
 launcher/local.properties
 # your own TV's dumps (serial, android_id, device names) stay local
 backup/

@@ -44,6 +44,13 @@ final class Azan {
     /** Where the azan itself begins in the KLCC recording (before it: birds and the park). */
     static final int KLCC_START_MS = 12_000;
 
+    /**
+     * Tied to the prayer master switch. When true, schedule() still cancels any alarm left over from an
+     * earlier build on startup but never sets a new one, fetch() never downloads a recording, and
+     * AzanReceiver never launches the activity, notification or sound. Code is kept, only disabled.
+     */
+    static final boolean AZAN_DISABLED = PrayerTimes.PRAYER_DISABLED;
+
     private Azan() {
     }
 
@@ -71,11 +78,22 @@ final class Azan {
         prefs(ctx).edit().putString("sound_choice", choice).apply();
     }
 
-    static String soundLabel(String choice) {
+    static String soundLabel(Context ctx, String choice) {
+        String lang = ctx != null ? AppLanguage.getLanguage(ctx) : AppLanguage.LANG_EN;
+        boolean inEnglish = AppLanguage.LANG_EN.equals(lang);
+        boolean inIndonesian = AppLanguage.LANG_ID.equals(lang);
         if (SOUND_MADINAH.equals(choice)) return "🕌 Azan Masjid Nabawi Madinah";
         if (SOUND_KLCC.equals(choice)) return "🇲🇾 Azan Masjid As-Syakirin KLCC";
-        if (SOUND_CHIME.equals(choice)) return "🔔 Nada Chime Lembut (Ringkas)";
-        if (SOUND_SILENT.equals(choice)) return "🔕 Mod Senyap (Visual Sahaja)";
+        if (SOUND_CHIME.equals(choice)) {
+            if (inEnglish) return "🔔 Soft Chime Tone (Short)";
+            if (inIndonesian) return "🔔 Nada Lonceng Lembut (Singkat)";
+            return "🔔 Nada Chime Lembut (Ringkas)";
+        }
+        if (SOUND_SILENT.equals(choice)) {
+            if (inEnglish) return "🔕 Silent Mode (Visual Only)";
+            if (inIndonesian) return "🔕 Mode Senyap (Visual Saja)";
+            return "🔕 Mod Senyap (Visual Sahaja)";
+        }
         return "🕋 Azan Masjidil Haram Makkah";
     }
 
@@ -84,6 +102,10 @@ final class Azan {
         AlarmManager am = ctx.getSystemService(AlarmManager.class);
         PendingIntent old = pending(ctx, -1, 0, PendingIntent.FLAG_NO_CREATE);
         if (old != null) am.cancel(old);
+        if (AZAN_DISABLED) {
+            note(ctx, "azan disabled: cleared any pending alarm, scheduled none");
+            return;
+        }
         if (!isMasterEnabled(ctx)) {
             note(ctx, "azan disabled (master off)");
             return;
@@ -172,6 +194,7 @@ final class Azan {
 
     /** Fetches the recording once in the background. */
     static void fetch(Context ctx, String soundKey) {
+        if (AZAN_DISABLED) return; // never download an azan recording in this build
         if (SOUND_CHIME.equals(soundKey) || SOUND_SILENT.equals(soundKey)) return;
         final Context app = ctx.getApplicationContext();
         new Thread(() -> {
@@ -223,10 +246,10 @@ final class Azan {
             String channelId = "azan_alarm_channel";
             android.app.NotificationChannel channel = new android.app.NotificationChannel(
                     channelId,
-                    "Waktu Solat & Azan TV",
+                    "Prayer Times & Adhan TV",
                     android.app.NotificationManager.IMPORTANCE_HIGH
             );
-            channel.setDescription("Notifikasi dan popup waktu solat / azan terapung");
+            channel.setDescription("Floating prayer time / adhan notification popup");
             channel.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);
             channel.setBypassDnd(true);
             nm.createNotificationChannel(channel);
@@ -237,11 +260,12 @@ final class Azan {
                     azanIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
-            String prayerName = (prayer >= 0 && prayer < PrayerTimes.NAMES.length) ? PrayerTimes.NAMES[prayer] : "Solat";
+            String prayerName = (prayer >= 0 && prayer < PrayerTimes.NAMES.length)
+                    ? AppLanguage.getPrayerNames(ctx)[prayer] : "Prayer";
             android.app.Notification.Builder builder = new android.app.Notification.Builder(ctx, channelId)
                     .setSmallIcon(R.drawable.ic_azan)
-                    .setContentTitle("🕌 Masuk Waktu " + prayerName)
-                    .setContentText("Peringatan Waktu Solat")
+                    .setContentTitle("🕌 Prayer Time: " + prayerName)
+                    .setContentText("Prayer Time Reminder")
                     .setCategory(android.app.Notification.CATEGORY_ALARM)
                     .setVisibility(android.app.Notification.VISIBILITY_PUBLIC)
                     .setFullScreenIntent(pi, true)

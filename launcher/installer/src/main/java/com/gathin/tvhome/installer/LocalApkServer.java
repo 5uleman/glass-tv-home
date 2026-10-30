@@ -96,8 +96,8 @@ public final class LocalApkServer {
                         + ".btn{background:#fff;color:#000;padding:16px 32px;font-size:18px;font-weight:bold;text-decoration:none;border-radius:12px;display:inline-block;box-shadow:0 4px 15px rgba(255,255,255,0.2)}"
                         + "</style></head><body>"
                         + "<h1>📺 Glass TV Home</h1>"
-                        + "<p>Muat turun fail pemasangan APK terus ke Android TV anda.</p>"
-                        + "<a href='/glass-tv.apk' class='btn'>📥 Muat Turun APK (v3.1.4)</a>"
+                        + "<p>Download the APK installer file directly to your Android TV.</p>"
+                        + "<a href='/glass-tv.apk' class='btn'>📥 Download APK (v3.1.4)</a>"
                         + "</body></html>";
                 byte[] htmlBytes = html.getBytes("UTF-8");
                 String header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " + htmlBytes.length + "\r\nConnection: close\r\n\r\n";

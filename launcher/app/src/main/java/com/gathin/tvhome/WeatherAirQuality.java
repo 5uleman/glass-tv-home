@@ -167,9 +167,10 @@ final class WeatherAirQuality {
                 String defaultPlace = AppLocationManager.getStationPlace(context);
 
                 // 1. Fetch Complete Weather Forecast (Open-Meteo)
+                String tz = AppLocationManager.getTimezone(context).replace("/", "%2F");
                 String weatherUrl = String.format(Locale.ROOT,
-                        "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=Asia%%2FKuala_Lumpur&forecast_days=7",
-                        lat, lon);
+                        "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=%s&forecast_days=7",
+                        lat, lon, tz);
                 JSONObject wJson = fetchJson(weatherUrl);
 
                 int temp = 29;
@@ -184,7 +185,7 @@ final class WeatherAirQuality {
                 String jasUrl = "https://eqms.doe.gov.my/api3/publicportalapims/currentapicurrentlocation?stationid=" + stationId;
                 JSONObject jasJson = fetchJson(jasUrl);
 
-                boolean isMalay = Locale.getDefault().getLanguage().startsWith("ms");
+                boolean isMalay = !AppLanguage.LANG_EN.equals(AppLanguage.getLanguage(context));
                 int aqi = 50;
                 String aqiStatus = "Moderate";
                 String aqiParam = "PM2.5";
@@ -257,7 +258,7 @@ final class WeatherAirQuality {
         int code = prefs.getInt(KEY_CODE, 2);
         int aqi = prefs.getInt(KEY_AQI, 50);
 
-        boolean isMalay = Locale.getDefault().getLanguage().startsWith("ms");
+        boolean isMalay = !AppLanguage.LANG_EN.equals(AppLanguage.getLanguage(context));
 
         String icon = getWeatherIcon(code);
         String condition = getWeatherCondition(code, isMalay);
@@ -282,14 +283,33 @@ final class WeatherAirQuality {
         sb.append("  •  ");
         sb.setSpan(new ForegroundColorSpan(0x80FFFFFF), startDot, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        // Air Quality: "IPU 112 Tidak Sihat"
+        // Air Quality: English "AQI 112 Unhealthy for Sensitive Groups", Malay "IPU 112 ...".
         int startAqi = sb.length();
-        String prefix = isMalay ? "IPU " : "API ";
+        String prefix = isMalay ? "IPU " : "AQI ";
         sb.append(prefix).append(String.valueOf(aqi)).append(" ").append(aqiStatus);
         sb.setSpan(new ForegroundColorSpan(aqiColor), startAqi, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         sb.setSpan(new StyleSpan(Typeface.BOLD), startAqi, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         return sb;
+    }
+
+    /**
+     * The AQI already stored by sync, as e.g. "AQI 167 Unhealthy", for the home pill. Reads only the
+     * cache (no network) and returns "" before the first successful sync.
+     */
+    static String getCachedAqiLabel(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        int aqi = prefs.getInt(KEY_AQI, -1);
+        if (aqi < 0) return "";
+        boolean isMalay = !AppLanguage.LANG_EN.equals(AppLanguage.getLanguage(context));
+        return (isMalay ? "IPU " : "AQI ") + aqi + " " + getAqiStatus(aqi, isMalay);
+    }
+
+    /** Colour matching getCachedAqiLabel, or 0 when nothing is cached yet. */
+    static int getCachedAqiColor(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        int aqi = prefs.getInt(KEY_AQI, -1);
+        return aqi < 0 ? 0 : getAqiColor(aqi);
     }
 
     /** Returns full weather model for WeatherActivity dashboard. */
@@ -409,7 +429,7 @@ final class WeatherAirQuality {
         // Air Quality
         int aqi = prefs.getInt(KEY_AQI, 50);
         boolean isJas = prefs.getBoolean(KEY_AQI_IS_JAS, true);
-        String aqiStatus = prefs.getString(KEY_AQI_STATUS, "Sederhana");
+        String aqiStatus = prefs.getString(KEY_AQI_STATUS, "Moderate");
         String aqiParam = prefs.getString(KEY_AQI_PARAM, "PM2.5");
         String stationPlace = prefs.getString(KEY_AQI_STATION_PLACE, AppLocationManager.getStationPlace(context));
         String stationId = AppLocationManager.getStationId(context);
@@ -418,7 +438,7 @@ final class WeatherAirQuality {
         double pm25 = aqi * 0.45;
         double pm10 = aqi * 0.55;
 
-        boolean isMalay = Locale.getDefault().getLanguage().startsWith("ms");
+        boolean isMalay = !AppLanguage.LANG_EN.equals(AppLanguage.getLanguage(context));
         if (isMalay) {
             aqiStatus = translateAqiStatus(aqiStatus);
         }
@@ -438,6 +458,9 @@ final class WeatherAirQuality {
         String s = status.toLowerCase(Locale.ROOT);
         if (s.contains("good") || s.contains("baik")) return "Baik";
         if (s.contains("moderate") || s.contains("sederhana")) return "Sederhana";
+        // "Sensitive groups" must be matched before the plain "unhealthy" branch, since both the English
+        // ("Unhealthy for Sensitive Groups") and Malay labels also contain the word "unhealthy"/"tidak sihat".
+        if (s.contains("sensitive") || s.contains("sensitif")) return "Tidak Sihat (Kelompok Sensitif)";
         if (s.contains("very unhealthy") || s.contains("sangat")) return "Sangat Tidak Sihat";
         if (s.contains("unhealthy") || s.contains("tidak sihat")) return "Tidak Sihat";
         if (s.contains("hazardous") || s.contains("bahaya")) return "Berbahaya";
@@ -544,20 +567,33 @@ final class WeatherAirQuality {
         }
     }
 
-    private static String getAqiStatus(int aqi, boolean isMalay) {
+    /**
+     * US EPA AQI category for a value. Open-Meteo returns the standard US AQI (us_aqi), so the tiers are
+     * Good (0-50), Moderate (51-100), Unhealthy for Sensitive Groups (101-150), Unhealthy (151-200),
+     * Very Unhealthy (201-300) and Hazardous (301+). Package-private so HomeWeather's pill reuses the same
+     * categories and colors as this dashboard.
+     */
+    static String getAqiStatus(int aqi, boolean isMalay) {
         if (aqi <= 50) return isMalay ? "Baik" : "Good";
         if (aqi <= 100) return isMalay ? "Sederhana" : "Moderate";
+        if (aqi <= 150) return isMalay ? "Tidak Sihat (Kelompok Sensitif)" : "Unhealthy for Sensitive Groups";
         if (aqi <= 200) return isMalay ? "Tidak Sihat" : "Unhealthy";
         if (aqi <= 300) return isMalay ? "Sangat Tidak Sihat" : "Very Unhealthy";
         return isMalay ? "Berbahaya" : "Hazardous";
     }
 
-    private static int getAqiColor(int aqi) {
-        if (aqi <= 50) return 0xFF4ADE80;  // Green (Baik)
-        if (aqi <= 100) return 0xFF38BDF8; // Sky Blue (Sederhana)
-        if (aqi <= 200) return 0xFFFB923C; // Orange (Tidak Sihat)
-        if (aqi <= 300) return 0xFFEF4444; // Red (Sangat Tidak Sihat)
-        return 0xFF991B1B;                 // Maroon (Berbahaya)
+    /**
+     * AQI text colors for the home pill. Softened and light so they read over both bright and dark
+     * wallpapers (the pill sits on a dark glass background with a text shadow). Package-private for reuse
+     * by HomeWeather.
+     */
+    static int getAqiColor(int aqi) {
+        if (aqi <= 50) return 0xFFFFFFFF;  // White — Good
+        if (aqi <= 100) return 0xFFFBE9A0; // Soft light yellow — Moderate
+        if (aqi <= 150) return 0xFFFFD08A; // Light amber — Unhealthy for Sensitive Groups
+        if (aqi <= 200) return 0xFFFFA24D; // Light orange — Unhealthy
+        if (aqi <= 300) return 0xFFFA8A70; // Softened coral — Very Unhealthy
+        return 0xFFF5655C;                  // Softened red — Hazardous
     }
 
     private static JSONObject fetchJson(String urlStr) {

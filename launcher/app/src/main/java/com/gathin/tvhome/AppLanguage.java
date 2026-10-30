@@ -7,8 +7,8 @@ import java.util.Locale;
 
 /**
  * Multi-language support for Glass TV Home:
- * - Bahasa Melayu (ms) [Default]
- * - English (en)
+ * - English (en) [Default]
+ * - Bahasa Melayu (ms)
  * - Bahasa Indonesia (id)
  */
 final class AppLanguage {
@@ -22,9 +22,16 @@ final class AppLanguage {
     private AppLanguage() {}
 
     public static String getLanguage(Context ctx) {
-        if (ctx == null) return LANG_MS;
+        // The app is English-only from now on: always report English, so a stored value of "ms"/"id"
+        // (or any leftover path that once set one) can no longer switch the UI or surface Malay or
+        // Indonesian. Every strXxx()/i18n() call routes through here, so the translations stay in the
+        // code untouched. The stored read is kept, not deleted.
+        return LANG_EN;
+        /*
+        if (ctx == null) return LANG_EN;
         return ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                .getString(KEY_LANG, LANG_MS);
+                .getString(KEY_LANG, LANG_EN);
+        */
     }
 
     public static void setLanguage(Context ctx, String lang) {
@@ -43,8 +50,9 @@ final class AppLanguage {
             case LANG_ID:
                 return "Bahasa Indonesia";
             case LANG_MS:
-            default:
                 return "Bahasa Melayu";
+            default:
+                return "English";
         }
     }
 
@@ -56,8 +64,9 @@ final class AppLanguage {
             case LANG_ID:
                 return "🇮🇩 ID";
             case LANG_MS:
-            default:
                 return "🇲🇾 BM";
+            default:
+                return "🇬🇧 EN";
         }
     }
 
@@ -365,6 +374,15 @@ final class AppLanguage {
             case LANG_EN: return "🔌 Turn Off TV";
             case LANG_ID: return "🔌 Matikan TV";
             case LANG_MS: default: return "🔌 Padamkan TV (Turn Off)";
+        }
+    }
+
+    /** Shown when a power row is tapped before the launcher's accessibility service is running. */
+    public static String strEnableA11yService(Context ctx) {
+        switch (getLanguage(ctx)) {
+            case LANG_EN: return "Enable the Glass TV accessibility service in Settings";
+            case LANG_ID: return "Aktifkan layanan aksesibilitas Glass TV di Setelan";
+            case LANG_MS: default: return "Dayakan perkhidmatan kebolehaksesanan Glass TV dalam Tetapan";
         }
     }
 

@@ -13,6 +13,7 @@ import android.os.PowerManager;
 public class AzanReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context ctx, Intent intent) {
+        if (Azan.AZAN_DISABLED) return; // no azan activity, notification, sound, or reschedule in this build
         int prayer = intent.getIntExtra("prayer", -1);
         long at = intent.getLongExtra("at", 0);
         String zone = Azan.prefs(ctx).getString("zone", "");

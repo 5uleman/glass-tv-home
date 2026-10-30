@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Load local IP
         String localIp = TvScanner.getLocalIpAddress(this);
-        tvLocalIp.setText("IP Telefon Anda: " + localIp);
+        tvLocalIp.setText("Your Phone IP: " + localIp);
 
         // Load saved TV IP
         SharedPreferences sp = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
@@ -76,25 +76,25 @@ public class MainActivity extends AppCompatActivity {
 
     private void scanNetwork() {
         btnScan.setEnabled(false);
-        btnScan.setText("🔄 Sedang Mengimbas Rangkaian Wi-Fi...");
-        tvStatus.setText("Status: Mencari Android TV di rangkaian tempatan...");
+        btnScan.setText("🔄 Scanning Wi-Fi Network...");
+        tvStatus.setText("Status: Searching for Android TV on the local network...");
 
         TvScanner.scan(this, new TvScanner.ScanCallback() {
             @Override
             public void onDeviceFound(String ip) {
                 etTvIp.setText(ip);
-                tvStatus.setText("Status: Android TV dijumpai di " + ip + "!");
-                Toast.makeText(MainActivity.this, "TV dijumpai: " + ip, Toast.LENGTH_SHORT).show();
+                tvStatus.setText("Status: Android TV found at " + ip + "!");
+                Toast.makeText(MainActivity.this, "TV found: " + ip, Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onScanFinished(List<String> devices) {
                 btnScan.setEnabled(true);
-                btnScan.setText("🔍 Imbas Android TV di Rangkaian Wi-Fi");
+                btnScan.setText("🔍 Scan for Android TV on Wi-Fi Network");
                 if (devices.isEmpty()) {
-                    tvStatus.setText("Status: Tiada TV dikesan secara automatik. Sila pastikan USB Debugging aktif atau masukkan IP TV secara manual.");
+                    tvStatus.setText("Status: No TV detected automatically. Please make sure USB Debugging is enabled or enter the TV IP manually.");
                 } else {
-                    tvStatus.setText("Status: Imbasan selesai. " + devices.size() + " peranti TV ditemui.");
+                    tvStatus.setText("Status: Scan complete. " + devices.size() + " TV device(s) found.");
                 }
             }
         });
@@ -110,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (ip.isEmpty()) {
-            Toast.makeText(this, "Sila masukkan IP Android TV anda", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please enter your Android TV IP", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
         btnInstall.setEnabled(false);
         progressBar.setVisibility(View.VISIBLE);
         progressBar.setProgress(0);
-        tvStatus.setText("Status: Menyambung ke TV...");
+        tvStatus.setText("Status: Connecting to TV...");
 
         AdbInstaller.install(this, ip, port, new AdbInstaller.InstallCallback() {
             @Override
@@ -157,11 +157,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (ip.isEmpty()) {
-            Toast.makeText(this, "Sila masukkan IP TV", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please enter the TV IP", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        tvStatus.setText("Melancarkan Glass TV Home pada skrin TV...");
+        tvStatus.setText("Launching Glass TV Home on the TV screen...");
         AdbInstaller.launchTvHome(this, ip, port, new AdbInstaller.InstallCallback() {
             @Override
             public void onProgress(int percent, String message) {
@@ -185,26 +185,26 @@ public class MainActivity extends AppCompatActivity {
     private void toggleWebServer() {
         if (LocalApkServer.isRunning()) {
             LocalApkServer.stop();
-            btnWebServer.setText("🌐 Pelayan Web TV");
+            btnWebServer.setText("🌐 TV Web Server");
             tvWebUrl.setVisibility(View.GONE);
-            tvStatus.setText("Pelayan web tempatan telah dimatikan.");
+            tvStatus.setText("Local web server stopped.");
         } else {
             LocalApkServer.start(this, 8080, new LocalApkServer.ServerStateCallback() {
                 @Override
                 public void onStarted(String url) {
                     runOnUiThread(() -> {
-                        btnWebServer.setText("⏹️ Hentikan Pelayan");
+                        btnWebServer.setText("⏹️ Stop Server");
                         tvWebUrl.setVisibility(View.VISIBLE);
-                        tvWebUrl.setText("Taip di TV: " + url);
-                        tvStatus.setText("Buka pelayar web atau Downloader di TV, taip alamat di atas untuk muat turun.");
-                        Toast.makeText(MainActivity.this, "Pelayan Web Aktif: " + url, Toast.LENGTH_LONG).show();
+                        tvWebUrl.setText("Type on TV: " + url);
+                        tvStatus.setText("Open a web browser or Downloader on the TV and type the address above to download.");
+                        Toast.makeText(MainActivity.this, "Web Server Active: " + url, Toast.LENGTH_LONG).show();
                     });
                 }
 
                 @Override
                 public void onStopped() {
                     runOnUiThread(() -> {
-                        btnWebServer.setText("🌐 Pelayan Web TV");
+                        btnWebServer.setText("🌐 TV Web Server");
                         tvWebUrl.setVisibility(View.GONE);
                     });
                 }

@@ -173,6 +173,21 @@ final class Backdrop {
         watchers.add(new WeakReference<>(view));
     }
 
+    /**
+     * Fills the glass with a flat colour, for the plain dark home screen where there is no picture
+     * to blur. The 1x1 bitmap is CLAMP-scaled by {@link Fill}, so it paints every panel solid.
+     */
+    static void presentSolid(int argb) {
+        Bitmap b;
+        try {
+            b = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+        } catch (OutOfMemoryError e) {
+            return;
+        }
+        b.setPixel(0, 0, argb);
+        present(b, 0);
+    }
+
     /** Memory is short: let go of what can be remade. The copy on the glass stays. */
     static void trim() {
         tinted.clear();

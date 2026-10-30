@@ -141,7 +141,7 @@ public class AzanActivity extends Activity {
         } else {
             File file = Azan.recording(this, soundChoice);
             if (file == null) {
-                hint.setText(AppLanguage.strAzanPopupDownloadingHint(this, Azan.soundLabel(soundChoice)));
+                hint.setText(AppLanguage.strAzanPopupDownloadingHint(this, Azan.soundLabel(this, soundChoice)));
                 Azan.fetch(this, soundChoice);
                 playChime();
                 handler.postDelayed(this::finish, 8000);

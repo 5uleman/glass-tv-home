@@ -47,6 +47,14 @@ final class PrayerTimes {
     private static final String[] PRAYER_NAMES = NAMES;
     private static final String[] PRAYER_KEYS = {"fajr", "syuruk", "dhuhr", "asr", "maghrib", "isha"};
 
+    /**
+     * Master switch for the prayer feature in this build. When true, no timetable is fetched (see
+     * syncInternal), the home prayer/ayah shelf and nightstand prayer views stay hidden, the prayer
+     * zone / Azan / daily-ayah settings rows and the Gemini prayer action are not added, and no Azan
+     * is scheduled (see Azan.AZAN_DISABLED). Code is kept, only gated.
+     */
+    static final boolean PRAYER_DISABLED = true;
+
     static final class Day {
         final int[] minutes;
         final String hijri;
@@ -96,6 +104,7 @@ final class PrayerTimes {
     }
 
     private static void syncInternal(Context context, Runnable onUpdated, boolean force) {
+        if (PRAYER_DISABLED) return; // no waktusolat fetch in this build
         new Thread(() -> {
             try {
                 SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -181,7 +190,7 @@ final class PrayerTimes {
         PRESET_ZONES.add(new PrayerZone("SGR03", "Selangor", "Klang, Kuala Langat, Banting", 3.0108, 101.4081));
 
         // Melaka
-        PRESET_ZONES.add(new PrayerZone("MLK01", "Melaka", "Bandaraya Melaka, Alor Gajah, Jasin", 2.1909, 102.2571));
+        PRESET_ZONES.add(new PrayerZone("MLK01", "Melaka", "Melaka City, Alor Gajah, Jasin", 2.1909, 102.2571));
 
         // Negeri Sembilan
         PRESET_ZONES.add(new PrayerZone("NGS02", "Negeri Sembilan", "Seremban, Port Dickson, Nilai", 2.6953, 101.9056));
@@ -193,7 +202,7 @@ final class PrayerTimes {
         PRESET_ZONES.add(new PrayerZone("JHR04", "Johor", "Kluang, Mersing", 2.0306, 103.3214));
 
         // Pulau Pinang
-        PRESET_ZONES.add(new PrayerZone("PNG01", "Pulau Pinang", "Seluruh Negeri Pulau Pinang", 5.3942, 100.3983));
+        PRESET_ZONES.add(new PrayerZone("PNG01", "Pulau Pinang", "Whole State of Pulau Pinang", 5.3942, 100.3983));
 
         // Perak
         PRESET_ZONES.add(new PrayerZone("PRK02", "Perak", "Ipoh, Batu Gajah, Kampar", 4.6397, 101.1083));

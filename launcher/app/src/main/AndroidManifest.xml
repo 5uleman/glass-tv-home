@@ -83,10 +83,15 @@
             android:excludeFromRecents="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.TvHome">
+            <!-- Launcher tile removed: the home weather pill no longer opens this screen, and the
+                 LEANBACK_LAUNCHER filter below would still surface it in the system app drawer.
+                 Kept (commented) so the activity class stays and this is reversible. -->
+            <!--
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
+            -->
         </activity>
 
         <activity
@@ -153,8 +158,9 @@
                 android:resource="@xml/home_key_service" />
         </service>
 
-        <!-- Screensaver: pick it in Settings, or `settings put secure screensaver_components
-             com.gathin.tvhome/.ClockDream` over adb. -->
+        <!-- Screensaver: ClockDream registration removed by the menu cleanup so the launcher's own
+             dream is no longer offered as a system screensaver (the Google system screensaver is used
+             instead). The .ClockDream class is kept; only the manifest registration is disabled.
         <service
             android:name=".ClockDream"
             android:label="@string/dream_name"
@@ -165,6 +171,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
+        -->
 
         <!-- The remote's Input button (KEYCODE_TV) opens the input switcher; see InputKeyService. -->
         <service

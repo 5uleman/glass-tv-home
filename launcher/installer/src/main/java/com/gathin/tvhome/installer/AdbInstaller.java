@@ -62,7 +62,7 @@ public final class AdbInstaller {
         new Thread(() -> {
             Socket socket = null;
             try {
-                postProgress(callback, 5, "Menyambung ke Android TV (" + ip + ":" + port + ")...");
+                postProgress(callback, 5, "Connecting to Android TV (" + ip + ":" + port + ")...");
                 socket = new Socket();
                 socket.connect(new InetSocketAddress(ip, port), 6000);
                 socket.setSoTimeout(35000);
@@ -76,10 +76,10 @@ public final class AdbInstaller {
 
                 // 2. Handle Authentication
                 if (resp.cmd == A_AUTH && resp.arg0 == 1) { // Token
-                    postProgress(callback, 15, "Menentusahkan kunci keselamatan ADB...");
+                    postProgress(callback, 15, "Authenticating ADB security key...");
                     PrivateKey privKey = AdbCrypto.getPrivateKey(context);
                     if (privKey == null) {
-                        throw new IOException("Gagal menjana kunci keselamatan RSA peranti.");
+                        throw new IOException("Failed to generate the device RSA security key.");
                     }
 
                     byte[] asn1Token = new byte[35];
@@ -96,7 +96,7 @@ public final class AdbInstaller {
 
                     if (resp.cmd != A_CNXN) {
                         // Send Public key to prompt TV
-                        postProgress(callback, 20, "Sila tekan 'Allow' pada skrin TV anda...");
+                        postProgress(callback, 20, "Please press 'Allow' on your TV screen...");
                         String pubKey = AdbCrypto.getPublicKeyAdbString(context);
                         if (pubKey != null) {
                             sendMessage(out, A_AUTH, 3, 0, (pubKey + "\0").getBytes("UTF-8"));
@@ -106,10 +106,10 @@ public final class AdbInstaller {
                 }
 
                 if (resp.cmd != A_CNXN) {
-                    throw new IOException("Sambungan ditolak oleh TV. Sila benarkan 'USB Debugging' pada skrin TV.");
+                    throw new IOException("Connection rejected by the TV. Please allow 'USB Debugging' on the TV screen.");
                 }
 
-                postProgress(callback, 30, "Sambungan TV disahkan! Membuka aliran pemasangan...");
+                postProgress(callback, 30, "TV connection authorized! Opening install stream...");
 
                 // Read bundled APK from extracted cache file (safe from asset compression limits)
                 File apkFile = getOrExtractApk(context);
@@ -124,7 +124,7 @@ public final class AdbInstaller {
                 Message ack = readMessage(in);
                 if (ack.cmd != A_OKAY) {
                     apkStream.close();
-                    throw new IOException("Gagal membuka aliran PackageManager di TV.");
+                    throw new IOException("Failed to open the PackageManager stream on the TV.");
                 }
                 int remoteId = ack.arg0;
 
@@ -140,7 +140,7 @@ public final class AdbInstaller {
                     totalSent += read;
 
                     int percent = (int) (30 + (totalSent * 55 / apkSize));
-                    postProgress(callback, percent, "Memindahkan Glass TV Home (" + (totalSent / 1024) + " KB / " + (apkSize / 1024) + " KB)...");
+                    postProgress(callback, percent, "Transferring Glass TV Home (" + (totalSent / 1024) + " KB / " + (apkSize / 1024) + " KB)...");
 
                     Message streamAck = readMessage(in);
                     if (streamAck.cmd != A_OKAY) {
@@ -149,7 +149,7 @@ public final class AdbInstaller {
                 }
                 apkStream.close();
 
-                postProgress(callback, 90, "Memasang fail APK pada sistem Android TV...");
+                postProgress(callback, 90, "Installing the APK on the Android TV system...");
 
                 // Read PM result
                 StringBuilder pmOutput = new StringBuilder();
@@ -166,14 +166,14 @@ public final class AdbInstaller {
 
                 String res = pmOutput.toString().trim();
                 if (res.contains("Success")) {
-                    postProgress(callback, 100, "Pemasangan Berjaya!");
-                    postSuccess(callback, "✅ Glass TV Home berjaya dipasang ke TV (" + ip + ")!");
+                    postProgress(callback, 100, "Installation Successful!");
+                    postSuccess(callback, "✅ Glass TV Home installed successfully on the TV (" + ip + ")!");
                 } else {
-                    throw new IOException("TV PM Ralat: " + (res.isEmpty() ? "Tidak diketahui" : res));
+                    throw new IOException("TV PM Error: " + (res.isEmpty() ? "Unknown" : res));
                 }
 
             } catch (Exception e) {
-                postError(callback, "Ralat: " + e.getMessage());
+                postError(callback, "Error: " + e.getMessage());
             } finally {
                 if (socket != null) {
                     try {
@@ -189,7 +189,7 @@ public final class AdbInstaller {
         new Thread(() -> {
             Socket socket = null;
             try {
-                postProgress(callback, 10, "Menyambung ke TV untuk melancarkan launcher...");
+                postProgress(callback, 10, "Connecting to the TV to launch the launcher...");
                 socket = new Socket();
                 socket.connect(new InetSocketAddress(ip, port), 5000);
                 socket.setSoTimeout(10000);
@@ -218,7 +218,7 @@ public final class AdbInstaller {
                 }
 
                 if (resp.cmd != A_CNXN) {
-                    throw new IOException("Kebenaran ADB ditolak oleh TV.");
+                    throw new IOException("ADB authorization rejected by the TV.");
                 }
 
                 // Send am start
@@ -239,9 +239,9 @@ public final class AdbInstaller {
                         }
                     }
                 }
-                postSuccess(callback, "🚀 Glass TV Home berjaya dibuka pada skrin TV!");
+                postSuccess(callback, "🚀 Glass TV Home launched successfully on the TV screen!");
             } catch (Exception e) {
-                postError(callback, "Gagal melancarkan launcher: " + e.getMessage());
+                postError(callback, "Failed to launch the launcher: " + e.getMessage());
             } finally {
                 if (socket != null) {
                     try {

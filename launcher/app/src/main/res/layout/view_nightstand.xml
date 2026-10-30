@@ -76,9 +76,10 @@
             android:shadowRadius="5"
             android:includeFontPadding="false" />
 
-        <!-- Islamic Hijri Date -->
+        <!-- Islamic Hijri Date (hidden: prayer/ayah disabled in this build) -->
         <TextView
             android:id="@+id/nightstandHijri"
+            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
@@ -93,9 +94,10 @@
             android:shadowRadius="5"
             android:includeFontPadding="false" />
 
-        <!-- Next Prayer Time Capsule -->
+        <!-- Next Prayer Time Capsule (hidden: prayer disabled in this build) -->
         <TextView
             android:id="@+id/nightstandPrayer"
+            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
@@ -121,7 +123,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="36dp"
-            android:text="Tekan mana-mana butang untuk kembali"
+            android:text="Press any button to return"
             android:textColor="#4DFFFFFF"
             android:textSize="12sp"
             android:fontFamily="@font/outfit"

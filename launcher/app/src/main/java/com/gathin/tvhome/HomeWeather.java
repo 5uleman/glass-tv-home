@@ -69,12 +69,18 @@ final class HomeWeather {
         String weather = "", api = "";
         int color = 0, code = -1;
         boolean day = true;
+        boolean isMalay = !AppLanguage.LANG_EN.equals(AppLanguage.getLanguage(ctx));
+        // US AQI from Open-Meteo covers the whole world, so it is the base reading; a genuinely nearby
+        // Malaysian DOE station (below) overrides it with the official local figure when one exists.
+        int aqiValue = -1;
+        String tz = AppLocationManager.getTimezone(ctx).replace("/", "%2F");
         try {
             JSONObject now = new JSONObject(get("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon
-                    + "&current=temperature_2m,weather_code,is_day&timezone=Asia%2FKuala_Lumpur")).getJSONObject("current");
+                    + "&current=temperature_2m,weather_code,is_day,us_aqi&timezone=" + tz)).getJSONObject("current");
             code = now.optInt("weather_code");
             day = now.optInt("is_day", 1) == 1;
             weather = Math.round(now.optDouble("temperature_2m")) + "°  " + describe(code);
+            aqiValue = now.optInt("us_aqi", -1);
         } catch (Exception e) {
             Log.w(TAG, "weather failed: " + e.getMessage());
         }
@@ -94,13 +100,15 @@ final class HomeWeather {
             // Only a station near home (about 80 km): the network covers Malaysia, and outside it the
             // nearest one would be far away and say nothing about the air here.
             if (near != null && best < 0.5) {
-                int value = near.getInt("API"), band = 0;
-                while (band < API_TOP.length - 1 && value > API_TOP[band]) band++;
-                api = "API " + value + " " + API_NAME[band];
-                color = API_COLOR[band];
+                aqiValue = near.getInt("API");
             }
         } catch (Exception e) {
             Log.w(TAG, "APIMS failed: " + e.getMessage());
+        }
+        if (aqiValue >= 0) {
+            // Standard US AQI categories and colors (shared with the weather dashboard), labelled AQI/IPU.
+            api = (isMalay ? "IPU " : "AQI ") + aqiValue + " " + WeatherAirQuality.getAqiStatus(aqiValue, isMalay);
+            color = WeatherAirQuality.getAqiColor(aqiValue);
         }
         // A failed try waits for the next round too, rather than asking again every minute.
         SharedPreferences.Editor ed = prefs(ctx).edit().putLong("at", System.currentTimeMillis());
