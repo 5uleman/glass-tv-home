@@ -55,7 +55,7 @@ com.google.android.videos              # Google TV / Play Movies
 com.google.android.play.games
 com.android.printspooler
 
-# ONLY AFTER com.gathin.tvhome IS INSTALLED. Disabling launcherx alone hands Home to the setup wizard's
+# ONLY AFTER com.suleman.glasstv IS INSTALLED. Disabling launcherx alone hands Home to the setup wizard's
 # RecoveryActivity, so the wizard has to go too. Re-enable it before a factory reset (restore.sh does).
 # On this box Wi-Fi dropped right after disabling it and the password had to be re-entered once.
 com.google.android.tungsten.setupwraith

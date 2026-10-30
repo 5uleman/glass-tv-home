@@ -2,6 +2,6 @@
   "versionCode": 18,
   "versionName": "3.3.0",
   "apkUrl": "https://github.com/aqmangge/glass-tv-home/raw/main/release/glass-tv-home.apk",
-  "changelog": "🌐 Sokongan 3 Bahasa (BM 🇲🇾, EN 🇬🇧, ID 🇮🇩), 📍 Tambah zon Singapura 🇸🇬 & Indonesia 🇮🇩, 📺 Pengoptimuman resolusi 1080p / 4K untuk Doa Harian & Waktu Solat",
+  "changelog": "English-only build (package com.suleman.glasstv): prayer and azan features removed, Lahore is the default weather station, the in-app updater is off, and the power rows open the system power dialog.",
   "releaseDate": "2026-10-29"
 }

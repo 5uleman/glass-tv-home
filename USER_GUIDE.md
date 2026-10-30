@@ -79,7 +79,7 @@ If you **do not have an Android smartphone** (e.g., you only have a laptop or co
    ```bash
    adb connect <TV_IP_ADDRESS>:5555
    adb install -r release/glass-tv-home.apk
-   adb shell am start -n com.gathin.tvhome/.MainActivity
+   adb shell am start -n com.suleman.glasstv/.MainActivity
    ```
 
 ---
@@ -126,7 +126,7 @@ update patch latest glass tv dekat tv rumah saya: https://github.com/aqmangge/gl
 > 
 > The AI can immediately install the prebuilt APK from `release/glass-tv-home.apk` or build it, run debloat, and set the user location via:
 > ```bash
-> adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.gathin.tvhome --es query "<USER_LOCATION>"
+> adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.suleman.glasstv --es query "<USER_LOCATION>"
 > ```
 > *(If the user does not specify a location, the default preset is **Putrajaya** / Station CA17W).*
 

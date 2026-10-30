@@ -167,13 +167,13 @@ update patch latest glass tv dekat tv rumah saya: https://github.com/aqmangge/gl
 > When a user requests to update/patch Glass TV:
 > 1. Connect to the TV over Wi-Fi (`adb connect <TV_IP>:5555`).
 > 2. Install the latest prebuilt APK without wiping user data (`adb install -r release/glass-tv-home.apk`).
-> 3. Relaunch the launcher (`adb shell am start -n com.gathin.tvhome/.MainActivity`).
+> 3. Relaunch the launcher (`adb shell am start -n com.suleman.glasstv/.MainActivity`).
 > 4. All personal wallpapers, dock orders, and settings are 100% retained!
 
 > 🚨 **AI Assistant Rule / Arahan Khas AI**:
 > When installing for a user, the AI **must ask the user for their location in Malaysia** (e.g. Putrajaya, Cheras, Shah Alam, Melaka, JB, Penang, Kuantan, Kuching, KK) to configure live JAS haze/IPU data and JAKIM prayer times via:
 > ```bash
-> adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.gathin.tvhome --es query "<LOCATION>"
+> adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.suleman.glasstv --es query "<LOCATION>"
 > ```
 > If installed manually without AI, users can change the station at any time directly on the TV using the remote control under **Settings (⚙️) $\rightarrow$ Location API Haze** or **Weather Dashboard $\rightarrow$ 📍 Tukar Stesen / Change**.
 
