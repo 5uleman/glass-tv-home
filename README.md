@@ -1,5 +1,10 @@
 # Glass TV
 
+> **Fork note.** This is a modified fork of [glass-tv-home](https://github.com/aqmangge/glass-tv-home),
+> Gathin's project, used under its MIT licence — see [LICENSE](LICENSE) and
+> [Credits and licence](#credits-and-licence) below. What this fork changes, and the steps it needs on each TV,
+> are written up at the top of [AGENTS.md](AGENTS.md).
+
 **Make your Android TV or Google TV fast and ad-free again: strip out the bloat and ads, free up memory,
 and come home to just your apps, with a new place to visit behind them every week.**
 
