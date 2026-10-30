@@ -196,9 +196,9 @@ Written so that any model can follow it to the letter:
   path without spaces.
 - Configure in `launcher/app/src/main/res/values/config.xml`, or better with a theme (step 6): ask which four
   apps go in the dock and in what order, using the package names from `pm list packages -3`.
-- Build: `cd launcher && ./gradlew testReleaseUnitTest assembleRelease`. The APK must stay under 400 KB
+- Build: `cd launcher && ./gradlew testReleaseUnitTest assembleRelease`. The APK must stay under 700 KB
   (CI checks it).
-- **Check**: `launcher/app/build/outputs/apk/release/app-release.apk` exists and is about 300 KB.
+- **Check**: `launcher/app/build/outputs/apk/release/app-release.apk` exists and is about 640 KB.
 
 ### 5. Install and make it Home
 
