@@ -1,3 +1,19 @@
 plugins {
     id 'com.android.application' version '8.5.2' apply false
 }
+
+// Release signing reads launcher/keystore.properties, which is gitignored; copy
+// keystore.properties.example and fill it in. The store itself should live outside this
+// repository and storeFile should be an absolute path. Without that file a release build
+// falls back to the debug key, which is what CI and a fresh clone get.
+def keystoreFile = rootProject.file('keystore.properties')
+ext.releaseKeystore = null
+if (keystoreFile.exists()) {
+    def p = new Properties()
+    keystoreFile.withInputStream { p.load(it) }
+    if (['storeFile', 'storePassword', 'keyAlias', 'keyPassword'].every { p.getProperty(it) }) {
+        ext.releaseKeystore = p
+    } else {
+        logger.warn("keystore.properties is missing one of storeFile/storePassword/keyAlias/keyPassword; releasing with the debug key")
+    }
+}

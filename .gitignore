@@ -11,6 +11,8 @@ local.properties
 *.log
 *.keystore
 *.jks
+# Release signing passwords; launcher/keystore.properties.example is the tracked template.
+keystore.properties
 launcher/local.properties
 # your own TV's dumps (serial, android_id, device names) stay local
 backup/

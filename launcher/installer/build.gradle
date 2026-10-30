@@ -14,10 +14,21 @@ android {
         versionName '1.0.0'
     }
 
+    signingConfigs {
+        if (rootProject.releaseKeystore) {
+            release {
+                storeFile file(rootProject.releaseKeystore['storeFile'])
+                storePassword rootProject.releaseKeystore['storePassword']
+                keyAlias rootProject.releaseKeystore['keyAlias']
+                keyPassword rootProject.releaseKeystore['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.debug
+            signingConfig rootProject.releaseKeystore ? signingConfigs.release : signingConfigs.debug
         }
     }
 
