@@ -9,10 +9,12 @@ import android.util.Log;
 import android.widget.Toast;
 
 /**
- * Handles location configuration broadcasts (e.g. from AI assistant scripts or adb):
- * adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.gathin.tvhome --es query "Putrajaya"
- * adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.gathin.tvhome --es station_id "CA17W"
- * adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.gathin.tvhome --ef lat 2.9158 --ef lon 101.6909
+ * Handles location configuration broadcasts (e.g. from AI assistant scripts or adb). The action names keep
+ * upstream's prefix, which is only a string both sides of the broadcast agree on; the target package is this
+ * fork's applicationId, {@code com.suleman.glasstv}:
+ * adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.suleman.glasstv --es query "Putrajaya"
+ * adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.suleman.glasstv --es station_id "CA17W"
+ * adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.suleman.glasstv --ef lat 2.9158 --ef lon 101.6909
  */
 public class LocationBroadcastReceiver extends BroadcastReceiver {
     private static final String TAG = "TvHome.LocationReceiver";

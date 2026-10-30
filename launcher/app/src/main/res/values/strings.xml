@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Home</string>
+    <!-- The name on the TV's app list and Home tile. The translated app_name entries were dropped from
+         the values-* folders: this build is English-only, so a German or French TV must not show "Accueil". -->
+    <string name="app_name">Glass TV (Clean English Edition)</string>
     <string name="inputs">Inputs</string>
     <string name="wifi">Wi-Fi</string>
     <string name="settings">Settings</string>

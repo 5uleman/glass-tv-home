@@ -282,7 +282,7 @@ final class Azan {
      */
     static synchronized void note(Context ctx, String line) {
         Log.i(TAG, line);
-        // Next to the theme (Android/data/com.gathin.tvhome/files), where the computer can read it.
+        // Next to the theme (Android/data/com.suleman.glasstv/files), where the computer can read it.
         File dir = Config.dir(ctx);
         File f = new File(dir != null ? dir : ctx.getFilesDir(), "azan-log.txt");
         java.util.List<String> lines = new java.util.ArrayList<>();

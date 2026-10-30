@@ -7,7 +7,7 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId 'com.gathin.tvhome'
+        applicationId 'com.suleman.glasstv'
         minSdk 26
         targetSdk 34
         versionCode 18
@@ -16,7 +16,7 @@ android {
 
     buildTypes {
         // -PsideBySide installs this build next to the one already on the TV (applicationId
-        // com.gathin.tvhome.debug) rather than over it. Without the flag nothing changes.
+        // com.suleman.glasstv.debug) rather than over it. Without the flag nothing changes.
         if (project.hasProperty('sideBySide')) {
             debug {
                 applicationIdSuffix '.debug'
