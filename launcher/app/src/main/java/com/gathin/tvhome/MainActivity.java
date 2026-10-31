@@ -2860,15 +2860,22 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
         });
 
+        // Row 2: VPN — opens Proton VPN; its TV build has its own leanback entry point.
+        addInputRow(rows, close, R.drawable.ic_vpn, getString(R.string.vpn), -1, () -> {
+            SoundEffects.playSelect();
+            closeMenu(false);
+            openVpnApp();
+        });
+
         addSeparator(rows);
 
-        // Row 2: Tetapan Wi-Fi
+        // Row 3: Tetapan Wi-Fi
         addInputRow(rows, close, R.drawable.ic_settings, i18n("Wi-Fi Settings", "Pengaturan Wi-Fi", "Tetapan Wi-Fi"), -1, () -> {
             SoundEffects.playSelect();
             open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
         });
 
-        // Row 3: Tutup
+        // Row 4: Tutup
         addInputRow(rows, close, R.drawable.ic_close, AppLanguage.strClose(this), -1, () -> {
             SoundEffects.playSelect();
             closeMenu(true);
@@ -2878,6 +2885,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         width = Math.max(width, panel.getMeasuredWidth());
 
         showMenu(panel, rows, anchor, width, false);
+    }
+
+    private static final String PROTON_VPN_PACKAGE = "ch.protonvpn.android";
+
+    /** Opens Proton VPN: its leanback entry point first, the normal launcher intent after that. */
+    private void openVpnApp() {
+        Intent leanback = new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
+                .setPackage(PROTON_VPN_PACKAGE);
+        if (leanback.resolveActivity(getPackageManager()) != null) {
+            open(leanback);
+            return;
+        }
+        Intent normal = getPackageManager().getLaunchIntentForPackage(PROTON_VPN_PACKAGE);
+        if (normal != null) {
+            open(normal);
+            return;
+        }
+        Toast.makeText(this, R.string.vpn_app_missing, Toast.LENGTH_SHORT).show();
     }
 
     /** Shows an Apple TV-style frosted glass Candy Box dropdown menu containing all launcher customizations & tools. */
