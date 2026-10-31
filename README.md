@@ -59,13 +59,21 @@ Install the APK, then three things have to be done by hand once per TV:
    `adb shell dumpsys accessibility | grep -i bound`. If it is not bound, firmware that blocks service
    auto-start is the usual reason, and the power rows will only show a hint pointing at that switch.
 
-   **This has to be checked after every reboot, not just once.** On the TCL set this build was tested on, the TV
+   **This has to be checked after every reboot on some TVs.** On the TCL set this build was tested on, the TV
    resets the accessibility master switch at boot: `adb shell settings get secure accessibility_enabled` reads `0`,
    the service stays listed but is not bound, and Restart TV / Turn Off TV only offer to open the Accessibility
-   screen. Turn Glass TV back on in Settings → Accessibility (the power rows open that screen for you), then check
-   again with `adb shell dumpsys accessibility | grep -i 'bound services'` — it must list `Service[label=Home button…]`.
+   screen.
 
-   Turning it back on over adb takes three commands, because setting the master switch alone does not rebind:
+   **From 3.3.1 the launcher repairs this itself.** When it starts and finds the grant from step 2, our service
+   still in `enabled_accessibility_services`, and the service not bound, it sets the master switch back to 1 and
+   rewrites the list (removing and re-adding our entry, keeping every other service) so Android rebinds it. It
+   never enables a service you had not turned on earlier. Check what it did with
+   `adb logcat -d -s TvHome.HomeKey | grep 'a11y repair'`, then confirm the binding with
+   `adb shell dumpsys accessibility | grep -i 'bound services'` — it must list `Service[label=Home button…]`.
+
+   If the repair cannot run (no grant, or the service was never enabled), do it by hand: Settings →
+   Accessibility → Glass TV → On, then check the binding again. Over adb it takes three commands, because
+   setting the master switch alone does not rebind:
    ```bash
    adb shell settings put secure accessibility_enabled 1
    adb shell settings put secure enabled_accessibility_services ""
