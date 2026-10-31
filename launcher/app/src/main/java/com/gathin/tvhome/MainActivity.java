@@ -2948,19 +2948,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         LinearLayout rows = panel.findViewById(R.id.rows);
         Runnable close = () -> closeMenu(false);
 
-        // Row 1: Restart TV — the Android system power dialog, not the launcher's own popup.
-        addInputRow(rows, close, R.drawable.ic_restart, AppLanguage.strRestart(this), -1, () -> {
+        // Row 1: Turn Off / Restart — one row for the Android system power dialog, which offers
+        // Lockdown, Power off and Restart; the launcher no longer asks twice.
+        addInputRow(rows, close, R.drawable.ic_power, getString(R.string.power_row), -1, () -> {
             SoundEffects.playSelect();
             showPowerDialog();
         });
 
-        // Row 2: Turn Off TV — the same system dialog, which offers both power off and sleep.
-        addInputRow(rows, close, R.drawable.ic_power, AppLanguage.strTurnOff(this), -1, () -> {
-            SoundEffects.playSelect();
-            showPowerDialog();
-        });
-
-        // Row 3: Screensaver — the TV's own dream, the same activity SystemUI's Somnambulator opens.
+        // Row 2: Screensaver — the TV's own dream, the same activity SystemUI's Somnambulator opens.
         addInputRow(rows, close, R.drawable.ic_sleep, getString(R.string.screensaver_row), -1, () -> {
             SoundEffects.playSelect();
             closeMenu(false);
@@ -3523,17 +3518,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /**
-     * Both Settings-menu power rows go straight to the Android system power dialog through the
-     * accessibility service. No launcher confirmation popup first (that path never worked), and no
-     * reboot/shutdown broadcast, {@code reboot} or {@code input keyevent 223} — an ordinary app cannot
-     * send those. If the service is not running, {@link HomeKeyService#showSystemPowerDialog} toasts what
-     * to enable and opens Accessibility settings.
+     * The "Turn Off / Restart" row opens the Android system power dialog through the accessibility
+     * service, and the TV's own Lockdown / Power off / Restart rows are chosen there. No launcher
+     * confirmation popup first (that path never worked), and no reboot/shutdown broadcast,
+     * {@code reboot} or {@code input keyevent 223} — an ordinary app cannot send those. If the
+     * service is not running, {@link HomeKeyService#showSystemPowerDialog} toasts what to enable and
+     * opens Accessibility settings.
      */
     private void showPowerDialog() {
         HomeKeyService.showSystemPowerDialog(this);
     }
 
-    // The launcher's own confirm popups are no longer shown by either power row: the system dialog
+    // The launcher's own confirm popups are no longer shown by the power row: the system dialog
     // replaced them. Kept, not deleted.
     /*
     private void showRestartDialog() {
