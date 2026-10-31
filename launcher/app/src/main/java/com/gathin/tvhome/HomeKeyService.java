@@ -2,6 +2,7 @@ package com.gathin.tvhome;
 
 import android.accessibilityservice.AccessibilityService;
 import android.app.ActivityManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
@@ -141,6 +142,24 @@ public class HomeKeyService extends AccessibilityService {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         } catch (Exception e) {
             Log.w(TAG, "This TV has no Accessibility settings screen to open", e);
+        }
+    }
+
+    /**
+     * Starts the TV's own screensaver through the activity SystemUI uses for the same job. The
+     * dream itself is whatever {@code screensaver_components} names (Backdrop on this TV).
+     */
+    public static boolean startScreensaver(Context context) {
+        try {
+            context.startActivity(new Intent()
+                    .setComponent(new ComponentName("com.android.systemui",
+                            "com.android.systemui.Somnambulator"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            Log.i(TAG, "Screensaver: asked SystemUI to start the dream");
+            return true;
+        } catch (Exception e) {
+            Log.w(TAG, "Screensaver: this TV has no SystemUI Somnambulator", e);
+            return false;
         }
     }
 

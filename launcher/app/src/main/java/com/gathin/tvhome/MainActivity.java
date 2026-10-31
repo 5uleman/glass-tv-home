@@ -2965,9 +2965,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             startPowerCountdown(HomeKeyService.ACTION_POWER_OFF);
         });
 
+        // Row 3: Screensaver — the TV's own dream, the same activity SystemUI's Somnambulator opens.
+        addInputRow(rows, close, R.drawable.ic_sleep, getString(R.string.screensaver_row), -1, () -> {
+            SoundEffects.playSelect();
+            closeMenu(false);
+            if (!HomeKeyService.startScreensaver(this)) {
+                Toast.makeText(this, R.string.screensaver_failed, Toast.LENGTH_SHORT).show();
+            }
+        });
+
         addSeparator(rows);
 
-        // Row 3: Bersihkan Cache TV
+        // Row 4: Bersihkan Cache TV
         addInputRow(rows, close, R.drawable.ic_clean, AppLanguage.strCleanCache(this), -1, () -> {
             SoundEffects.playSelect();
             closeMenu(false);
@@ -2992,13 +3001,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
         */
 
-        // Row 6: All Settings (Android Settings)
+        // Row 5: All Settings (Android Settings)
         addInputRow(rows, close, R.drawable.ic_settings, AppLanguage.strAllSettings(this), -1, () -> {
             SoundEffects.playSelect();
             open(systemIntent(Settings.ACTION_SETTINGS));
         });
 
-        // Row 7: Tutup
+        // Row 6: Tutup
         addInputRow(rows, close, R.drawable.ic_close, AppLanguage.strClose(this), -1, () -> {
             SoundEffects.playSelect();
             closeMenu(true);
