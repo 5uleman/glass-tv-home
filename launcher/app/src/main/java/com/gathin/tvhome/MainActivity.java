@@ -1307,6 +1307,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onStop() {
         hiddenSinceResume = true;
+        endPowerCountdown();
         handler.removeCallbacks(cacheClean);
         handler.removeCallbacks(nowPlayingPoll);
         super.onStop();
@@ -1510,6 +1511,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void handleBackPress() {
+        if (powerCountdownAction >= 0) {
+            cancelPowerCountdown();
+            return;
+        }
         if (openMenu != null) {
             closeMenu(true);
             return;
@@ -2948,16 +2953,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         LinearLayout rows = panel.findViewById(R.id.rows);
         Runnable close = () -> closeMenu(false);
 
-        // Row 1: Restart TV — the Android system power dialog, not the launcher's own popup.
+        // Row 1: Restart TV — system power dialog, then its Restart row clicked for you.
         addInputRow(rows, close, R.drawable.ic_restart, AppLanguage.strRestart(this), -1, () -> {
             SoundEffects.playSelect();
-            showPowerDialog();
+            startPowerCountdown(HomeKeyService.ACTION_RESTART);
         });
 
-        // Row 2: Turn Off TV — the same system dialog, which offers both power off and sleep.
+        // Row 2: Turn Off TV — system power dialog, then its Power off row clicked for you.
         addInputRow(rows, close, R.drawable.ic_power, AppLanguage.strTurnOff(this), -1, () -> {
             SoundEffects.playSelect();
-            showPowerDialog();
+            startPowerCountdown(HomeKeyService.ACTION_POWER_OFF);
         });
 
         addSeparator(rows);
@@ -3514,14 +3519,84 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /**
-     * Both Settings-menu power rows go straight to the Android system power dialog through the
-     * accessibility service. No launcher confirmation popup first (that path never worked), and no
-     * reboot/shutdown broadcast, {@code reboot} or {@code input keyevent 223} — an ordinary app cannot
-     * send those. If the service is not running, {@link HomeKeyService#showSystemPowerDialog} toasts what
-     * to enable and opens Accessibility settings.
+     * Superseded by {@link #startPowerCountdown}: the rows now raise the dialog and press the
+     * matching row themselves. Kept, not used by the rows.
      */
     private void showPowerDialog() {
         HomeKeyService.showSystemPowerDialog(this);
+    }
+
+    private static final long POWER_COUNTDOWN_TICK_MS = 1000;
+
+    private int powerCountdownAction = -1;
+    private int powerCountdownRemaining = 0;
+    private TextView powerCountdownView;
+
+    /**
+     * Three seconds of "Restarting in 3 s: press Back to cancel" on the launcher, then the system
+     * power dialog is raised and its matching row pressed by the accessibility service. Back
+     * during the countdown cancels and nothing is raised.
+     */
+    private void startPowerCountdown(int action) {
+        if (powerCountdownAction >= 0) return;
+        powerCountdownAction = action;
+        powerCountdownRemaining = 3;
+        if (openMenu != null) closeMenu(false);
+        powerCountdownView = new TextView(this);
+        powerCountdownView.setTextSize(22f);
+        powerCountdownView.setTextColor(0xFFFFFFFF);
+        powerCountdownView.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
+        powerCountdownView.setPadding((int) (26 * density), (int) (14 * density),
+                (int) (26 * density), (int) (14 * density));
+        powerCountdownView.setBackgroundResource(R.drawable.pill_bg);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL);
+        lp.bottomMargin = (int) (130 * density);
+        powerCountdownView.setLayoutParams(lp);
+        root.addView(powerCountdownView);
+        updatePowerCountdownText();
+        handler.postDelayed(powerCountdownTick, POWER_COUNTDOWN_TICK_MS);
+    }
+
+    private final Runnable powerCountdownTick = new Runnable() {
+        @Override
+        public void run() {
+            if (powerCountdownAction < 0) return;
+            if (powerCountdownRemaining > 1) {
+                powerCountdownRemaining--;
+                updatePowerCountdownText();
+                handler.postDelayed(this, POWER_COUNTDOWN_TICK_MS);
+                return;
+            }
+            int action = powerCountdownAction;
+            endPowerCountdown();
+            HomeKeyService.runPowerAction(MainActivity.this, action);
+        }
+    };
+
+    private void updatePowerCountdownText() {
+        if (powerCountdownView == null) return;
+        boolean restart = powerCountdownAction == HomeKeyService.ACTION_RESTART;
+        powerCountdownView.setText(getString(
+                restart ? R.string.power_countdown_restart : R.string.power_countdown_off,
+                powerCountdownRemaining));
+    }
+
+    private void cancelPowerCountdown() {
+        if (powerCountdownAction < 0) return;
+        endPowerCountdown();
+        android.util.Log.i("TvHome.HomeKey", "Power countdown cancelled with Back");
+    }
+
+    private void endPowerCountdown() {
+        handler.removeCallbacks(powerCountdownTick);
+        powerCountdownAction = -1;
+        powerCountdownRemaining = 0;
+        if (powerCountdownView != null) {
+            root.removeView(powerCountdownView);
+            powerCountdownView = null;
+        }
     }
 
     // The launcher's own confirm popups are no longer shown by either power row: the system dialog

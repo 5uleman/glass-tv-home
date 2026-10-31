@@ -20,6 +20,8 @@
     <string name="dream_name">Nightstand Screensaver</string>
     <string name="vpn">VPN</string>
     <string name="vpn_off">VPN off</string>
+    <string name="power_countdown_restart">Restarting in %1$d s: press Back to cancel</string>
+    <string name="power_countdown_off">Turning off in %1$d s: press Back to cancel</string>
     <string name="home_settings">Default home</string>
     <string name="home_settings_help">Choose a home screen in system settings, then press Home.</string>
     <string name="input_key_service_description">Opens the input switcher when the remote\'s Input button is pressed.</string>
