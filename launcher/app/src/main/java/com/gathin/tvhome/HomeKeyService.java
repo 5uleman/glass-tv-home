@@ -127,12 +127,6 @@ public class HomeKeyService extends AccessibilityService {
             if (instance.performGlobalAction(GLOBAL_ACTION_POWER_DIALOG)) return true;
         }
         Log.w(TAG, "HomeKeyService is not running: cannot raise the system power dialog");
-        showServiceMissingHint(context);
-        return false;
-    }
-
-    /** Toast plus the Accessibility screen: the only thing an app without the service can offer. */
-    private static void showServiceMissingHint(Context context) {
         try {
             android.widget.Toast.makeText(context, AppLanguage.strEnableA11yService(context),
                     android.widget.Toast.LENGTH_LONG).show();
@@ -143,6 +137,7 @@ public class HomeKeyService extends AccessibilityService {
         } catch (Exception e) {
             Log.w(TAG, "This TV has no Accessibility settings screen to open", e);
         }
+        return false;
     }
 
     /**
@@ -161,74 +156,6 @@ public class HomeKeyService extends AccessibilityService {
             Log.w(TAG, "Screensaver: this TV has no SystemUI Somnambulator", e);
             return false;
         }
-    }
-
-    public static final int ACTION_RESTART = 0;
-    public static final int ACTION_POWER_OFF = 1;
-
-    /**
-     * Restart TV and Turn Off TV: raise the system power dialog, then press its matching row
-     * ("Restart" / "Power off") by itself, so the launcher's row acts instead of asking again.
-     *
-     * <p>The rows are TextViews with {@code android:id/message} in a list dialog whose window
-     * belongs to the "android" package; the click target is the clickable row that holds the label.
-     * Only an exact, case-insensitive label match is clicked — the launcher's own "Restart TV" row
-     * can never match. When the row does not show up within {@code SEARCH_MS}, nothing is clicked
-     * and the dialog is left on screen.
-     */
-    public static void runPowerAction(Context context, int action) {
-        final Context app = context.getApplicationContext();
-        new Thread(() -> {
-            HomeKeyService service = instance;
-            String label = action == ACTION_RESTART ? "Restart" : "Power off";
-            if (service == null) {
-                Log.w(TAG, "Power action " + label + ": HomeKeyService is not running");
-                showServiceMissingHint(app);
-                return;
-            }
-            Log.i(TAG, "Power action " + label + ": raising the system power dialog");
-            if (!service.performGlobalAction(GLOBAL_ACTION_POWER_DIALOG)) {
-                Log.w(TAG, "Power action " + label + ": the TV refused GLOBAL_ACTION_POWER_DIALOG");
-                showServiceMissingHint(app);
-                return;
-            }
-            if (service.clickPowerDialogRow(label, 3000)) {
-                Log.i(TAG, "Power action " + label + ": row clicked");
-            } else {
-                Log.w(TAG, "Power action " + label
-                        + ": row not found within 3 s, nothing clicked, dialog left open");
-            }
-        }, "power-action").start();
-    }
-
-    private boolean clickPowerDialogRow(String label, long timeoutMs) {
-        long deadline = SystemClock.uptimeMillis() + timeoutMs;
-        while (SystemClock.uptimeMillis() < deadline) {
-            AccessibilityNodeInfo root = getRootInActiveWindow();
-            // Only the system's own dialog window: the launcher window behind it has similar labels.
-            if (root != null && "android".equals(String.valueOf(root.getPackageName()))) {
-                for (AccessibilityNodeInfo node : root.findAccessibilityNodeInfosByText(label)) {
-                    CharSequence text = node.getText();
-                    if (text == null || !text.toString().equalsIgnoreCase(label)) continue;
-                    AccessibilityNodeInfo clickable = clickableAncestor(node);
-                    if (clickable != null
-                            && clickable.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
-                        return true;
-                    }
-                }
-            }
-            SystemClock.sleep(250);
-        }
-        return false;
-    }
-
-    private static AccessibilityNodeInfo clickableAncestor(AccessibilityNodeInfo node) {
-        AccessibilityNodeInfo current = node;
-        for (int i = 0; i < 4 && current != null; i++) {
-            if (current.isClickable()) return current;
-            current = current.getParent();
-        }
-        return null;
     }
 
     public static void forceStopApp(Context context, String pkg) {
