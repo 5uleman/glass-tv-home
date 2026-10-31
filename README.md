@@ -58,6 +58,19 @@ Install the APK, then three things have to be done by hand once per TV:
    force-stop it does and the power dialog need it. Press Home afterwards and check it is bound:
    `adb shell dumpsys accessibility | grep -i bound`. If it is not bound, firmware that blocks service
    auto-start is the usual reason, and the power rows will only show a hint pointing at that switch.
+
+   **This has to be checked after every reboot, not just once.** On the TCL set this build was tested on, the TV
+   resets the accessibility master switch at boot: `adb shell settings get secure accessibility_enabled` reads `0`,
+   the service stays listed but is not bound, and Restart TV / Turn Off TV only offer to open the Accessibility
+   screen. Turn Glass TV back on in Settings → Accessibility (the power rows open that screen for you), then check
+   again with `adb shell dumpsys accessibility | grep -i 'bound services'` — it must list `Service[label=Home button…]`.
+
+   Turning it back on over adb takes three commands, because setting the master switch alone does not rebind:
+   ```bash
+   adb shell settings put secure accessibility_enabled 1
+   adb shell settings put secure enabled_accessibility_services ""
+   adb shell settings put secure enabled_accessibility_services com.suleman.glasstv/com.gathin.tvhome.HomeKeyService
+   ```
 2. **Grant one permission for the cache cleaning**:
    ```bash
    adb shell pm grant com.suleman.glasstv android.permission.WRITE_SECURE_SETTINGS
