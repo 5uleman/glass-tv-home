@@ -35,6 +35,11 @@ public class HomeKeyService extends AccessibilityService {
     /** Scancodes of remote buttons that should open Settings (config.xml, settings_key_scancodes). */
     private int[] settingsScancodes = new int[0];
 
+    /** Whether the system has connected this service to the app process. */
+    public static boolean isRunning() {
+        return instance != null;
+    }
+
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();

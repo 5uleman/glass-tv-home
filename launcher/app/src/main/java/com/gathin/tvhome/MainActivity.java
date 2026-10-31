@@ -1315,6 +1315,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onResume() {
         super.onResume();
+        maybeRepairAccessibilityService();
         // Returning from an app (or a leaked BACK ACTION_UP) must always bring back the full home
         // screen: clear any pending Back state and undo the "wallpaper only" fade before anything else.
         if (singleBackRunnable != null) {
@@ -5697,6 +5698,69 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 android.util.Log.w("TvHome", "Failed to send sleep keyevent: " + e);
             }
         }
+    }
+
+    private static boolean a11yRepairChecked = false;
+
+    /**
+     * The TV resets the accessibility master switch at boot but keeps our service in the enabled
+     * list, so the service never binds and both power rows only open the Accessibility screen.
+     * When the grant is there and the user opted in earlier, rewrite the list so Android binds it
+     * again. It never adds the service: without that earlier opt-in nothing is touched.
+     */
+    private void maybeRepairAccessibilityService() {
+        if (a11yRepairChecked) return;
+        a11yRepairChecked = true;
+        final String ourService = getPackageName() + "/" + HomeKeyService.class.getName();
+        // On a healthy boot the service binds a moment after Home comes up; look only after that.
+        handler.postDelayed(() -> new Thread(() -> {
+            try {
+                boolean granted = checkSelfPermission(android.Manifest.permission.WRITE_SECURE_SETTINGS)
+                        == PackageManager.PERMISSION_GRANTED;
+                android.content.ContentResolver cr = getContentResolver();
+                String list = Settings.Secure.getString(
+                        cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+                boolean listed = AccessibilityRepair.isListed(list, ourService);
+                boolean bound = HomeKeyService.isRunning() || isAccessibilityServiceBound(ourService);
+                if (!AccessibilityRepair.shouldRepair(granted, listed, bound)) {
+                    android.util.Log.i("TvHome.HomeKey", "a11y repair not attempted: grant="
+                            + granted + " listed=" + listed + " bound=" + bound);
+                    return;
+                }
+                String rebuilt = AccessibilityRepair.withServiceLast(list, ourService);
+                Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 1);
+                Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                        AccessibilityRepair.withoutService(list, ourService));
+                Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                        rebuilt);
+                android.util.Log.i("TvHome.HomeKey", "a11y repair attempted: grant=true"
+                        + " listed=true bound=false; master switch set to 1, list rewritten to "
+                        + rebuilt);
+            } catch (SecurityException e) {
+                android.util.Log.w("TvHome.HomeKey",
+                        "a11y repair not attempted: no WRITE_SECURE_SETTINGS grant", e);
+            } catch (Exception e) {
+                android.util.Log.w("TvHome.HomeKey", "a11y repair failed", e);
+            }
+        }, "a11y-repair").start(), 4000);
+    }
+
+    /** True when the accessibility framework reports our service as enabled and bound. */
+    private boolean isAccessibilityServiceBound(String component) {
+        try {
+            android.view.accessibility.AccessibilityManager am =
+                    (android.view.accessibility.AccessibilityManager)
+                            getSystemService(Context.ACCESSIBILITY_SERVICE);
+            if (am == null) return false;
+            for (android.accessibilityservice.AccessibilityServiceInfo info
+                    : am.getEnabledAccessibilityServiceList(
+                            android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK)) {
+                android.content.pm.ServiceInfo si = info.getResolveInfo().serviceInfo;
+                if (si != null && component.equals(si.packageName + "/" + si.name)) return true;
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
     }
 
     private void ensureSystemScreensaverAndSleepSettings() {
