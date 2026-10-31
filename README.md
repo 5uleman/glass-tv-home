@@ -79,6 +79,10 @@ Install the APK, then three things have to be done by hand once per TV:
    adb shell settings put secure enabled_accessibility_services ""
    adb shell settings put secure enabled_accessibility_services com.suleman.glasstv/com.gathin.tvhome.HomeKeyService
    ```
+
+   **An install or update clears this again on this TV.** Replacing the APK over the old one left
+   `enabled_accessibility_services` empty and the switch at `0`, and the launcher does not opt you back in, so
+   turn Glass TV back on in Settings after every install or update.
 2. **Grant one permission for the cache cleaning**:
    ```bash
    adb shell pm grant com.suleman.glasstv android.permission.WRITE_SECURE_SETTINGS
