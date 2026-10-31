@@ -1316,6 +1316,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onResume() {
         super.onResume();
         maybeRepairAccessibilityService();
+        startVpnMonitoring();
+        updateWifiLabel();
         // Returning from an app (or a leaked BACK ACTION_UP) must always bring back the full home
         // screen: clear any pending Back state and undo the "wallpaper only" fade before anything else.
         if (singleBackRunnable != null) {
@@ -1443,6 +1445,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onPause() {
         super.onPause();
+        stopVpnMonitoring();
         unregisterReceiver(packageReceiver);
         handler.removeCallbacks(minuteTick);
         handler.removeCallbacks(wallTick);
@@ -2711,6 +2714,50 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /** Shows the Wi-Fi network name on the button when we can read it, otherwise the connection type. */
+    private ConnectivityManager.NetworkCallback vpnNetworkCallback;
+
+    /**
+     * The default NetworkRequest carries NET_CAPABILITY_NOT_VPN, which no VPN network has, so it
+     * must be removed or the callback never sees the VPN. onAvailable also delivers VPNs that are
+     * already up when the launcher resumes, which keeps the pill right after a return from Proton.
+     */
+    private void startVpnMonitoring() {
+        if (vpnNetworkCallback != null) return;
+        try {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm == null) return;
+            vpnNetworkCallback = new ConnectivityManager.NetworkCallback() {
+                @Override
+                public void onAvailable(Network network) {
+                    handler.post(MainActivity.this::updateWifiLabel);
+                }
+
+                @Override
+                public void onLost(Network network) {
+                    handler.post(MainActivity.this::updateWifiLabel);
+                }
+            };
+            NetworkRequest request = new NetworkRequest.Builder()
+                    .addTransportType(NetworkCapabilities.TRANSPORT_VPN)
+                    .removeCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+                    .build();
+            cm.registerNetworkCallback(request, vpnNetworkCallback);
+        } catch (Exception e) {
+            android.util.Log.w("TvHome.Vpn", "VPN callback registration failed", e);
+        }
+    }
+
+    private void stopVpnMonitoring() {
+        ConnectivityManager.NetworkCallback callback = vpnNetworkCallback;
+        vpnNetworkCallback = null;
+        if (callback == null) return;
+        try {
+            ((ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE))
+                    .unregisterNetworkCallback(callback);
+        } catch (Exception ignored) {
+        }
+    }
+
     private void updateWifiLabel() {
         if (btnWifi.getVisibility() == View.GONE) return;   // show_network_pill off
         String text = getString(R.string.wifi);
@@ -2749,7 +2796,20 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         } catch (Exception ignored) {
         }
-        btnWifi.setText(text);
+        // A small green "● VPN" chip inside the pill, only while any VPN transport is up.
+        CharSequence label = text;
+        if (vpn) {
+            String chip = getString(R.string.vpn_chip);
+            android.text.SpannableStringBuilder sb =
+                    new android.text.SpannableStringBuilder(text).append(' ').append(chip);
+            int start = sb.length() - chip.length();
+            sb.setSpan(new android.text.style.ForegroundColorSpan(0xFF34C759),
+                    start, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new android.text.style.RelativeSizeSpan(0.85f),
+                    start, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            label = sb;
+        }
+        btnWifi.setText(label);
         btnWifi.setCompoundDrawablesRelativeWithIntrinsicBounds(icon, 0, 0, 0);
     }
 

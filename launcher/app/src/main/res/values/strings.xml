@@ -20,6 +20,7 @@
     <string name="dream_name">Nightstand Screensaver</string>
     <string name="vpn">VPN</string>
     <string name="vpn_off">VPN off</string>
+    <string name="vpn_chip">● VPN</string>
     <string name="power_row">Turn Off / Restart</string>
     <string name="screensaver_row">Screensaver</string>
     <string name="screensaver_failed">Couldn\'t start the screensaver</string>
