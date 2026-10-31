@@ -5712,7 +5712,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 // 2 hours after screensaver -> TV off (10m + 2h = 7,800,000 ms)
                 android.provider.Settings.Secure.putInt(cr, "sleep_timeout", 7800000);
                 android.provider.Settings.Secure.putInt(cr, "screensaver_enabled", 1);
-                android.provider.Settings.Secure.putString(cr, "screensaver_components", "com.suleman.glasstv/.ClockDream");
+                android.provider.Settings.Secure.putString(cr, "screensaver_components", "com.suleman.glasstv/com.gathin.tvhome.ClockDream");
                 */
 
                 // Auto-enable HomeKeyService for system actions (restart, sleep, force-stop)

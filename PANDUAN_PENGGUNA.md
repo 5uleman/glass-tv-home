@@ -79,7 +79,7 @@ Jika anda **tidak mempunyai telefon pintar Android** (contohnya hanya ada laptop
    ```bash
    adb connect <ALAMAT_IP_TV>:5555
    adb install -r release/glass-tv-home.apk
-   adb shell am start -n com.suleman.glasstv/.MainActivity
+   adb shell am start -n com.suleman.glasstv/com.gathin.tvhome.MainActivity
    ```
 
 ---

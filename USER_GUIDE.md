@@ -79,7 +79,7 @@ If you **do not have an Android smartphone** (e.g., you only have a laptop or co
    ```bash
    adb connect <TV_IP_ADDRESS>:5555
    adb install -r release/glass-tv-home.apk
-   adb shell am start -n com.suleman.glasstv/.MainActivity
+   adb shell am start -n com.suleman.glasstv/com.gathin.tvhome.MainActivity
    ```
 
 ---

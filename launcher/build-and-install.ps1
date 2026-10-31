@@ -105,14 +105,14 @@ try {
     @(
         'pm grant com.suleman.glasstv android.permission.ACCESS_FINE_LOCATION 2>/dev/null; echo location-granted',
         'cmd package compile -m speed -f com.suleman.glasstv',
-        "am start -W -n com.suleman.glasstv/.MainActivity | grep -E '^(Status|Error)'"
+        "am start -W -n com.suleman.glasstv/com.gathin.tvhome.MainActivity | grep -E '^(Status|Error)'"
     ) | & $py -I ..\tools\tv.py --batch
     # Check it really runs on this TV before the TV's own launcher is touched.
     if (-not (Test-Healthy 'start')) { throw 'Glass TV did not start properly on this TV (it is not in front, or it keeps restarting).' }
     # Android 9 only accepts a component here; Android 10+ also takes a bare package name.
     @(
         $disableStock,
-        'cmd package set-home-activity --user 0 com.suleman.glasstv/.MainActivity'
+        'cmd package set-home-activity --user 0 com.suleman.glasstv/com.gathin.tvhome.MainActivity'
     ) | & $py -I ..\tools\tv.py --batch
     # Order matters, see build-and-install.sh: start the new launcher, disable the stock one, set the
     # preference last, then check where Home ended up.
@@ -130,7 +130,7 @@ try {
 }
 # Optional accessibility services, appended to enabled_accessibility_services without dropping others.
 function Enable-Service([string]$Name) {
-    $svc = "com.suleman.glasstv/.$Name"
+    $svc = "com.suleman.glasstv/com.gathin.tvhome.$Name"
     # On stdin, like Test-Healthy: the quotes in this command would not survive PowerShell 5.1 as an argument.
     ('s=$(settings get secure enabled_accessibility_services); case "$s" in *' + $Name + '*) ;; null|"") settings put secure enabled_accessibility_services ' + $svc + ' ;; *) settings put secure enabled_accessibility_services "$s:' + $svc + '" ;; esac; settings put secure accessibility_enabled 1; echo ' + $Name + ' enabled') | & $py -I ..\tools\tv.py --batch | Select-Object -Last 1
 }

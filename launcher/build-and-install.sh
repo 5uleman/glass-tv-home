@@ -134,7 +134,7 @@ ARMED=1
 printf '%s\n' \
   "pm grant com.suleman.glasstv android.permission.ACCESS_FINE_LOCATION 2>/dev/null; echo location-granted" \
   "cmd package compile -m speed -f com.suleman.glasstv" \
-  "am start -W -n com.suleman.glasstv/.MainActivity | grep -E '^(Status|Error)'" \
+  "am start -W -n com.suleman.glasstv/com.gathin.tvhome.MainActivity | grep -E '^(Status|Error)'" \
   | "$PY" -I ../tools/tv.py --batch
 # Check it really runs on this TV before the TV's own launcher is touched.
 if ! healthy start; then
@@ -143,7 +143,7 @@ if ! healthy start; then
 fi
 printf '%s\n' \
   "$DISABLE_STOCK" \
-  "cmd package set-home-activity --user 0 com.suleman.glasstv/.MainActivity" \
+  "cmd package set-home-activity --user 0 com.suleman.glasstv/com.gathin.tvhome.MainActivity" \
   | "$PY" -I ../tools/tv.py --batch
 # Order matters: the new launcher is started before the stock one is disabled, and the home
 # preference is set after. Android drops the preference whenever the set of HOME apps changes, and
@@ -174,7 +174,7 @@ ARMED=0
 #   HOME_KEY_SERVICE=1    remotes whose Home button sends KEYCODE_ALL_APPS instead of HOME, e.g. Xiaomi
 #                         sticks: the key is routed to the launcher (HomeKeyService)
 enable_service() {   # appends to enabled_accessibility_services without dropping other services
-  svc=com.suleman.glasstv/.$1
+  svc=com.suleman.glasstv/com.gathin.tvhome.$1
   "$PY" -I ../tools/tv.py "s=\$(settings get secure enabled_accessibility_services); case \"\$s\" in *$1*) ;; null|'') settings put secure enabled_accessibility_services $svc ;; *) settings put secure enabled_accessibility_services \"\$s:$svc\" ;; esac; settings put secure accessibility_enabled 1; echo $1 enabled"
 }
 if [ "${INPUT_KEY_SERVICE:-0}" = 1 ]; then enable_service InputKeyService; fi

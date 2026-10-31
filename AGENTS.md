@@ -246,7 +246,7 @@ A theme is a folder with `config.json` (and optional `wallpaper.jpg` or `wallpap
 - **Android 10 quirk**: the first time the launcher gains the internet permission, sockets fail with `EPERM`
   until the TV restarts. Ask before restarting it.
 - Point the screensaver at the launcher's clock before disabling the stock screensaver:
-  `settings put secure screensaver_components com.suleman.glasstv/.ClockDream`.
+  `settings put secure screensaver_components com.suleman.glasstv/com.gathin.tvhome.ClockDream`.
 - **Location / Jerebu & Waktu Solat**: Ask the person where in Malaysia they are located (e.g. Putrajaya, Cheras, Shah Alam, Melaka, JB, Penang, Kuantan, Kuching, KK). Set it via:
   `adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.suleman.glasstv --es query "<LOCATION>"`
   This automatically calibrates both the official Department of Environment (JAS) APIMS haze / IPU ground station and JAKIM prayer times.

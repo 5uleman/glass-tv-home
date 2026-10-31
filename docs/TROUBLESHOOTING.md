@@ -129,8 +129,8 @@ tools/tv.py 'dumpsys accessibility'
 
 | Helper | Component in the enabled-services list | Key it filters |
 | --- | --- | --- |
-| Home button | `com.suleman.glasstv/.HomeKeyService` | `KEYCODE_ALL_APPS` (not an ordinary `KEYCODE_HOME`) |
-| Input button | `com.suleman.glasstv/.InputKeyService` | `KEYCODE_TV` |
+| Home button | `com.suleman.glasstv/com.gathin.tvhome.HomeKeyService` | `KEYCODE_ALL_APPS` (not an ordinary `KEYCODE_HOME`) |
+| Input button | `com.suleman.glasstv/com.gathin.tvhome.InputKeyService` | `KEYCODE_TV` |
 
 - **Enabled** means the component is in that user's colon-separated list (the class may be written in
   full, `com.suleman.glasstv/com.gathin.tvhome.HomeKeyService`). Match the whole component.

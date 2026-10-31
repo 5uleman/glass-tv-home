@@ -223,7 +223,7 @@ public final class AdbInstaller {
 
                 // Send am start
                 int localId = 2;
-                String cmd = "exec:am start -n com.suleman.glasstv/.MainActivity\0";
+                String cmd = "exec:am start -n com.suleman.glasstv/com.gathin.tvhome.MainActivity\0";
                 sendMessage(out, A_OPEN, localId, 0, cmd.getBytes("UTF-8"));
 
                 Message ack = readMessage(in);
