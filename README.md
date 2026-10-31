@@ -19,6 +19,8 @@ release binaries are attached there, not committed to this repository.
 SHA-256 `54d52dc00785940f1eaca91c4b7c39177f88061426368c2cccf9c4087d5884fc`, tagged
 `v3.3.0-clean-english`.
 
+Later versions are work in progress on the `wip-3.5.0` branch and are not released yet.
+
 > The APKs still under `release/` (`glass-tv-home.apk`, `glass-tv-installer.apk`) are upstream's original
 > builds, kept for reference. Do not install them as this edition — use only the Releases page.
 
@@ -39,8 +41,12 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   next-prayer rows in the nightstand clock.
 - **Lahore is the default location** (station `PK01`, Asia/Karachi) for the weather pill. A location you set on
   the TV still wins over the default.
-- **Restart TV and Turn Off TV open the system power dialog** instead of a launcher-made popup, so both rows do
-  the same, predictable thing.
+- **One Turn Off / Restart row** in the gear menu opens the system power dialog, where the TV itself offers
+  Power off or Restart.
+- **A Screensaver row** in the gear menu starts the TV's own screensaver. Any key dismisses it.
+- **A VPN indicator.** While any VPN is connected, the network pill shows a small green "● VPN". The network
+  menu has a VPN row that opens the Proton VPN app if it is installed, and otherwise says it is missing. It is
+  only a shortcut: there is no on/off switch, because Android does not let a launcher control another VPN app.
 - **The self-updater is off.** This build never reads a release feed or shows an update prompt; new versions are
   built and installed by hand.
 - **Four-column grid** and a hero title that uses the full width, so a long place name is not cut with an
@@ -57,11 +63,11 @@ Install the APK, then three things have to be done by hand once per TV:
 1. **Turn on the accessibility service**: Settings → Accessibility → Glass TV → On. The recent-apps deck, the
    force-stop it does and the power dialog need it. Press Home afterwards and check it is bound:
    `adb shell dumpsys accessibility | grep -i bound`. If it is not bound, firmware that blocks service
-   auto-start is the usual reason, and the power rows will only show a hint pointing at that switch.
+   auto-start is the usual reason, and the power row will only show a hint pointing at that switch.
 
    **This has to be checked after every reboot on some TVs.** On the TCL set this build was tested on, the TV
    resets the accessibility master switch at boot: `adb shell settings get secure accessibility_enabled` reads `0`,
-   the service stays listed but is not bound, and Restart TV / Turn Off TV only offer to open the Accessibility
+   the service stays listed but is not bound, and Turn Off / Restart only offers to open the Accessibility
    screen.
 
    **From 3.3.1 the launcher repairs this itself.** When it starts and finds the grant from step 2, our service
@@ -110,7 +116,7 @@ Taken from this build on a TCL Android TV (Android 11, 1080p).
 | ![The app grid, four columns](docs/screenshots/fork-grid.jpg) | ![The quick settings menu](docs/screenshots/fork-settings.jpg) |
 | *Every app, four columns* | *The quick settings menu* |
 | ![The system power dialog](docs/screenshots/fork-power.jpg) | |
-| *Restart TV and Turn Off TV open the system power dialog* | |
+| *Turn Off / Restart opens the system power dialog* | |
 
 ## Which TVs work
 
