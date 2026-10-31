@@ -4,6 +4,9 @@
 > used under its MIT licence — see [LICENSE](LICENSE). It is a hobby fork: there is no support promise, and it is
 > not endorsed by or affiliated with the original author.
 
+This is a modified version of Gathin's glass-tv-home, made by Suleman for English use, with some features
+removed for a cleaner experience.
+
 A light home screen for Android TV and Google TV in frosted glass, with a new set of places behind your apps
 every week. This edition is the English-only, prayer-free build I use on my own TV.
 
@@ -70,10 +73,16 @@ Debloating is optional and separate from this launcher. The playbook, tested lis
 
 ## Screenshots
 
-<!-- TODO: screenshots for this edition. -->
-> **Placeholder — screenshots to be added.** Nothing here is final; the pictures will be added in a later commit
-> once this fork's own home screen, menus and nightstand clock are captured. Until then the layout and features
-> above are the description.
+Taken from this build on a TCL Android TV (Android 11, 1080p).
+
+| | |
+|---|---|
+| ![Home screen with the week's place and the glass dock](docs/screenshots/fork-home.jpg) | ![The dock with the first rows of the app grid](docs/screenshots/fork-dock.jpg) |
+| *Home, with this week's place* | *The dock and the app grid behind it* |
+| ![The app grid, four columns](docs/screenshots/fork-grid.jpg) | ![The quick settings menu](docs/screenshots/fork-settings.jpg) |
+| *Every app, four columns* | *The quick settings menu* |
+| ![The system power dialog](docs/screenshots/fork-power.jpg) | |
+| *Restart TV and Turn Off TV open the system power dialog* | |
 
 ## Which TVs work
 
