@@ -28,10 +28,11 @@ public class OnlineWallpapersTest {
 
         String[] about = OnlineWallpapers.describe(jpg);
         assertNotNull(about);
-        assertEquals(3, about.length);
+        assertEquals(4, about.length);
         assertEquals("Moody Alpine Mountains", about[0]);
         assertEquals("Dark 4K Landscape", about[1]);
         assertEquals("Unsplash", about[2]);
+        assertEquals("", about[3]);
 
         jpg.delete();
         txt.delete();
