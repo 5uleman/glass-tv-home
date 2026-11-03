@@ -4188,6 +4188,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         String sMin = AppLanguage.LANG_EN.equals(curLang) ? "16 Unsplash Dark Wallpapers • Perfect for OLED" : (AppLanguage.LANG_ID.equals(curLang) ? "16 Koleksi Unsplash Dark Wallpaper • Khusus Layar OLED" : "16 Koleksi Unsplash Dark Wallpaper • Khas Skrin OLED");
         options.add(new WallpaperOption("Minimalist", tMin, sMin));
 
+        // Category 7: Lahore & Pakistan
+        options.add(new WallpaperOption("Pakistan", "🇵🇰 Lahore & Pakistan",
+                "16 photos: Lahore's Mughal sights and the northern valleys"));
+
         // Special: no wallpaper at all - a plain solid black home screen
         String tDark = AppLanguage.LANG_EN.equals(curLang) ? "🌑 No wallpaper (dark screen)" : (AppLanguage.LANG_ID.equals(curLang) ? "🌑 Tanpa wallpaper (layar gelap)" : "🌑 Tiada wallpaper (skrin gelap)");
         String sDark = AppLanguage.LANG_EN.equals(curLang) ? "Plain black background • slideshow and loading off" : (AppLanguage.LANG_ID.equals(curLang) ? "Latar hitam polos • slideshow dan pemuatan mati" : "Latar hitam kosong • slaid dan pemuatan dimatikan");
@@ -4805,6 +4809,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             displayLabel = "Tempat Menarik di Malaysia";
         } else if ("Minimalist".equalsIgnoreCase(category)) {
             displayLabel = "Minimalis Gelap (OLED)";
+        } else if ("Pakistan".equalsIgnoreCase(category)) {
+            displayLabel = "Lahore & Pakistan";
         } else {
             displayLabel = category;
         }

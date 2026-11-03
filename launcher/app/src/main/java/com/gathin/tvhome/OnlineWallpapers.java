@@ -191,7 +191,42 @@ final class OnlineWallpapers {
             new WallpaperItem("https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=3840&h=2160&q=80",
                     "Black Basalt Desert", "Volcanic black earth with a calm, dim horizon line", "Minimalist_OLED"),
             new WallpaperItem("https://images.unsplash.com/photo-1491557345352-5929e343eb89?auto=format&fit=crop&w=3840&h=2160&q=80",
-                    "Obsidian Mountain Peak", "Sharp rocky mountain peaks piercing dramatic black storm clouds", "Minimalist_OLED")
+                    "Obsidian Mountain Peak", "Sharp rocky mountain peaks piercing dramatic black storm clouds", "Minimalist_OLED"),
+
+            // Lahore & Northern Pakistan (Unsplash & Pexels, 16:9 1920x1080). Picked for dusk, night or
+            // mid-tone light so the white UI text stays readable; no people in the frame.
+            new WallpaperItem("https://images.unsplash.com/photo-1758714144057-aae0194dfde5?auto=format&fit=crop&w=1920&h=1080&q=80",
+                    "Badshahi Mosque at Dusk", "The Mughal mosque glowing over its courtyard as the sun goes down", "Pakistan_Lahore"),
+            new WallpaperItem("https://images.unsplash.com/photo-1531804308561-b6438d25a810?auto=format&fit=crop&w=1920&h=1080&q=80",
+                    "Badshahi Minaret Under the Stars", "A minaret of the Badshahi Mosque against the night sky and the Milky Way", "Pakistan_Lahore"),
+            new WallpaperItem("https://images.unsplash.com/photo-1792332446671-c0df49cecfcb?auto=format&fit=crop&w=1920&h=1080&q=80",
+                    "Alamgiri Gate", "The gateway into Lahore Fort, lit by the late afternoon sun", "Pakistan_Lahore"),
+            new WallpaperItem("https://images.unsplash.com/photo-1792332446550-af997d6c4974?auto=format&fit=crop&w=1920&h=1080&q=60",
+                    "Naulakha Pavilion", "The white marble pavilion inside Lahore Fort, framed by its garden", "Pakistan_Lahore"),
+            new WallpaperItem("https://images.unsplash.com/photo-1566900928746-f20085fc889f?auto=format&fit=crop&w=1920&h=1080&q=80",
+                    "Wazir Khan Minaret", "Tiled minaret of the 17th-century Wazir Khan Mosque", "Pakistan_Lahore"),
+            new WallpaperItem("https://images.unsplash.com/photo-1742292433093-9d51ac80283d?auto=format&fit=crop&w=1920&h=1080&q=80",
+                    "Inside Wazir Khan Mosque", "Frescoed walls and red prayer carpets in the dim interior", "Pakistan_Lahore"),
+            new WallpaperItem("https://images.unsplash.com/photo-1567236952663-beed21e698ac?auto=format&fit=crop&w=1920&h=1080&q=80",
+                    "Shalimar Gardens", "The Mughal water gardens of Shalimar at golden hour", "Pakistan_Lahore"),
+            new WallpaperItem("https://images.pexels.com/photos/13239874/pexels-photo-13239874.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
+                    "Minar-e-Pakistan", "The national monument rising over its lawns in Lahore", "Pakistan_Lahore"),
+            new WallpaperItem("https://images.unsplash.com/photo-1654754946703-9dc55d5ea927?auto=format&fit=crop&w=1920&h=1080&q=80",
+                    "Hunza Valley and Rakaposhi", "The Hunza valley seen from Duikar, with Rakaposhi in the distance", "Pakistan_Hunza"),
+            new WallpaperItem("https://images.unsplash.com/photo-1632133914376-83306e8f6eb1?auto=format&fit=crop&w=1920&h=1080&q=80",
+                    "Hunza Sunset", "Snow peaks of the Hunza valley catching the last light", "Pakistan_Hunza"),
+            new WallpaperItem("https://images.unsplash.com/photo-1514558427911-8e293bebf18c?auto=format&fit=crop&w=1920&h=1080&q=50",
+                    "Hunza River", "Turquoise water cutting through the Karakoram gorge", "Pakistan_Hunza"),
+            new WallpaperItem("https://images.unsplash.com/photo-1551308352-b697c5327d9d?auto=format&fit=crop&w=1920&h=1080&q=80",
+                    "Skardu by Moonlight", "A crescent moon over the dark ridgeline near Skardu", "Pakistan_Skardu"),
+            new WallpaperItem("https://images.unsplash.com/photo-1663076255729-30c47a7ba6ad?auto=format&fit=crop&w=1920&h=1080&q=60",
+                    "Fairy Meadows", "Pine forest and Nanga Parbat under an overcast sky", "Pakistan_Fairy_Meadows"),
+            new WallpaperItem("https://images.unsplash.com/photo-1664872745799-a68029e60a96?auto=format&fit=crop&w=1920&h=1080&q=80",
+                    "Fairy Meadows Meadow", "Green meadow below the snow slopes of Nanga Parbat", "Pakistan_Fairy_Meadows"),
+            new WallpaperItem("https://images.unsplash.com/photo-1690482688252-d500b557402a?auto=format&fit=crop&w=1920&h=1080&q=50",
+                    "Attabad Lake", "Turquoise water and cliffside hotels at Attabad Lake", "Pakistan_Attabad"),
+            new WallpaperItem("https://images.unsplash.com/photo-1777836933679-9942ba02ea90?auto=format&fit=crop&w=1920&h=1080&q=80",
+                    "Karakoram Peaks", "Snow-capped Karakoram peaks above a dry high valley", "Pakistan_Karakoram")
     };
 
     private OnlineWallpapers() {
