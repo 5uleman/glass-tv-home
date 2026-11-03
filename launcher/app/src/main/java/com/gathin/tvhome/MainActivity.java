@@ -2796,16 +2796,24 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         } catch (Exception ignored) {
         }
-        // A small green "● VPN" chip inside the pill, only while any VPN transport is up.
+        // A filled green "VPN" pill inside the network pill, only while any VPN transport is up.
+        // The label is ellipsized to the room that is left, so the VPN pill is never the part cut off.
         CharSequence label = text;
         if (vpn) {
             String chip = getString(R.string.vpn_chip);
-            android.text.SpannableStringBuilder sb =
-                    new android.text.SpannableStringBuilder(text).append(' ').append(chip);
-            int start = sb.length() - chip.length();
-            sb.setSpan(new android.text.style.ForegroundColorSpan(0xFF34C759),
-                    start, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            sb.setSpan(new android.text.style.RelativeSizeSpan(0.85f),
+            float textSize = btnWifi.getTextSize();
+            int padH = (int) (6 * density);
+            int chipWidth = (int) Math.ceil(VpnChipSpan.widthFor(chip, textSize, padH, btnWifi.getTypeface()));
+            int iconRoom = 0;
+            Drawable[] icons = btnWifi.getCompoundDrawablesRelative();
+            if (icons[0] != null) iconRoom = icons[0].getIntrinsicWidth() + btnWifi.getCompoundDrawablePadding();
+            int room = btnWifi.getMaxWidth() - btnWifi.getPaddingLeft() - btnWifi.getPaddingRight() - iconRoom;
+            int labelRoom = Math.max(0, room - chipWidth - (int) (7 * density));
+            CharSequence cut = TextUtils.ellipsize(text, btnWifi.getPaint(), labelRoom, TextUtils.TruncateAt.END);
+            android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder(cut).append(' ');
+            int start = sb.length();
+            sb.append(chip);
+            sb.setSpan(new VpnChipSpan(textSize, padH, density, 0xFF15703A, btnWifi.getTypeface()),
                     start, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             label = sb;
         }
