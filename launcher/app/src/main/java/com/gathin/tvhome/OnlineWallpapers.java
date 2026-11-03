@@ -325,17 +325,21 @@ final class OnlineWallpapers {
         if (files == null) return;
         int kept = 0;
         for (File f : files) {
-            if (current.contains(f.getName().replace(".jpg", ""))) kept++;
+            if (current.contains(f.getName().replace(".jpg", "")) || isFeed(f)) kept++;
         }
         if (kept == 0) return;
         for (File f : files) {
             String base = f.getName().replace(".jpg", "");
-            if (current.contains(base)) continue;
-            String[] desc = describe(f);
-            if (desc != null && desc.length >= 3 && "Web Server".equals(desc[2])) continue;
+            if (current.contains(base) || isFeed(f)) continue;
             delete(f, d, base);
             Log.i(TAG, "Removed unreferenced wallpaper: " + f.getName());
         }
+    }
+
+    /** A picture fetched from a web-server feed: the curated catalog never lists those. */
+    private static boolean isFeed(File picture) {
+        String[] desc = describe(picture);
+        return desc != null && desc.length >= 3 && "Web Server".equals(desc[2]);
     }
 
     private static void delete(File picture, File d, String base) {
