@@ -288,14 +288,20 @@ final class OnlineWallpapers {
         return ic.contains(sc);
     }
 
-    static void cleanOutdatedCategoryWallpapers(File d, String category) {
-        if (d == null || !d.exists()) return;
-        Set<String> validHashes = new HashSet<>();
+    /** Cache file names (without extension) the catalog asks for, optionally for one category only. */
+    static Set<String> currentNames(String category) {
+        Set<String> names = new HashSet<>();
         for (WallpaperItem item : CURATED_CATALOG) {
-            if (matchesCategory(item.category, category)) {
-                validHashes.add(hashFilename(item.url));
+            if (category == null || matchesCategory(item.category, category)) {
+                names.add(hashFilename(item.url));
             }
         }
+        return names;
+    }
+
+    static void cleanOutdatedCategoryWallpapers(File d, String category) {
+        if (d == null || !d.exists()) return;
+        Set<String> validHashes = currentNames(category);
         File[] files = d.listFiles((dir, name) -> name.endsWith(".jpg"));
         if (files == null) return;
         for (File f : files) {
@@ -303,13 +309,43 @@ final class OnlineWallpapers {
             if (!validHashes.contains(base)) {
                 String[] desc = describe(f);
                 if (desc != null && desc.length >= 3 && matchesCategory(desc[2], category)) {
-                    f.delete();
-                    File txt = new File(d, base + ".txt");
-                    if (txt.exists()) txt.delete();
+                    delete(f, d, base);
                     Log.i(TAG, "Removed outdated " + category + " wallpaper: " + f.getName());
                 }
             }
         }
+    }
+
+    /**
+     * Deletes cached pictures no catalog entry points at any more (an old URL size, a replaced
+     * photo), so the rotation can never show them. Pictures from a web-server feed are kept: the
+     * catalog does not list those. Does nothing unless at least one picture the catalog still
+     * lists is on disk, so a bad edit can never empty the cache.
+     */
+    static void pruneUnreferenced(File d) {
+        if (d == null || !d.exists()) return;
+        Set<String> current = currentNames(null);
+        File[] files = d.listFiles((dir, name) -> name.endsWith(".jpg"));
+        if (files == null) return;
+        int kept = 0;
+        for (File f : files) {
+            if (current.contains(f.getName().replace(".jpg", ""))) kept++;
+        }
+        if (kept == 0) return;
+        for (File f : files) {
+            String base = f.getName().replace(".jpg", "");
+            if (current.contains(base)) continue;
+            String[] desc = describe(f);
+            if (desc != null && desc.length >= 3 && "Web Server".equals(desc[2])) continue;
+            delete(f, d, base);
+            Log.i(TAG, "Removed unreferenced wallpaper: " + f.getName());
+        }
+    }
+
+    private static void delete(File picture, File d, String base) {
+        picture.delete();
+        File txt = new File(d, base + ".txt");
+        if (txt.exists()) txt.delete();
     }
 
     static List<File> listByCategory(Context ctx, String category) {
@@ -383,6 +419,7 @@ final class OnlineWallpapers {
                 if (tempTxt.exists()) tempTxt.delete();
             }
         }
+        if (anyDownloaded) pruneUnreferenced(d);
         return anyDownloaded;
     }
 
@@ -489,6 +526,10 @@ final class OnlineWallpapers {
                 if (tempTxt.exists()) tempTxt.delete();
             }
         }
+
+        // Pictures the catalog no longer lists (an old size, a replaced photo) go now, so the
+        // rotation can never pick one.
+        if (anyDownloaded) pruneUnreferenced(d);
 
         // Prune old files if cache exceeds maximum allowed files
         pruneCache(d);

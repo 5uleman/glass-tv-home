@@ -392,7 +392,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (heroName != null) heroName.setMaxWidth(heroNameMaxWidth);
         if (heroDesc != null) heroDesc.setMaxWidth(heroMaxWidth);
 
-        String activeCat = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getString("active_category", "Malaysia");
+        String activeCat = activeCategory();
         if (isNoWallpaper()) {
             applyDarkScreen();
         } else if ("Custom".equalsIgnoreCase(activeCat)) {
@@ -412,14 +412,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             } else if (files != null && files.length > 0) {
                 Arrays.sort(files, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
                 wallpapers = new ArrayList<>(Arrays.asList(files));
-            } else if (cfg.wallpaperOnline && wallpapers.isEmpty()) {
-                wallpapers = OnlineWallpapers.list(this);
             }
         } else {
             placesMode = false;
             List<File> catFiles = OnlineWallpapers.listByCategory(this, activeCat);
             if (!catFiles.isEmpty()) wallpapers = catFiles;
-            else if (cfg.wallpaperOnline && wallpapers.isEmpty()) wallpapers = OnlineWallpapers.list(this);
             if (wallpapers.isEmpty()) {
                 new Thread(() -> {
                     OnlineWallpapers.syncCategory(getApplicationContext(), activeCat);
@@ -1061,9 +1058,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit().putBoolean("show_wallpaper_desc", enabled).apply();
     }
 
+    private String activeCategory() {
+        return getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getString("active_category", "Malaysia");
+    }
+
     /** True when the "No wallpaper (dark screen)" choice is active (the active_category sentinel "DARK"). */
     private boolean isNoWallpaper() {
-        return "DARK".equalsIgnoreCase(getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getString("active_category", "Malaysia"));
+        return "DARK".equalsIgnoreCase(activeCategory());
     }
 
     /**
@@ -1206,7 +1207,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private boolean onlineRefreshRunning;
 
-    /** Fetches fresh 4K online wallpapers in the background when due. */
+    /** Fetches fresh online wallpapers in the background when due. */
     private void refreshOnlineWallpapersIfDue() {
         if (isNoWallpaper()) return;
         if (config == null || !config.wallpaperOnline || onlineRefreshRunning || !OnlineWallpapers.due(this)) return;
@@ -1216,13 +1217,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             handler.post(() -> {
                 onlineRefreshRunning = false;
                 if (!changed || isDestroyed()) return;
-                List<File> fresh = OnlineWallpapers.list(this);
+                // Only the active collection: the cache may hold pictures from other collections
+                // (or an older URL) that the rotation must not show.
+                boolean feed = config.wallpaperFeed != null && !config.wallpaperFeed.trim().isEmpty();
+                List<File> fresh = feed
+                        ? OnlineWallpapers.list(this)
+                        : OnlineWallpapers.listByCategory(this, activeCategory());
                 if (fresh.isEmpty()) return;
-                List<File> combined = new ArrayList<>(config.wallpapers);
-                for (File f : fresh) {
-                    if (!combined.contains(f)) combined.add(f);
-                }
-                wallpapers = combined;
+                wallpapers = fresh;
                 if (wallBitmap == null) showNextWallpaper(false);
                 if (!isFinishing() && hasWindowFocus()) startWallpaperRotation();
             });
