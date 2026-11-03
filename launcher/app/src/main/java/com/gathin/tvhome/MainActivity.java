@@ -112,6 +112,38 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
+    /** Opens the recent-apps deck from the accessibility service (Home pressed twice). */
+    public static void openRecentsFromGlobal() {
+        MainActivity inst = getInstance();
+        if (inst != null) {
+            inst.runOnUiThread(() -> {
+                if (inst.screensaverActive) inst.dismissScreensaver();
+                inst.showRecentsDeck();
+            });
+        }
+    }
+
+    public static boolean isRecentsOpen() {
+        MainActivity inst = getInstance();
+        return inst != null && inst.recentsDeck != null && inst.recentsDeck.isShowing();
+    }
+
+    public static void dismissRecentsFromGlobal() {
+        MainActivity inst = getInstance();
+        if (inst != null) {
+            inst.runOnUiThread(() -> {
+                if (inst.recentsDeck != null) inst.recentsDeck.close();
+            });
+        }
+    }
+
+    private void showRecentsDeck() {
+        if (isFinishing() || isDestroyed()) return;
+        if (openMenu != null) closeMenu(false);
+        if (recentsDeck == null) recentsDeck = new RecentsDeck(this, root, density, reducedMotion);
+        recentsDeck.show();
+    }
+
     private boolean isHomeLongPressed = false;
     private final Runnable longPressHomeRunnable = new Runnable() {
         @Override
@@ -246,6 +278,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean promptsPaused;
     /** The Inputs or Module cards dropdown while one is open, so onPause can close it. */
     private PopupWindow openPopup;
+    private RecentsDeck recentsDeck;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     /** Rotating wallpaper (Config.wallpapers), the view that shows it and the bitmap on screen. */
@@ -670,7 +703,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         // The grid only shows the shape on the tray.
         glider.addCompanion(grid, tray.area);
-        for (int id : new int[]{R.id.btnInputs, R.id.btnWifi, R.id.btnAssistant, R.id.btnCandyBox, R.id.btnSettings}) {
+        for (int id : new int[]{R.id.btnInputs, R.id.btnWifi, R.id.btnAssistant, R.id.btnCandyBox, R.id.btnRecents, R.id.btnSettings}) {
             View pill = findViewById(id);
             if (pill == null) continue;
             float radius = 21f * density;
@@ -779,6 +812,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 }
                 open(systemIntent(Settings.ACTION_SETTINGS));
                 return true;
+            });
+        }
+        View btnRecents = findViewById(R.id.btnRecents);
+        if (btnRecents != null) {
+            btnRecents.setOnClickListener(v -> {
+                SoundEffects.playSelect();
+                showRecentsDeck();
             });
         }
 
@@ -946,6 +986,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             handler.postDelayed(() -> {
                 if (screensaverActive) dismissScreensaver();
                 showNowPlayingDialog();
+            }, 100);
+        }
+        if (getIntent() != null && getIntent().getBooleanExtra("open_recents", false)) {
+            handler.postDelayed(() -> {
+                if (screensaverActive) dismissScreensaver();
+                showRecentsDeck();
             }, 100);
         }
     }
@@ -1288,6 +1334,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             showNowPlayingDialog();
             return;
         }
+        if (intent != null && intent.getBooleanExtra("open_recents", false)) {
+            if (screensaverActive) dismissScreensaver();
+            showRecentsDeck();
+            return;
+        }
         // Nightstand screensaver is removed; the "screensaver" intent trigger is disabled (kept, not deleted).
         /*
         if (intent != null && intent.getBooleanExtra("screensaver", false)) {
@@ -1524,6 +1575,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void handleBackPress() {
+        if (recentsDeck != null && recentsDeck.isShowing()) {
+            recentsDeck.close();
+            return;
+        }
         if (openMenu != null) {
             closeMenu(true);
             return;
@@ -1792,7 +1847,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private boolean isTopPill(View v) {
         int id = v.getId();
-        return id == R.id.btnInputs || id == R.id.btnWifi || id == R.id.btnAssistant || id == R.id.btnCandyBox || id == R.id.btnSettings;
+        return id == R.id.btnInputs || id == R.id.btnWifi || id == R.id.btnAssistant || id == R.id.btnCandyBox || id == R.id.btnRecents || id == R.id.btnSettings;
     }
 
     /** Sends the focus shape onto a pill: from a tile it glides up and narrows into the pill. */

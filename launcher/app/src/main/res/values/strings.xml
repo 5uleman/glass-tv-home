@@ -51,4 +51,8 @@
     <string name="card_state_new_label">New name</string>
     <string name="tile_move">Move</string>
     <string name="tile_app_info">App info</string>
+    <string name="recents_title">Recent apps</string>
+    <string name="recents_empty">Nothing here yet. Open an app from Home and it shows up here.</string>
+    <string name="recents_hint">OK opens · Back closes</string>
+    <string name="recents_open">Recent apps</string>
 </resources>

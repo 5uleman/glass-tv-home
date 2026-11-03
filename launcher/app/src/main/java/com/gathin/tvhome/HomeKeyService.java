@@ -339,6 +339,7 @@ public class HomeKeyService extends AccessibilityService {
     }
 
     private boolean isHomeLongPressed = false;
+    private final RecentsKeyTracker recentsPress = new RecentsKeyTracker();
     private final Runnable longPressHomeRunnable = new Runnable() {
         @Override
         public void run() {
@@ -350,6 +351,7 @@ public class HomeKeyService extends AccessibilityService {
 
     public static void openSettingsPopupGlobal() {
         if (instance == null) return;
+        if (MainActivity.isRecentsOpen()) MainActivity.dismissRecentsFromGlobal();
         if (MainActivity.isForeground()) {
             MainActivity.openSettingsFromGlobal();
         } else {
@@ -361,6 +363,22 @@ public class HomeKeyService extends AccessibilityService {
             } catch (Exception e) {
                 Log.w(TAG, "Failed to launch MainActivity for settings", e);
             }
+        }
+    }
+
+    private void openRecentsDeckGlobal() {
+        Log.i(TAG, "Home pressed twice: opening the recent-apps deck");
+        if (MainActivity.isForeground()) {
+            MainActivity.openRecentsFromGlobal();
+            return;
+        }
+        try {
+            startActivity(new Intent(this, MainActivity.class)
+                    .putExtra("open_recents", true)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            | Intent.FLAG_ACTIVITY_SINGLE_TOP));
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to open the recent-apps deck", e);
         }
     }
 
@@ -388,6 +406,7 @@ public class HomeKeyService extends AccessibilityService {
 
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
             if (event.isLongPress() || (event.getFlags() & KeyEvent.FLAG_LONG_PRESS) != 0 || event.getRepeatCount() > 0) {
+                recentsPress.reset();
                 if (!isHomeLongPressed) {
                     isHomeLongPressed = true;
                     homeHandler.removeCallbacks(longPressHomeRunnable);
@@ -407,11 +426,24 @@ public class HomeKeyService extends AccessibilityService {
             homeHandler.removeCallbacks(longPressHomeRunnable);
             if (isHomeLongPressed) {
                 isHomeLongPressed = false;
+                recentsPress.reset();
                 return true;
+            }
+            // Home twice in quick succession opens the recent-apps deck. The first press still goes
+            // Home at once: delaying it to see whether a second one follows would slow every press.
+            if (keyCode == KeyEvent.KEYCODE_HOME) {
+                if (recentsPress.isDoublePress(SystemClock.uptimeMillis())) {
+                    openRecentsDeckGlobal();
+                    return true;
+                }
+            } else {
+                recentsPress.reset();
             }
             // Single Home press: return to Home
             if (RecentAppsActivity.isForeground()) {
                 RecentAppsActivity.dismissFromGlobal();
+            } else if (MainActivity.isRecentsOpen()) {
+                MainActivity.dismissRecentsFromGlobal();
             } else {
                 Intent home = new Intent(Intent.ACTION_MAIN)
                         .addCategory(Intent.CATEGORY_HOME)
