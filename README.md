@@ -151,6 +151,7 @@ in the passwords; without that file the build falls back to the debug key, which
 - The Inputs icon is from Google's Material Icons (Apache 2.0).
 - Pictures of places and their captions are Bing's daily images (Microsoft). The launcher fetches them on your
   own TV; any promo or screenshot pictures in this repository show three of them.
+- "Cyberpunk Neon Night" in the city collection — Cash Macanaya ([photo](https://unsplash.com/photos/a-city-at-night-with-neon-signs-and-buildings-kUpA8qN28GE)).
 - The Lahore & Pakistan wallpaper collection uses photos from Unsplash and Pexels, free under their licences.
   Photographers, in the order the collection lists them:
   - Badshahi Mosque at dusk — Haris khan ([photo](https://unsplash.com/photos/badshahi-mosque-at-sunset-with-dramatic-sky-XkA0rziC9sc))
