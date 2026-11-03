@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -69,5 +70,23 @@ final class RecentsDeckItems {
             }
         }
         return out;
+    }
+
+    /** Drops cleared apps from the launch history so the next deck doesn't list them again. */
+    static void forget(Context ctx, Collection<String> packages) {
+        if (packages == null || packages.isEmpty()) return;
+        try {
+            SharedPreferences sp = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            String saved = sp.getString(KEY_HISTORY, "");
+            if (saved == null || saved.isEmpty()) return;
+            StringBuilder sb = new StringBuilder();
+            for (String pkg : saved.split(",")) {
+                if (pkg.isEmpty() || packages.contains(pkg)) continue;
+                if (sb.length() > 0) sb.append(',');
+                sb.append(pkg);
+            }
+            sp.edit().putString(KEY_HISTORY, sb.toString()).apply();
+        } catch (Exception ignored) {
+        }
     }
 }

@@ -55,4 +55,9 @@
     <string name="recents_empty">Nothing here yet. Open an app from Home and it shows up here.</string>
     <string name="recents_hint">OK opens · Back closes</string>
     <string name="recents_open">Recent apps</string>
+    <string name="recents_clear_all">Clear all</string>
+    <string name="recents_freed">Freed about %1$d MB</string>
+    <string name="recents_freed_little">Freed only %1$d MB — little memory was free to reclaim</string>
+    <string name="recents_freed_none">Nothing to free — those apps were already asleep</string>
+    <string name="recents_nothing_cleared">Nothing in this list was safe to close</string>
 </resources>

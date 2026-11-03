@@ -31,6 +31,7 @@ final class RecentsDeck {
     private final boolean reducedMotion;
     private FrameLayout scrim;
     private boolean open;
+    private boolean clearing;
 
     RecentsDeck(Activity activity, FrameLayout root, float density, boolean reducedMotion) {
         this.activity = activity;
@@ -46,6 +47,7 @@ final class RecentsDeck {
     /** Builds the deck fresh, so it reflects the last launches, and fades it in. */
     void show() {
         if (open) return;
+        clearing = false;
         List<RecentAppItem> items = RecentsDeckItems.load(activity);
 
         scrim = new FrameLayout(activity);
@@ -87,10 +89,11 @@ final class RecentsDeck {
             column.addView(empty);
         } else {
             for (int i = 0; i < items.size(); i++) {
-                View card = card(items.get(i), scroll, i == 0, i == items.size() - 1);
+                View card = card(items.get(i), scroll, i == 0);
                 row.addView(card);
                 if (first == null) first = card;
             }
+            row.addView(clearButton(items, scroll));
             column.addView(scroll);
         }
 
@@ -121,8 +124,7 @@ final class RecentsDeck {
         }).start();
     }
 
-    private View card(RecentAppItem item, HorizontalScrollView scroll,
-                      boolean firstCard, boolean lastCard) {
+    private View card(RecentAppItem item, HorizontalScrollView scroll, boolean firstCard) {
         LinearLayout card = new LinearLayout(activity);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER);
@@ -137,13 +139,7 @@ final class RecentsDeck {
 
         card.setBackground(new GlassDrawable(card, 22 * density, density, null, 0.6f));
         Backdrop.watch(card);
-
-        GradientDrawable ring = new GradientDrawable();
-        ring.setCornerRadius(22 * density);
-        ring.setStroke((int) (2 * density), 0xFFFFFFFF);
-        ring.setColor(Color.TRANSPARENT);
-        card.setForeground(ring);
-        card.getForeground().setAlpha(0);
+        attachFocus(card, scroll);
 
         ImageView icon = new ImageView(activity);
         icon.setImageDrawable(item.icon);
@@ -162,22 +158,11 @@ final class RecentsDeck {
         card.addView(label, labelParams);
 
         card.setOnClickListener(v -> openApp(item));
-        card.setOnFocusChangeListener((v, has) -> {
-            v.animate().scaleX(has ? 1.06f : 1f).scaleY(has ? 1.06f : 1f)
-                    .setDuration(reducedMotion ? 0 : 140).start();
-            v.getForeground().setAlpha(has ? 255 : 0);
-            if (has) {
-                SoundEffects.playNav();
-                scroll.smoothScrollTo(Math.max(0, v.getLeft() - (int) (40 * density)), 0);
-            }
-        });
         card.setOnKeyListener((v, keyCode, event) -> {
             if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
             switch (keyCode) {
                 case KeyEvent.KEYCODE_DPAD_LEFT:
                     return firstCard;
-                case KeyEvent.KEYCODE_DPAD_RIGHT:
-                    return lastCard;
                 case KeyEvent.KEYCODE_DPAD_UP:
                 case KeyEvent.KEYCODE_DPAD_DOWN:
                     return true;
@@ -189,6 +174,101 @@ final class RecentsDeck {
             }
         });
         return card;
+    }
+
+    private View clearButton(final List<RecentAppItem> items, HorizontalScrollView scroll) {
+        LinearLayout card = new LinearLayout(activity);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER);
+        card.setFocusable(true);
+        card.setClickable(true);
+        card.setPadding(0, (int) (22 * density), 0, (int) (18 * density));
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                (int) (150 * density), (int) (210 * density));
+        params.setMarginEnd((int) (12 * density));
+        card.setLayoutParams(params);
+
+        card.setBackground(new GlassDrawable(card, 22 * density, density, null, 0.6f));
+        Backdrop.watch(card);
+        attachFocus(card, scroll);
+
+        ImageView icon = new ImageView(activity);
+        icon.setImageResource(R.drawable.ic_delete);
+        card.addView(icon, new LinearLayout.LayoutParams(
+                (int) (48 * density), (int) (48 * density)));
+
+        TextView label = text(activity.getString(R.string.recents_clear_all), 15, true);
+        label.setSingleLine(true);
+        label.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        label.setGravity(Gravity.CENTER);
+        label.setMaxWidth((int) (126 * density));
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        labelParams.topMargin = (int) (14 * density);
+        card.addView(label, labelParams);
+
+        card.setOnClickListener(v -> clearAll(items));
+        card.setOnKeyListener((v, keyCode, event) -> {
+            if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+            switch (keyCode) {
+                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                case KeyEvent.KEYCODE_DPAD_UP:
+                case KeyEvent.KEYCODE_DPAD_DOWN:
+                    return true;
+                case KeyEvent.KEYCODE_DPAD_CENTER:
+                case KeyEvent.KEYCODE_ENTER:
+                    clearAll(items);
+                    return true;
+                case KeyEvent.KEYCODE_BACK:
+                    close();
+                    return true;
+                default:
+                    return false;
+            }
+        });
+        return card;
+    }
+
+    private void attachFocus(final View view, final HorizontalScrollView scroll) {
+        GradientDrawable ring = new GradientDrawable();
+        ring.setCornerRadius(22 * density);
+        ring.setStroke((int) (2 * density), 0xFFFFFFFF);
+        ring.setColor(Color.TRANSPARENT);
+        view.setForeground(ring);
+        view.getForeground().setAlpha(0);
+
+        view.setOnFocusChangeListener((v, has) -> {
+            v.animate().scaleX(has ? 1.06f : 1f).scaleY(has ? 1.06f : 1f)
+                    .setDuration(reducedMotion ? 0 : 140).start();
+            v.getForeground().setAlpha(has ? 255 : 0);
+            if (has) {
+                SoundEffects.playNav();
+                scroll.smoothScrollTo(Math.max(0, v.getLeft() - (int) (40 * density)), 0);
+            }
+        });
+    }
+
+    private void clearAll(List<RecentAppItem> items) {
+        if (clearing) return;
+        clearing = true;
+        SoundEffects.playSelect();
+        RecentsCleaner.clear(activity, items, (apps, freedBytes) -> {
+            clearing = false;
+            long mb = freedBytes / (1024L * 1024L);
+            String message;
+            if (apps == 0) {
+                message = activity.getString(R.string.recents_nothing_cleared);
+            } else if (mb <= 0) {
+                message = activity.getString(R.string.recents_freed_none);
+            } else if (mb < 5) {
+                message = activity.getString(R.string.recents_freed_little, mb);
+            } else {
+                message = activity.getString(R.string.recents_freed, mb);
+            }
+            Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
+            close();
+        });
     }
 
     private void openApp(RecentAppItem item) {
