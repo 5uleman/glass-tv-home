@@ -1890,7 +1890,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         String[] about = placesMode ? PlaceWallpapers.describe(picture) : OnlineWallpapers.describe(picture);
         String title = about != null ? titleCase(about[0]) : null;
         String overview = about != null ? about[1] : "";
-        String country = about != null && about.length > 2 ? about[2] : "";
+        // The Pakistan collection names its own place ("Lahore, Pakistan") on a fourth line; other
+        // collections keep showing the category on the third one.
+        String country = about != null && about.length > 3 && about[3] != null && !about[3].isEmpty()
+                ? about[3] : (about != null && about.length > 2 ? about[2] : "");
         if (country != null) {
             country = country.replaceAll("(?i)\\bunsplash\\s*•?\\s*", "").trim();
             if (country.startsWith("Malaysia_")) {

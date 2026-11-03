@@ -44,12 +44,19 @@ final class OnlineWallpapers {
         final String title;
         final String description;
         final String category;
+        /** The place shown under the title ("Lahore, Pakistan"); empty for collections that show a category. */
+        final String place;
 
         WallpaperItem(String url, String title, String description, String category) {
+            this(url, title, description, category, "");
+        }
+
+        WallpaperItem(String url, String title, String description, String category, String place) {
             this.url = url;
             this.title = title;
             this.description = description;
             this.category = category;
+            this.place = place;
         }
     }
 
@@ -400,7 +407,8 @@ final class OnlineWallpapers {
                 if (downloadUrlToFile(item.url, tempFile)) {
                     String meta = (item.title != null ? item.title : "Wallpaper") + "\n"
                             + (item.description != null ? item.description : "") + "\n"
-                            + (item.category != null ? item.category : category);
+                            + (item.category != null ? item.category : category)
+                            + (item.place != null && !item.place.isEmpty() ? "\n" + item.place : "");
                     try (OutputStream os = new FileOutputStream(tempTxt)) {
                         os.write(meta.getBytes(StandardCharsets.UTF_8));
                     }
@@ -435,6 +443,7 @@ final class OnlineWallpapers {
      * Line 1: Title
      * Line 2: Description / Overview
      * Line 3: Category / Source
+     * Line 4 (optional): the place to show under the title, e.g. "Lahore, Pakistan"
      */
     static String[] describe(File picture) {
         if (picture == null) return null;
@@ -449,10 +458,12 @@ final class OnlineWallpapers {
             if (title == null || title.trim().isEmpty()) return null;
             String desc = r.readLine();
             String cat = r.readLine();
+            String place = r.readLine();
             return new String[]{
                     title.trim(),
                     desc == null ? "" : desc.trim(),
-                    cat == null ? "" : cat.trim()
+                    cat == null ? "" : cat.trim(),
+                    place == null ? "" : place.trim()
             };
         } catch (Exception e) {
             return null;
@@ -506,7 +517,8 @@ final class OnlineWallpapers {
                     // Write metadata
                     String meta = (item.title != null ? item.title : "Wallpaper") + "\n"
                             + (item.description != null ? item.description : "") + "\n"
-                            + (item.category != null ? item.category : "Desktop");
+                            + (item.category != null ? item.category : "Desktop")
+                            + (item.place != null && !item.place.isEmpty() ? "\n" + item.place : "");
                     try (OutputStream os = new FileOutputStream(tempTxt)) {
                         os.write(meta.getBytes(StandardCharsets.UTF_8));
                     }
