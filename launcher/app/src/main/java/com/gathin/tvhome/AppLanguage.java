@@ -652,7 +652,7 @@ final class AppLanguage {
     // --- Wallpaper Dialog ---
     public static String strWallpaperDialogTitle(Context ctx) {
         switch (getLanguage(ctx)) {
-            case LANG_EN: return "🖼️ Select 4K Wallpaper Collection";
+            case LANG_EN: return "🖼️ Select Wallpaper Collection";
             case LANG_ID: return "🖼️ Pilih Koleksi Wallpaper 4K";
             case LANG_MS: default: return "🖼️ Pilih Koleksi Wallpaper 4K";
         }
@@ -660,7 +660,7 @@ final class AppLanguage {
 
     public static String strWallpaperDialogSub(Context ctx) {
         switch (getLanguage(ctx)) {
-            case LANG_EN: return "Pexels & Unsplash CDN • Ultra HD 3840×2160 Resolution";
+            case LANG_EN: return "Pexels & Unsplash CDN • 1920×1080 (16:9)";
             case LANG_ID: return "Pexels & Unsplash CDN • Resolusi Ultra HD 3840×2160";
             case LANG_MS: default: return "Pexels & Unsplash CDN • Resolusi Ultra HD 3840×2160";
         }

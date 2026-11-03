@@ -4169,12 +4169,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         // Category 1: Malaysia
         String tMal = AppLanguage.LANG_EN.equals(curLang) ? "🇲🇾 Attractions in Malaysia" : (AppLanguage.LANG_ID.equals(curLang) ? "🇲🇾 Tempat Wisata Malaysia" : "🇲🇾 Tempat Menarik di Malaysia");
-        String sMal = AppLanguage.LANG_EN.equals(curLang) ? "16 Iconic 4K Collection (Pexels Ultra HD)" : "16 Koleksi 4K Ikonik (Pexels Ultra HD)";
+        String sMal = AppLanguage.LANG_EN.equals(curLang) ? "16 Iconic Photo Collection (Pexels)" : "16 Koleksi 4K Ikonik (Pexels Ultra HD)";
         options.add(new WallpaperOption("Malaysia", tMal, sMal));
 
         // Category 2: Natural
         String tNat = AppLanguage.LANG_EN.equals(curLang) ? "🌿 Nature & Landscapes" : (AppLanguage.LANG_ID.equals(curLang) ? "🌿 Alam Semesta & Lanskap" : "🌿 Alam Semula Jadi & Landskap");
-        String sNat = AppLanguage.LANG_EN.equals(curLang) ? "Mountains, Forests & Aurora 4K" : (AppLanguage.LANG_ID.equals(curLang) ? "Pegunungan, Hutan & Aurora 4K" : "Pergunungan, Rimba & Aurora 4K");
+        String sNat = AppLanguage.LANG_EN.equals(curLang) ? "Mountains, Forests & Aurora" : (AppLanguage.LANG_ID.equals(curLang) ? "Pegunungan, Hutan & Aurora 4K" : "Pergunungan, Rimba & Aurora 4K");
         options.add(new WallpaperOption("Natural", tNat, sNat));
 
         // Category 3: Skyscraper
@@ -4860,7 +4860,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             showNextWallpaper(true);
             startWallpaperRotation();
         } else {
-            Toast.makeText(this, i18n("Downloading 4K Wallpaper ", "Mengunduh Wallpaper 4K ", "Memuat turun 4K Wallpaper ") + displayLabel + " (Pexels & Unsplash)...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, i18n("Downloading wallpaper ", "Mengunduh Wallpaper 4K ", "Memuat turun 4K Wallpaper ") + displayLabel + " (Pexels & Unsplash)...", Toast.LENGTH_SHORT).show();
             new Thread(() -> {
                 boolean downloaded = OnlineWallpapers.syncCategory(getApplicationContext(), category);
                 handler.post(() -> {
@@ -5053,7 +5053,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 .setTitle(i18n("💡 Glass TV Smart Tips", "💡 Tips Pintar Glass TV", "💡 Tips Pintar Glass TV"))
                 .setMessage(i18n("• Hold the HOME button (Hold 500ms) to open the Settings Popup over any app or the home screen.\n\n", "• Tekan lama tombol HOME (Hold 500ms) untuk membuka Popup Pengaturan di aplikasi mana pun atau layar utama.\n\n", "• Tekan lama butang HOME (Hold 500ms) untuk buka Popup Tetapan di mana-mana aplikasi atau skrin utama.\n\n")
                         + i18n("• Press the HOME button once to return to the home screen.\n\n", "• Tekan sekali tombol HOME untuk kembali ke layar utama.\n\n", "• Tekan sekali butang HOME untuk kembali ke paparan utama.\n\n")
-                        + i18n("• The 4K Wallpaper Collection is generated from Pexels & Unsplash by category.\n\n", "• Koleksi Wallpaper 4K dihasilkan dari Pexels & Unsplash sesuai kategori.\n\n", "• Koleksi Wallpaper 4K dijana daripada Pexels & Unsplash mengikut kategori.\n\n")
+                        + i18n("• The Wallpaper Collection is generated from Pexels & Unsplash by category.\n\n", "• Koleksi Wallpaper 4K dihasilkan dari Pexels & Unsplash sesuai kategori.\n\n", "• Koleksi Wallpaper 4K dijana daripada Pexels & Unsplash mengikut kategori.\n\n")
                         + i18n("• Adhan & Prayer Times are precisely synced with JAKIM Malaysia zones.\n\n", "• Adzan & Waktu Sholat disinkronkan secara tepat dengan zona JAKIM Malaysia.\n\n", "• Azan & Waktu Solat diselaraskan secara tepat dengan zon JAKIM Malaysia.\n\n")
                         + i18n("• Use Gemini AI to clean the cache and refresh your TV quickly.", "• Gunakan Gemini AI untuk membersihkan cache dan menyegarkan TV Anda dengan cepat.", "• Gunakan Gemini AI untuk membersihkan cache dan menyegarkan TV anda secara pantas."))
                 .setPositiveButton(i18n("Got It", "Paham", "Faham"), null)

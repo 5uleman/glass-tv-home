@@ -25,9 +25,9 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Dynamic 4K dark desktop wallpaper manager.
+ * Dynamic HD (1920x1080) wallpaper manager.
  * Fetches high-resolution (3840x2160) atmospheric and moody desktop wallpapers
- * directly from an online feed or a curated Unsplash 4K catalog.
+ * directly from an online feed or a curated Unsplash catalog.
  * Caches wallpapers locally for instant loading and offline resilience.
  */
 final class OnlineWallpapers {
@@ -37,7 +37,7 @@ final class OnlineWallpapers {
     private static final String PREF_LAST_SYNC = "last_sync_time";
     private static final long REFRESH_INTERVAL_MS = 6L * 60 * 60 * 1000; // 6 hours
     private static final int MAX_CACHE_FILES = 150;
-    private static final int MAX_IMAGE_BYTES = 25 * 1024 * 1024; // 25 MB limit per 4K/8K image
+    private static final int MAX_IMAGE_BYTES = 25 * 1024 * 1024; // 25 MB limit per image
 
     static class WallpaperItem {
         final String url;
@@ -237,7 +237,7 @@ final class OnlineWallpapers {
         return base != null ? new File(base, DIR) : null;
     }
 
-    /** Returns all valid downloaded 4K wallpapers in sorted order. */
+    /** Returns all valid downloaded wallpapers in sorted order. */
     static List<File> list(Context ctx) {
         List<File> out = new ArrayList<>();
         File d = dir(ctx);
@@ -362,7 +362,7 @@ final class OnlineWallpapers {
             File tempTxt = new File(d, fileName.replace(".jpg", ".txt") + ".tmp");
             try {
                 if (downloadUrlToFile(item.url, tempFile)) {
-                    String meta = (item.title != null ? item.title : "4K Wallpaper") + "\n"
+                    String meta = (item.title != null ? item.title : "Wallpaper") + "\n"
                             + (item.description != null ? item.description : "") + "\n"
                             + (item.category != null ? item.category : category);
                     try (OutputStream os = new FileOutputStream(tempTxt)) {
@@ -467,7 +467,7 @@ final class OnlineWallpapers {
             try {
                 if (downloadUrlToFile(item.url, tempFile)) {
                     // Write metadata
-                    String meta = (item.title != null ? item.title : "4K Wallpaper") + "\n"
+                    String meta = (item.title != null ? item.title : "Wallpaper") + "\n"
                             + (item.description != null ? item.description : "") + "\n"
                             + (item.category != null ? item.category : "Desktop");
                     try (OutputStream os = new FileOutputStream(tempTxt)) {
