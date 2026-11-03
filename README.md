@@ -152,22 +152,26 @@ in the passwords; without that file the build falls back to the debug key, which
 - Pictures of places and their captions are Bing's daily images (Microsoft). The launcher fetches them on your
   own TV; any promo or screenshot pictures in this repository show three of them.
 - "Cyberpunk Neon Night" in the city collection — Cash Macanaya ([photo](https://unsplash.com/photos/a-city-at-night-with-neon-signs-and-buildings-kUpA8qN28GE)).
-- The Lahore & Pakistan wallpaper collection uses photos from Unsplash and Pexels, free under their licences.
+- The Lahore & Pakistan wallpaper collection uses photos from Pexels, free under their licence.
   Photographers, in the order the collection lists them:
-  - Badshahi Mosque at dusk — Haris khan ([photo](https://unsplash.com/photos/badshahi-mosque-at-sunset-with-dramatic-sky-XkA0rziC9sc))
-  - Badshahi minaret at night — Nouman Younas ([photo](https://unsplash.com/photos/badshahi-mosque-minaret-in-lahore-6Ppkk8rIhvk))
-  - Alamgiri Gate, Lahore Fort — Syawish Rehman ([photo](https://unsplash.com/photos/alamgiri-gate-at-lahore-fort-umKFWn6QLq8))
-  - Naulakha Pavilion, Lahore Fort — Syawish Rehman ([photo](https://unsplash.com/photos/naulakha-pavilion-in-lahore-fort-B9IveywUm1A))
-  - Wazir Khan minaret — Abuzar Xheikh ([photo](https://unsplash.com/photos/brown-and-green-tower-ZtuNnB3eYhg))
-  - Inside Wazir Khan Mosque — Hassan Pasha ([photo](https://unsplash.com/photos/sunlight-streams-into-a-mosque-with-patterned-carpets-DQ5ipEG6EG8))
-  - Shalimar Gardens — Qasim Rehmani ([photo](https://unsplash.com/photos/body-of-water-across-white-and-brown-buildings-vsbwkBTnTTA))
-  - Minar-e-Pakistan — Aatik Ali Makani ([photo](https://www.pexels.com/photo/white-concrete-tower-surrounded-by-green-grass-field-13239874/))
-  - Hunza valley and Rakaposhi — Pervez Sajjad ([photo](https://unsplash.com/photos/a-view-of-a-valley-with-mountains-in-the-background-0AUJY-5FxGU))
-  - Hunza sunset — Umar Farooq ([photo](https://unsplash.com/photos/a-mountain-covered-in-snow-under-a-cloudy-sky-PitvmalIFOc))
-  - Hunza river — Mehtab Farooq ([photo](https://unsplash.com/photos/aerial-photography-of-river-surrounded-by-mountains-8qCtP97jgoE))
-  - Skardu by moonlight — Ijaz Rafi ([photo](https://unsplash.com/photos/silhouette-of-mountain-during-nighttime-tBR4sct4gm4))
-  - Fairy Meadows, pines and Nanga Parbat — Aqib Bilal ([photo](https://unsplash.com/photos/a-mountain-range-with-trees-217Zug9Ryq0))
-  - Fairy Meadows, meadow — Aqib Bilal ([photo](https://unsplash.com/photos/a-grassy-field-with-mountains-in-the-background-fMuoepZalLQ))
-  - Attabad Lake — Abdullah Kashif ([photo](https://unsplash.com/photos/a-body-of-water-with-mountains-in-the-background-nnjZ1StmKv4))
-  - Karakoram peaks — Sohail Raza ([photo](https://unsplash.com/photos/snow-capped-mountains-under-a-blue-sky-with-clouds-aA18w2GFe4U))
+  - Badshahi Mosque under the Milky Way — Aitizaz Naqvi ([photo](https://www.pexels.com/photo/5487986/))
+  - Alamgiri Gate, Lahore Fort — Salman Rafique ([photo](https://www.pexels.com/photo/11774127/))
+  - Naulakha Pavilion, Lahore Fort — Null Factor ([photo](https://www.pexels.com/photo/13023314/))
+  - Lahore at night — Wasif Mehmood ([photo](https://www.pexels.com/photo/16021536/))
+  - Faisal Mosque at dusk — Bilal ([photo](https://www.pexels.com/photo/16693762/))
+  - Rawal Lake at sunset — Ashraf Hussain ([photo](https://www.pexels.com/photo/38459967/))
+  - Islamabad from above — Ahmed Ismail ([photo](https://www.pexels.com/photo/38773558/))
+  - Karachi at night — Tahamie Farooqui ([photo](https://www.pexels.com/photo/34096455/))
+  - Clifton Beach — Muneeb Khan ([photo](https://www.pexels.com/photo/28244078/))
+  - Karachi skyline — Tahamie Farooqui ([photo](https://www.pexels.com/photo/33045005/))
+  - Hunza valley in autumn — Wasif Mehmood ([photo](https://www.pexels.com/photo/19442083/))
+  - Hunza valley at sunset — Wasif Mehmood ([photo](https://www.pexels.com/photo/15916726/))
+  - Golden peaks of Hunza — Arif Esapzai ([photo](https://www.pexels.com/photo/35302563/))
+  - Passu Cones — Raj Kumar Lohana ([photo](https://www.pexels.com/photo/8835247/))
+  - Attabad Lake — Hamayoon Riaz ([photo](https://www.pexels.com/photo/13462643/))
+  - Nanga Parbat at sunrise — Maaz Kalia ([photo](https://www.pexels.com/photo/29401243/))
+  - Swat Valley — Tahir Shaw ([photo](https://www.pexels.com/photo/186985/))
+  - Karakoram peaks — Pierre Matile ([photo](https://www.pexels.com/photo/36870354/))
+  - Derawar Fort — Syed Hasan Mehdi ([photo](https://www.pexels.com/photo/815880/))
+  - Makli Necropolis — Ayesha Memon ([photo](https://www.pexels.com/photo/34535290/))
 - Gotham, used in upstream's promo pictures only, is a Hoefler&Co. typeface and is not part of this repository.
