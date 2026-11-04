@@ -121,19 +121,18 @@ final class GlassDialogs {
 
         ScrollView scroll = new ScrollView(activity);
         scroll.setVerticalScrollBarEnabled(false);
+        // clipChildren stays true: rows must scroll INSIDE this viewport, never over the header
+        // or footer. clipToPadding=false only lets the focus ring use the 2dp padding band.
         scroll.setClipToPadding(false);
-        scroll.setClipChildren(false);
         int ringRoom = (int) (2 * density);
         scroll.setPadding(0, ringRoom, 0, ringRoom);
         LinearLayout list = new LinearLayout(activity);
         list.setOrientation(LinearLayout.VERTICAL);
-        list.setClipChildren(false);
-        list.setClipToPadding(false);
 
         final View[] focusRow = new View[1];
         for (int i = 0; i < rows.size(); i++) {
             final int index = i;
-            View row = row(activity, density, rows.get(i), () -> {
+            View row = row(activity, density, scroll, list, rows.get(i), ringRoom, () -> {
                 if (dialog.isShowing()) dialog.dismiss();
                 if (onRow != null) onRow.onRow(index);
             });
@@ -178,8 +177,8 @@ final class GlassDialogs {
 
         ScrollView scroll = new ScrollView(activity);
         scroll.setVerticalScrollBarEnabled(false);
+        // Same rule as a list: the content is clipped to this viewport, header/footer stay clear.
         scroll.setClipToPadding(false);
-        scroll.setClipChildren(false);
         scroll.addView(content, new ScrollView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         LayoutParams contentParams = new LayoutParams(
@@ -277,8 +276,6 @@ final class GlassDialogs {
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding((int) (24 * density), (int) (20 * density),
                 (int) (24 * density), (int) (18 * density));
-        panel.setClipChildren(false);
-        panel.setClipToPadding(false);
         panel.setBackground(new GlassDrawable(panel, 22 * density, density, null, 0.5f,
                 false, SMOKE));
         Backdrop.watch(panel);
@@ -316,7 +313,8 @@ final class GlassDialogs {
         return header;
     }
 
-    private static View row(Activity activity, float density, Row data, Runnable onClick) {
+    private static View row(Activity activity, float density, ScrollView scroll, ViewGroup list,
+                            Row data, int ringRoom, Runnable onClick) {
         LinearLayout row = new LinearLayout(activity);
         row.setOrientation(LinearLayout.VERTICAL);
         row.setFocusable(true);
@@ -379,7 +377,21 @@ final class GlassDialogs {
         row.setOnFocusChangeListener((v, has) -> {
             if (sub != null) sub.setTextColor(has ? Color.WHITE : 0xD9FFFFFF);
             if (tag != null) tag.setTextColor(has ? Color.WHITE : 0xFFE0F2FE);
-            if (has) SoundEffects.playNav();
+            if (!has) return;
+            SoundEffects.playNav();
+            // The framework may only reveal the row itself; add the ring band on both sides and
+            // keep the whole row inside the scroll viewport.
+            v.post(() -> {
+                // Rows live in the list, which the ScrollView lays out below its top padding;
+                // the scroll offset counts from the content origin, so add that padding back.
+                int padTop = scroll.getPaddingTop();
+                int viewport = scroll.getHeight() - padTop - scroll.getPaddingBottom();
+                int contentHeight = list.getHeight() + padTop;
+                int target = GlassDialogLayout.scrollTarget(v.getTop() + padTop,
+                        v.getBottom() + padTop, scroll.getScrollY(), viewport, ringRoom,
+                        contentHeight);
+                if (target != scroll.getScrollY()) scroll.smoothScrollTo(0, target);
+            });
         });
         row.setOnClickListener(v -> onClick.run());
 
@@ -409,8 +421,9 @@ final class GlassDialogs {
         float density = activity.getResources().getDisplayMetrics().density;
         int screenW = activity.getResources().getDisplayMetrics().widthPixels;
         int screenH = activity.getResources().getDisplayMetrics().heightPixels;
+        // Real screen with a 56dp top/bottom margin; never a percentage of an assumed window.
         int width = Math.min((int) (520 * density), screenW - (int) (120 * density));
-        int maxHeight = (int) (screenH * 0.82f);
+        int maxHeight = GlassDialogLayout.maxPanelHeight(screenH, density, 56);
         panel.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.UNSPECIFIED);
         int height = Math.min(panel.getMeasuredHeight() + (int) (2 * density), maxHeight);
