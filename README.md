@@ -152,8 +152,8 @@ in the passwords; without that file the build falls back to the debug key, which
 - Pictures of places and their captions are Bing's daily images (Microsoft). The launcher fetches them on your
   own TV; any promo or screenshot pictures in this repository show three of them.
 - "Cyberpunk Neon Night" in the city collection — Cash Macanaya ([photo](https://unsplash.com/photos/a-city-at-night-with-neon-signs-and-buildings-kUpA8qN28GE)).
-- The Lahore & Pakistan wallpaper collection uses photos from Pexels, free under their licence.
-  Photographers, in the order the collection lists them:
+- The Lahore & Pakistan wallpaper collection uses photos from Pexels, free under their licence, and two from
+  Wikimedia Commons with the licences noted. Photographers and authors, in the order the collection lists them:
   - Badshahi Mosque under the Milky Way — Aitizaz Naqvi ([photo](https://www.pexels.com/photo/5487986/))
   - Alamgiri Gate, Lahore Fort — Salman Rafique ([photo](https://www.pexels.com/photo/11774127/))
   - Naulakha Pavilion, Lahore Fort — Null Factor ([photo](https://www.pexels.com/photo/13023314/))
@@ -174,4 +174,12 @@ in the passwords; without that file the build falls back to the debug key, which
   - Karakoram peaks — Pierre Matile ([photo](https://www.pexels.com/photo/36870354/))
   - Derawar Fort — Syed Hasan Mehdi ([photo](https://www.pexels.com/photo/815880/))
   - Makli Necropolis — Ayesha Memon ([photo](https://www.pexels.com/photo/34535290/))
+  - Lahore Fort at sunset — Mian Rizwan ([photo](https://www.pexels.com/photo/14926132/))
+  - Minar-e-Pakistan in daylight — Aatik Ali Makani ([photo](https://www.pexels.com/photo/13239874/))
+  - Lahore Museum, Gandhara gallery — Percy Brown, public domain
+    ([file](https://commons.wikimedia.org/wiki/File:Lahore_Museum_Gandhara_artefacts.jpg))
+  - Eiffel Tower replica, Bahria Town Lahore — M Saqib Sarwar, CC BY 2.0
+    ([file](https://commons.wikimedia.org/wiki/File:Eiffel_Tower_replica_in_Bahria_Town.jpg))
+  - Pakistan Monument at night — Hamza Ali ([photo](https://www.pexels.com/photo/14394126/))
+  - Abbasi Mosque at Derawar — Waqas Ahmad Wicky ([photo](https://www.pexels.com/photo/4253018/))
 - Gotham, used in upstream's promo pictures only, is a Hoefler&Co. typeface and is not part of this repository.
