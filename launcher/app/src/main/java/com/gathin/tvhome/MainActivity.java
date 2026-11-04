@@ -4232,590 +4232,185 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         File[] customFiles = customDir.listFiles((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".jpeg"));
         int customCount = (customFiles != null) ? customFiles.length : 0;
 
-        String currentKey = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getString("active_category", "Malaysia");
-
-        class WallpaperOption {
-            final String key;
-            final String title;
-            final String subtitle;
-            WallpaperOption(String key, String title, String subtitle) {
-                this.key = key;
-                this.title = title;
-                this.subtitle = subtitle;
-            }
-        }
-
-        String curLang = AppLanguage.getLanguage(this);
-        List<WallpaperOption> options = new ArrayList<>();
-
-        // First: Lahore & Pakistan. Only its position changes; the current selection still comes
-        // from active_category, and every other collection keeps its order.
-        options.add(new WallpaperOption("Pakistan", "🇵🇰 Lahore & Pakistan",
-                "25 photos: Lahore, Islamabad, Karachi, the northern valleys, landmarks and historic sites"));
-
-        // Category 1: Malaysia
-        String tMal = AppLanguage.LANG_EN.equals(curLang) ? "🇲🇾 Attractions in Malaysia" : (AppLanguage.LANG_ID.equals(curLang) ? "🇲🇾 Tempat Wisata Malaysia" : "🇲🇾 Tempat Menarik di Malaysia");
-        String sMal = AppLanguage.LANG_EN.equals(curLang) ? "16 Iconic Photo Collection (Pexels)" : "16 Koleksi 4K Ikonik (Pexels Ultra HD)";
-        options.add(new WallpaperOption("Malaysia", tMal, sMal));
-
-        // Category 2: Natural
-        String tNat = AppLanguage.LANG_EN.equals(curLang) ? "🌿 Nature & Landscapes" : (AppLanguage.LANG_ID.equals(curLang) ? "🌿 Alam Semesta & Lanskap" : "🌿 Alam Semula Jadi & Landskap");
-        String sNat = AppLanguage.LANG_EN.equals(curLang) ? "Mountains, Forests & Aurora" : (AppLanguage.LANG_ID.equals(curLang) ? "Pegunungan, Hutan & Aurora 4K" : "Pergunungan, Rimba & Aurora 4K");
-        options.add(new WallpaperOption("Natural", tNat, sNat));
-
-        // Category 3: Skyscraper
-        String tSky = AppLanguage.LANG_EN.equals(curLang) ? "🏙️ Skyscrapers & Cities" : (AppLanguage.LANG_ID.equals(curLang) ? "🏙️ Pencakar Langit & Kota" : "🏙️ Pencakar Langit & Bandar Raya");
-        String sSky = AppLanguage.LANG_EN.equals(curLang) ? "Modern Metropolis & Architecture" : (AppLanguage.LANG_ID.equals(curLang) ? "Metropolis Modern & Arsitektur" : "Metropolis Moden & Seni Bina");
-        options.add(new WallpaperOption("Skyscraper", tSky, sSky));
-
-        // Category 4: Space
-        String tSpc = AppLanguage.LANG_EN.equals(curLang) ? "🌌 Space & Cosmos" : (AppLanguage.LANG_ID.equals(curLang) ? "🌌 Luar Angkasa & Kosmos" : "🌌 Angkasa & Kosmos");
-        String sSpc = AppLanguage.LANG_EN.equals(curLang) ? "Galaxies, Nebulae & Stars (Deep Space)" : (AppLanguage.LANG_ID.equals(curLang) ? "Galaksi, Nebula & Bintang (Deep Space)" : "Galaksi, Nebula & Bintang (Deep Space)");
-        options.add(new WallpaperOption("Space", tSpc, sSpc));
-
-        // Category 5: Ocean
-        String tOcn = AppLanguage.LANG_EN.equals(curLang) ? "🌊 Oceans & Coastlines" : (AppLanguage.LANG_ID.equals(curLang) ? "🌊 Lautan & Pesisir Pantai" : "🌊 Lautan & Pesisir Pantai");
-        String sOcn = AppLanguage.LANG_EN.equals(curLang) ? "Crystal Clear Waters, Reefs & Beaches" : (AppLanguage.LANG_ID.equals(curLang) ? "Air Jernih, Terumbu Karang & Pantai" : "Air Jernih, Terumbu Karang & Pantai");
-        options.add(new WallpaperOption("Ocean", tOcn, sOcn));
-
-        // Category 6: Minimalist
-        String tMin = AppLanguage.LANG_EN.equals(curLang) ? "🔲 Dark Minimalist (OLED)" : (AppLanguage.LANG_ID.equals(curLang) ? "🔲 Minimalis Gelap (OLED)" : "🔲 Minimalis Gelap (OLED)");
-        String sMin = AppLanguage.LANG_EN.equals(curLang) ? "16 Unsplash Dark Wallpapers • Perfect for OLED" : (AppLanguage.LANG_ID.equals(curLang) ? "16 Koleksi Unsplash Dark Wallpaper • Khusus Layar OLED" : "16 Koleksi Unsplash Dark Wallpaper • Khas Skrin OLED");
-        options.add(new WallpaperOption("Minimalist", tMin, sMin));
-
-        // Special: no wallpaper at all - a plain solid black home screen
-        String tDark = AppLanguage.LANG_EN.equals(curLang) ? "🌑 No wallpaper (dark screen)" : (AppLanguage.LANG_ID.equals(curLang) ? "🌑 Tanpa wallpaper (layar gelap)" : "🌑 Tiada wallpaper (skrin gelap)");
-        String sDark = AppLanguage.LANG_EN.equals(curLang) ? "Plain black background • slideshow and loading off" : (AppLanguage.LANG_ID.equals(curLang) ? "Latar hitam polos • slideshow dan pemuatan mati" : "Latar hitam kosong • slaid dan pemuatan dimatikan");
-        options.add(new WallpaperOption("DARK", tDark, sDark));
-
-        // Category 7: Manage Custom
-        String tCst = AppLanguage.LANG_EN.equals(curLang) ? "📁 Manage Uploaded Photos" : (AppLanguage.LANG_ID.equals(curLang) ? "📁 Kelola Foto yang Diunggah" : "📁 Urus Gambar Dimuat Naik");
-        String sCst = customCount > 0
-                ? (AppLanguage.LANG_EN.equals(curLang) ? (customCount + " uploaded photos • QR / Slideshow") : (AppLanguage.LANG_ID.equals(curLang) ? (customCount + " foto diunggah • QR / Slideshow") : (customCount + " foto dimuat naik • QR / Slideshow")))
-                : (AppLanguage.LANG_EN.equals(curLang) ? "Upload personal photos via phone" : (AppLanguage.LANG_ID.equals(curLang) ? "Unggah foto pribadi lewat ponsel" : "Muat naik foto peribadi melalui telefon"));
-        options.add(new WallpaperOption("MANAGE_CUSTOM", tCst, sCst));
-
+        String currentKey = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+                .getString("active_category", "Malaysia");
         int curInterval = getWallpaperIntervalMinutes();
         String intervalText = AppLanguage.strWallpaperIntervalText(this, curInterval);
-
         boolean isShuffle = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getBoolean("shuffle_mode", true);
         boolean isDescOn = isWallpaperDescEnabled();
-        boolean isWeatherFxOn = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getBoolean("dynamic_weather_overlay", true);
+        boolean isWeatherFxOn = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+                .getBoolean("dynamic_weather_overlay", true);
 
-        String tInt = (AppLanguage.LANG_EN.equals(curLang) ? "⏱️ Shuffle Interval: " : (AppLanguage.LANG_ID.equals(curLang) ? "⏱️ Interval Shuffle: " : "⏱️ Selang Masa Shuffle: ")) + intervalText;
-        String sInt = AppLanguage.LANG_EN.equals(curLang) ? "Choose wallpaper change frequency (5 min, 10 min, etc.)" : (AppLanguage.LANG_ID.equals(curLang) ? "Pilih frekuensi pergantian wallpaper (5 mnt, 10 mnt, dll)" : "Pilih kekerapan pertukaran wallpaper (5 min, 10 min, dll)");
-        options.add(new WallpaperOption("INTERVAL", tInt, sInt));
+        List<GlassDialogs.Row> rows = new ArrayList<>();
+        List<Runnable> actions = new ArrayList<>();
+        int focus = 0;
 
-        String tShf = AppLanguage.LANG_EN.equals(curLang) ? ("🔀 Play Order: " + (isShuffle ? "Random (Shuffle ON)" : "Sequential")) : (AppLanguage.LANG_ID.equals(curLang) ? ("🔀 Urutan Tampil: " + (isShuffle ? "Acak (Shuffle ON)" : "Berurutan (Sequential)")) : ("🔀 Mod Susunan: " + (isShuffle ? "Rawak (Shuffle ON)" : "Berurutan (Sequential)")));
-        String sShf = isShuffle
-                ? (AppLanguage.LANG_EN.equals(curLang) ? "Photos picked randomly without repeats" : (AppLanguage.LANG_ID.equals(curLang) ? "Gambar dipilih acak tanpa berulang" : "Gambar dipilih secara rawak tanpa mengulang"))
-                : (AppLanguage.LANG_EN.equals(curLang) ? "Photos cycle through catalog order" : (AppLanguage.LANG_ID.equals(curLang) ? "Gambar bertukar sesuai urutan katalog" : "Gambar bertukar mengikut urutan katalog"));
-        options.add(new WallpaperOption("TOGGLE_SHUFFLE", tShf, sShf));
+        // Collections: Lahore first. The active one still comes from active_category.
+        String[][] collections = {
+                {"Pakistan", "Lahore & Pakistan",
+                        "25 photos: Lahore, Islamabad, Karachi, the northern valleys, landmarks and historic sites"},
+                {"Malaysia", "Attractions in Malaysia", "16 iconic photos (Pexels)"},
+                {"Natural", "Nature & Landscapes", "Mountains, forests and aurora"},
+                {"Skyscraper", "Skyscrapers & Cities", "Modern metropolis and architecture"},
+                {"Space", "Space & Cosmos", "Galaxies, nebulae and stars (deep space)"},
+                {"Ocean", "Oceans & Coastlines", "Crystal clear waters, reefs and beaches"},
+                {"Minimalist", "Dark Minimalist (OLED)", "16 dark wallpapers, made for OLED"}
+        };
+        for (String[] c : collections) {
+            boolean active = c[0].equalsIgnoreCase(currentKey)
+                    || (c[0].equals("Malaysia") && currentKey.startsWith("Malaysia"));
+            if (active) focus = rows.size();
+            final String key = c[0];
+            rows.add(new GlassDialogs.Row(c[1], c[2], active));
+            actions.add(() -> switchWallpaperCategory(key));
+        }
 
-        String tDsc = (AppLanguage.LANG_EN.equals(curLang) ? "🏷️ Image Title & Info: " : (AppLanguage.LANG_ID.equals(curLang) ? "🏷️ Info & Deskripsi Gambar: " : "🏷️ Info & Deskripsi Gambar: ")) + (isDescOn ? (AppLanguage.LANG_EN.equals(curLang) ? "ON" : (AppLanguage.LANG_ID.equals(curLang) ? "Aktif (ON)" : "Dihidupkan (ON)")) : (AppLanguage.LANG_EN.equals(curLang) ? "OFF" : (AppLanguage.LANG_ID.equals(curLang) ? "Mati (OFF)" : "Dimatikan (OFF)")));
-        String sDsc = isDescOn
-                ? (AppLanguage.LANG_EN.equals(curLang) ? "Display title and description on home screen" : (AppLanguage.LANG_ID.equals(curLang) ? "Tampilkan judul dan deskripsi gambar di layar utama" : "Paparkan tajuk dan penerangan gambar di skrin utama"))
-                : (AppLanguage.LANG_EN.equals(curLang) ? "Hide text for a clean screen display" : (AppLanguage.LANG_ID.equals(curLang) ? "Sembunyikan teks untuk tampilan layar bersih" : "Sembunyikan teks untuk paparan skrin bersih (Clean Look)"));
-        options.add(new WallpaperOption("TOGGLE_DESC", tDsc, sDsc));
+        boolean dark = "DARK".equalsIgnoreCase(currentKey);
+        if (dark) focus = rows.size();
+        rows.add(new GlassDialogs.Row("No wallpaper (dark screen)",
+                "Plain black background, slideshow and loading off", dark));
+        actions.add(() -> {
+            applyDarkScreen();
+            Toast.makeText(this, "No wallpaper: plain dark screen", Toast.LENGTH_SHORT).show();
+        });
 
-        String tWtr = (AppLanguage.LANG_EN.equals(curLang) ? "🌧️ Dynamic Weather: " : (AppLanguage.LANG_ID.equals(curLang) ? "🌧️ Cuaca Dinamis: " : "🌧️ Dynamic Weather: ")) + (isWeatherFxOn ? (AppLanguage.LANG_EN.equals(curLang) ? "ON" : (AppLanguage.LANG_ID.equals(curLang) ? "Aktif (ON)" : "Dihidupkan (ON)")) : (AppLanguage.LANG_EN.equals(curLang) ? "OFF" : (AppLanguage.LANG_ID.equals(curLang) ? "Mati (OFF)" : "Dimatikan (OFF)")));
-        String sWtr = isWeatherFxOn
-                ? (AppLanguage.LANG_EN.equals(curLang) ? "Rain & lightning animations on wallpaper when raining" : (AppLanguage.LANG_ID.equals(curLang) ? "Animasi rintik hujan & kilat di atas wallpaper saat hujan" : "Animasi rintik hujan & kilat di atas wallpaper bila cuaca hujan"))
-                : (AppLanguage.LANG_EN.equals(curLang) ? "Static wallpaper without weather animations" : (AppLanguage.LANG_ID.equals(curLang) ? "Hanya wallpaper statis tanpa animasi cuaca" : "Hanya wallpaper pegun tanpa animasi cuaca"));
-        options.add(new WallpaperOption("TOGGLE_WEATHER_OVERLAY", tWtr, sWtr));
+        boolean custom = "Custom".equalsIgnoreCase(currentKey);
+        if (custom) focus = rows.size();
+        rows.add(new GlassDialogs.Row("Manage Uploaded Photos",
+                customCount > 0 ? customCount + " uploaded photos, QR upload / slideshow"
+                        : "Upload personal photos from your phone", custom));
+        actions.add(this::showCustomWallpaperManagerDialog);
 
-        String tNxt = AppLanguage.LANG_EN.equals(curLang) ? "⏭️ Change Wallpaper Now" : (AppLanguage.LANG_ID.equals(curLang) ? "⏭️ Ganti Gambar Sekarang" : "⏭️ Tukar Gambar Sekarang");
-        String sNxt = AppLanguage.LANG_EN.equals(curLang) ? "Cycle and display next wallpaper immediately" : (AppLanguage.LANG_ID.equals(curLang) ? "Putar dan tampilkan gambar berikutnya sekarang juga" : "Putar dan paparkan gambar seterusnya serta-merta");
-        options.add(new WallpaperOption("NEXT", tNxt, sNxt));
+        rows.add(new GlassDialogs.Row("Shuffle Interval: " + intervalText,
+                "Choose how often the wallpaper changes", false));
+        actions.add(this::showWallpaperIntervalDialog);
 
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding((int) (20 * density), (int) (16 * density), (int) (20 * density), (int) (12 * density));
+        rows.add(new GlassDialogs.Row(
+                "Play Order: " + (isShuffle ? "Random (shuffle on)" : "Sequential"),
+                isShuffle ? "Photos picked randomly without repeats"
+                        : "Photos cycle through catalog order", false));
+        actions.add(() -> {
+            boolean newMode = !isShuffle;
+            getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
+                    .putBoolean("shuffle_mode", newMode).apply();
+            Toast.makeText(this, newMode ? "Shuffle mode: images picked randomly"
+                    : "Sequential mode: images picked in order", Toast.LENGTH_SHORT).show();
+            showWallpaperDialog();
+        });
 
-        // Header Title
-        TextView titleView = new TextView(this);
-        titleView.setText(AppLanguage.strWallpaperDialogTitle(this));
-        titleView.setTextSize(19);
-        titleView.setTextColor(0xFFFFFFFF);
-        titleView.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-        titleView.setFontVariationSettings("'wght' 700");
-        titleView.setShadowLayer(4 * density, 0, 1 * density, 0xDD000000);
-        layout.addView(titleView);
-
-        // Header Subtitle
-        TextView subView = new TextView(this);
-        subView.setText(AppLanguage.strWallpaperDialogSub(this));
-        subView.setTextSize(13.5f);
-        subView.setTextColor(0xE6FFFFFF);
-        subView.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-        subView.setFontVariationSettings("'wght' 600");
-        subView.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
-        subView.setPadding(0, (int) (3 * density), 0, (int) (12 * density));
-        layout.addView(subView);
-
-        ScrollView scroll = new ScrollView(this);
-        scroll.setVerticalScrollBarEnabled(false);
-        LinearLayout list = new LinearLayout(this);
-        list.setOrientation(LinearLayout.VERTICAL);
-
-        AlertDialog[] dialogHolder = new AlertDialog[1];
-        View[] viewToFocus = new View[1];
-
-        for (int i = 0; i < options.size(); i++) {
-            WallpaperOption opt = options.get(i);
-            boolean isActive = opt.key.equalsIgnoreCase(currentKey) || (opt.key.equals("Malaysia") && currentKey.startsWith("Malaysia"));
-
-            LinearLayout row = new LinearLayout(this);
-            row.setOrientation(LinearLayout.VERTICAL);
-            row.setFocusable(true);
-            row.setClickable(true);
-            row.setPadding((int) (16 * density), (int) (9 * density), (int) (16 * density), (int) (9 * density));
-
-            StateListDrawable bg = new StateListDrawable();
-            GradientDrawable on = new GradientDrawable();
-            on.setColor(0x2EFFFFFF);
-            on.setStroke((int) (2f * density), 0xFFFFFFFF);
-            on.setCornerRadius(12 * density);
-            GradientDrawable off = new GradientDrawable();
-            off.setColor(isActive ? 0x2A4A90E2 : 0x1AFFFFFF);
-            if (isActive) {
-                off.setStroke((int) (1.5f * density), 0xFF38BDF8);
-            }
-            off.setCornerRadius(12 * density);
-            bg.addState(new int[]{android.R.attr.state_focused}, on);
-            bg.addState(new int[]{}, off);
-            row.setBackground(bg);
-
-            // Row horizontal container for Title + Active tag
-            LinearLayout topRow = new LinearLayout(this);
-            topRow.setOrientation(LinearLayout.HORIZONTAL);
-            topRow.setGravity(Gravity.CENTER_VERTICAL);
-
-            TextView rowTitle = new TextView(this);
-            rowTitle.setText(opt.title);
-            rowTitle.setTextSize(16);
-            rowTitle.setTextColor(0xFFFFFFFF);
-            rowTitle.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-            rowTitle.setFontVariationSettings("'wght' 700");
-            rowTitle.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
-            topRow.addView(rowTitle, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-            TextView activeTag = null;
-            if (isActive) {
-                activeTag = new TextView(this);
-                activeTag.setText("✓ " + AppLanguage.strNowBadge(this));
-                activeTag.setTextSize(13);
-                activeTag.setTextColor(0xFFBAE6FD);
-                activeTag.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-                activeTag.setFontVariationSettings("'wght' 700");
-                topRow.addView(activeTag);
-            }
-            row.addView(topRow);
-
-            TextView rowSub = new TextView(this);
-            rowSub.setText(opt.subtitle);
-            rowSub.setTextSize(13);
-            rowSub.setTextColor(0xD9FFFFFF);
-            rowSub.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-            rowSub.setFontVariationSettings("'wght' 600");
-            rowSub.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
-            rowSub.setPadding(0, (int) (2 * density), 0, 0);
-            row.addView(rowSub);
-
-            final TextView finalRowTitle = rowTitle;
-            final TextView finalRowSub = rowSub;
-            final TextView finalActiveTag = activeTag;
-            row.setOnFocusChangeListener((v, hasFocus) -> {
-                if (hasFocus) {
-                    finalRowTitle.setTextColor(0xFFFFFFFF);
-                    finalRowTitle.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
-                    finalRowSub.setTextColor(0xFFFFFFFF);
-                    finalRowSub.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
-                    if (finalActiveTag != null) {
-                        finalActiveTag.setTextColor(0xFFFFFFFF);
-                        finalActiveTag.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
-                    }
-                } else {
-                    finalRowTitle.setTextColor(0xFFFFFFFF);
-                    finalRowTitle.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
-                    finalRowSub.setTextColor(0xD9FFFFFF);
-                    finalRowSub.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
-                    if (finalActiveTag != null) {
-                        finalActiveTag.setTextColor(0xFFBAE6FD);
-                        finalActiveTag.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
-                    }
+        rows.add(new GlassDialogs.Row("Image Title & Info: " + (isDescOn ? "ON" : "OFF"),
+                isDescOn ? "Show the title and description on Home"
+                        : "Hide the text for a clean screen", false));
+        actions.add(() -> {
+            boolean newMode = !isDescOn;
+            setWallpaperDescEnabled(newMode);
+            if (!newMode) {
+                if (heroShelf != null) {
+                    heroShelf.animate().cancel();
+                    heroShelf.setAlpha(0f);
+                    heroShelf.setVisibility(View.GONE);
                 }
-            });
-
-            final String chosenKey = opt.key;
-            row.setOnClickListener(v -> {
-                if (dialogHolder[0] != null) dialogHolder[0].dismiss();
-                SoundEffects.playSelect();
-                if ("NEXT".equals(chosenKey)) {
+                Toast.makeText(this, "Wallpaper description turned off (clean look)",
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                if (heroShelf != null && !isCustomWallpaper()) {
+                    heroShelf.setVisibility(View.VISIBLE);
+                    heroShelf.setAlpha(1f);
                     if (wallpapers != null && !wallpapers.isEmpty()) {
-                        showNextWallpaper(true);
-                        if (wallpaperIntervalMs > 0 && wallpapers.size() >= 2) {
-                            handler.removeCallbacks(wallTick);
-                            handler.postDelayed(wallTick, wallpaperIntervalMs);
-                        }
-                        Toast.makeText(MainActivity.this, i18n("Switching to the next image...", "Beralih ke gambar berikutnya...", "Menukar ke gambar seterusnya..."), Toast.LENGTH_SHORT).show();
+                        int curIdx = getSharedPreferences("wallpaper", MODE_PRIVATE).getInt("index", 0);
+                        if (curIdx >= 0 && curIdx < wallpapers.size()) setPlace(wallpapers.get(curIdx));
                     }
-                } else if ("INTERVAL".equals(chosenKey)) {
-                    showWallpaperIntervalDialog();
-                } else if ("TOGGLE_SHUFFLE".equals(chosenKey)) {
-                    boolean current = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getBoolean("shuffle_mode", true);
-                    boolean newMode = !current;
-                    getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit().putBoolean("shuffle_mode", newMode).apply();
-                    Toast.makeText(MainActivity.this, newMode ? i18n("🔀 Shuffle Mode: Images Picked Randomly", "🔀 Mode Acak: Gambar Dipilih Secara Acak", "🔀 Mod Rawak: Gambar Dipilih Secara Rawak") : i18n("➡️ Sequential Mode: Images Picked in Order", "➡️ Mode Berurutan: Gambar Dipilih Sesuai Urutan", "➡️ Mod Berurutan: Gambar Dipilih Ikut Urutan"), Toast.LENGTH_SHORT).show();
-                    showWallpaperDialog();
-                } else if ("TOGGLE_DESC".equals(chosenKey)) {
-                    boolean current = isWallpaperDescEnabled();
-                    boolean newMode = !current;
-                    setWallpaperDescEnabled(newMode);
-                    if (!newMode) {
-                        if (heroShelf != null) {
-                            heroShelf.animate().cancel();
-                            heroShelf.setAlpha(0f);
-                            heroShelf.setVisibility(View.GONE);
-                        }
-                        Toast.makeText(MainActivity.this, i18n("Wallpaper Description Turned Off (Clean Look)", "Deskripsi Wallpaper Dimatikan (Clean Look)", "Deskripsi Wallpaper Dimatikan (Clean Look)"), Toast.LENGTH_SHORT).show();
-                    } else {
-                        if (heroShelf != null && !isCustomWallpaper()) {
-                            heroShelf.setVisibility(View.VISIBLE);
-                            heroShelf.setAlpha(1f);
-                            if (wallpapers != null && !wallpapers.isEmpty()) {
-                                int curIdx = getSharedPreferences("wallpaper", MODE_PRIVATE).getInt("index", 0);
-                                if (curIdx >= 0 && curIdx < wallpapers.size()) {
-                                    setPlace(wallpapers.get(curIdx));
-                                }
-                            }
-                        }
-                        Toast.makeText(MainActivity.this, i18n("Wallpaper Description Turned On (ON)", "Deskripsi Wallpaper Dihidupkan (ON)", "Deskripsi Wallpaper Dihidupkan (ON)"), Toast.LENGTH_SHORT).show();
-                    }
-                    showWallpaperDialog();
-                } else if ("TOGGLE_WEATHER_OVERLAY".equals(chosenKey)) {
-                    boolean current = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getBoolean("dynamic_weather_overlay", true);
-                    boolean newMode = !current;
-                    getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit().putBoolean("dynamic_weather_overlay", newMode).apply();
-                    Toast.makeText(MainActivity.this, newMode ? "🌧️ Dynamic Weather Overlay Turned On (ON)" : "⛅ Dynamic Weather Overlay Turned Off (OFF)", Toast.LENGTH_SHORT).show();
-                    updateWeatherOverlay(HomeWeather.last(MainActivity.this));
-                    showWallpaperDialog();
-                } else if ("MANAGE_CUSTOM".equals(chosenKey)) {
-                    showCustomWallpaperManagerDialog();
-                } else if ("DARK".equals(chosenKey)) {
-                    applyDarkScreen();
-                    Toast.makeText(MainActivity.this, i18n("🌑 No wallpaper: plain dark screen", "🌑 Tanpa wallpaper: layar gelap", "🌑 Tiada wallpaper: skrin gelap"), Toast.LENGTH_SHORT).show();
-                } else {
-                    switchWallpaperCategory(chosenKey);
                 }
-            });
-
-            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            rlp.bottomMargin = (int) (5 * density);
-            list.addView(row, rlp);
-
-            if (isActive && viewToFocus[0] == null) {
-                viewToFocus[0] = row;
+                Toast.makeText(this, "Wallpaper description turned on", Toast.LENGTH_SHORT).show();
             }
-        }
+            showWallpaperDialog();
+        });
 
-        scroll.addView(list);
-        layout.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        rows.add(new GlassDialogs.Row("Dynamic Weather: " + (isWeatherFxOn ? "ON" : "OFF"),
+                isWeatherFxOn ? "Rain and lightning on the wallpaper when raining"
+                        : "Static wallpaper without weather effects", false));
+        actions.add(() -> {
+            boolean newMode = !isWeatherFxOn;
+            getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
+                    .putBoolean("dynamic_weather_overlay", newMode).apply();
+            Toast.makeText(this, newMode ? "Dynamic weather turned on" : "Dynamic weather turned off",
+                    Toast.LENGTH_SHORT).show();
+            updateWeatherOverlay(HomeWeather.last(this));
+            showWallpaperDialog();
+        });
 
-        final LinearLayout footer = GlassDialogs.footer(this);
-        final View closeButton = GlassDialogs.button(this, density, AppLanguage.strClose(this), false,
-                () -> {
-                    if (dialogHolder[0] != null) dialogHolder[0].dismiss();
+        rows.add(new GlassDialogs.Row("Change Wallpaper Now",
+                "Cycle and display the next wallpaper immediately", false));
+        actions.add(() -> {
+            if (wallpapers != null && !wallpapers.isEmpty()) {
+                showNextWallpaper(true);
+                if (wallpaperIntervalMs > 0 && wallpapers.size() >= 2) {
+                    handler.removeCallbacks(wallTick);
+                    handler.postDelayed(wallTick, wallpaperIntervalMs);
+                }
+                Toast.makeText(this, "Switching to the next image", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        GlassDialogs.showList(this, R.drawable.ic_wallpaper,
+                AppLanguage.strWallpaperDialogTitle(this), AppLanguage.strWallpaperDialogSub(this),
+                rows, focus, AppLanguage.strClose(this), null,
+                index -> {
+                    if (index >= 0 && index < actions.size()) actions.get(index).run();
                 });
-        footer.addView(closeButton);
-        LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        footerParams.topMargin = (int) (10 * density);
-        layout.addView(footer, footerParams);
-
-        final View lastRow = list.getChildCount() > 0 ? list.getChildAt(list.getChildCount() - 1) : null;
-        if (lastRow != null) {
-            lastRow.setOnKeyListener((v, keyCode, event) -> {
-                if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                    closeButton.requestFocus();
-                    return true;
-                }
-                return false;
-            });
-            closeButton.setOnKeyListener((v, keyCode, event) -> {
-                if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-                    lastRow.requestFocus();
-                    return true;
-                }
-                return false;
-            });
-        }
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.Theme_TvHome_GlassDialog);
-        builder.setView(layout);
-        AlertDialog dialog = builder.create();
-        dialogHolder[0] = dialog;
-        dialog.show();
-        styleGlassDialog(dialog);
-
-        if (dialog.getWindow() != null) {
-            layout.setBackground(new GlassDrawable(layout, 22 * density, density, null, 0.5f,
-                    false, 0x99000000));
-            Backdrop.watch(layout);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(0x00000000));
-            int w = Math.min((int) (520 * density), getResources().getDisplayMetrics().widthPixels - (int) (120 * density));
-            int h = Math.min((int) (470 * density), (int) (getResources().getDisplayMetrics().heightPixels * 0.85f));
-            dialog.getWindow().setLayout(w, h);
-        }
-
-        if (viewToFocus[0] != null) {
-            viewToFocus[0].requestFocus();
-        } else if (list.getChildCount() > 0) {
-            list.getChildAt(0).requestFocus();
-        }
     }
 
     private void showWallpaperIntervalDialog() {
-        SoundEffects.playSelect();
-        class IntervalOption {
-            final int minutes;
-            final String title;
-            final String subtitle;
-            IntervalOption(int minutes, String title, String subtitle) {
-                this.minutes = minutes;
-                this.title = title;
-                this.subtitle = subtitle;
-            }
-        }
-
-        String curLang = AppLanguage.getLanguage(this);
-        List<IntervalOption> options = new ArrayList<>();
-        options.add(new IntervalOption(1,
-                AppLanguage.LANG_EN.equals(curLang) ? "⚡ 1 Minute" : (AppLanguage.LANG_ID.equals(curLang) ? "⚡ 1 Menit" : "⚡ 1 Minit"),
-                AppLanguage.LANG_EN.equals(curLang) ? "Fast • Ideal for demonstration & testing" : (AppLanguage.LANG_ID.equals(curLang) ? "Cepat • Cocok untuk demonstrasi & pengujian" : "Pantas • Sesuai untuk demonstrasi & ujian")));
-        options.add(new IntervalOption(5,
-                AppLanguage.LANG_EN.equals(curLang) ? "⭐ 5 Minutes (Recommended)" : (AppLanguage.LANG_ID.equals(curLang) ? "⭐ 5 Menit (Disarankan)" : "⭐ 5 Minit (Disyorkan)"),
-                AppLanguage.LANG_EN.equals(curLang) ? "Dynamic display, changes fresh every 5 minutes" : (AppLanguage.LANG_ID.equals(curLang) ? "Tampilan dinamis, berganti segar tiap 5 menit" : "Paparan dinamik, bertukar segar setiap 5 minit")));
-        options.add(new IntervalOption(10,
-                AppLanguage.LANG_EN.equals(curLang) ? "⭐ 10 Minutes (Recommended)" : (AppLanguage.LANG_ID.equals(curLang) ? "⭐ 10 Menit (Disarankan)" : "⭐ 10 Minit (Disyorkan)"),
-                AppLanguage.LANG_EN.equals(curLang) ? "Balanced cadence for relaxed viewing" : (AppLanguage.LANG_ID.equals(curLang) ? "Keseimbangan pas untuk kenyamanan santai" : "Keseimbangan sempurna untuk tontonan santai")));
-        options.add(new IntervalOption(15,
-                AppLanguage.LANG_EN.equals(curLang) ? "⏱️ 15 Minutes" : (AppLanguage.LANG_ID.equals(curLang) ? "⏱️ 15 Menit" : "⏱️ 15 Minit"),
-                AppLanguage.LANG_EN.equals(curLang) ? "Quarter-hour rotation" : (AppLanguage.LANG_ID.equals(curLang) ? "Rotasi santai setiap seperempat jam" : "Pertukaran santai suku jam")));
-        options.add(new IntervalOption(30,
-                AppLanguage.LANG_EN.equals(curLang) ? "⏱️ 30 Minutes" : (AppLanguage.LANG_ID.equals(curLang) ? "⏱️ 30 Menit" : "⏱️ 30 Minit"),
-                AppLanguage.LANG_EN.equals(curLang) ? "Half-hour rotation" : (AppLanguage.LANG_ID.equals(curLang) ? "Rotasi setiap setengah jam" : "Pertukaran perlahan setengah jam")));
-        options.add(new IntervalOption(60,
-                AppLanguage.LANG_EN.equals(curLang) ? "⏱️ 1 Hour (60 Minutes)" : (AppLanguage.LANG_ID.equals(curLang) ? "⏱️ 1 Jam (60 Menit)" : "⏱️ 1 Jam (60 Minit)"),
-                AppLanguage.LANG_EN.equals(curLang) ? "One wallpaper per hour" : (AppLanguage.LANG_ID.equals(curLang) ? "Satu wallpaper setiap jam" : "Satu gambar bagi setiap jam")));
-        options.add(new IntervalOption(0,
-                AppLanguage.LANG_EN.equals(curLang) ? "⏸️ Manual Only (Turn Off Shuffle)" : (AppLanguage.LANG_ID.equals(curLang) ? "⏸️ Manual Saja (Matikan Shuffle)" : "⏸️ Manual Sahaja (Matikan Shuffle)"),
-                AppLanguage.LANG_EN.equals(curLang) ? "Keep current wallpaper • No automatic change" : (AppLanguage.LANG_ID.equals(curLang) ? "Pertahankan gambar saat ini • Tidak berganti otomatis" : "Kekalkan gambar semasa • Tiada pertukaran automatik")));
+        int[] minutes = {1, 5, 10, 15, 30, 60, 0};
+        String[] titles = {
+                "1 minute",
+                "5 minutes (recommended)",
+                "10 minutes (recommended)",
+                "15 minutes",
+                "30 minutes",
+                "1 hour (60 minutes)",
+                "Manual only (shuffle off)"
+        };
+        String[] subtitles = {
+                "Fast, for demonstrations and testing",
+                "A fresh picture every 5 minutes",
+                "A balanced pace for relaxed viewing",
+                "A new picture every quarter hour",
+                "A new picture every half hour",
+                "One wallpaper per hour",
+                "Keep the current wallpaper; no automatic change"
+        };
 
         int currentMin = getWallpaperIntervalMinutes();
-
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding((int) (20 * density), (int) (16 * density), (int) (20 * density), (int) (12 * density));
-
-        // Header Title
-        TextView titleView = new TextView(this);
-        titleView.setText(AppLanguage.strWallpaperIntervalTitle(this));
-        titleView.setTextSize(19);
-        titleView.setTextColor(0xFFFFFFFF);
-        titleView.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-        titleView.setFontVariationSettings("'wght' 700");
-        titleView.setShadowLayer(4 * density, 0, 1 * density, 0xDD000000);
-        layout.addView(titleView);
-
-        // Header Subtitle
-        TextView subView = new TextView(this);
-        subView.setText(AppLanguage.strWallpaperIntervalSub(this));
-        subView.setTextSize(13.5f);
-        subView.setTextColor(0xE6FFFFFF);
-        subView.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-        subView.setFontVariationSettings("'wght' 600");
-        subView.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
-        subView.setPadding(0, (int) (3 * density), 0, (int) (12 * density));
-        layout.addView(subView);
-
-        ScrollView scroll = new ScrollView(this);
-        scroll.setVerticalScrollBarEnabled(false);
-        LinearLayout list = new LinearLayout(this);
-        list.setOrientation(LinearLayout.VERTICAL);
-
-        AlertDialog[] dialogHolder = new AlertDialog[1];
-        View[] viewToFocus = new View[1];
-
-        for (int i = 0; i < options.size(); i++) {
-            IntervalOption opt = options.get(i);
-            boolean isActive = (opt.minutes == currentMin);
-
-            LinearLayout row = new LinearLayout(this);
-            row.setOrientation(LinearLayout.VERTICAL);
-            row.setFocusable(true);
-            row.setClickable(true);
-            row.setPadding((int) (16 * density), (int) (9 * density), (int) (16 * density), (int) (9 * density));
-
-            StateListDrawable bg = new StateListDrawable();
-            GradientDrawable on = new GradientDrawable();
-            on.setColor(0x2EFFFFFF);
-            on.setStroke((int) (2f * density), 0xFFFFFFFF);
-            on.setCornerRadius(12 * density);
-            GradientDrawable off = new GradientDrawable();
-            off.setColor(isActive ? 0x2A4A90E2 : 0x1AFFFFFF);
-            if (isActive) {
-                off.setStroke((int) (1.5f * density), 0xFF38BDF8);
-            }
-            off.setCornerRadius(12 * density);
-            bg.addState(new int[]{android.R.attr.state_focused}, on);
-            bg.addState(new int[]{}, off);
-            row.setBackground(bg);
-
-            LinearLayout topRow = new LinearLayout(this);
-            topRow.setOrientation(LinearLayout.HORIZONTAL);
-            topRow.setGravity(Gravity.CENTER_VERTICAL);
-
-            TextView rowTitle = new TextView(this);
-            rowTitle.setText(opt.title);
-            rowTitle.setTextSize(16);
-            rowTitle.setTextColor(0xFFFFFFFF);
-            rowTitle.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-            rowTitle.setFontVariationSettings("'wght' 700");
-            rowTitle.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
-            topRow.addView(rowTitle, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-            TextView activeTag = null;
-            if (isActive) {
-                activeTag = new TextView(this);
-                activeTag.setText("✓ " + AppLanguage.strNowBadge(this));
-                activeTag.setTextSize(13);
-                activeTag.setTextColor(0xFFBAE6FD);
-                activeTag.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-                activeTag.setFontVariationSettings("'wght' 700");
-                topRow.addView(activeTag);
-            }
-            row.addView(topRow);
-
-            TextView rowSub = new TextView(this);
-            rowSub.setText(opt.subtitle);
-            rowSub.setTextSize(13);
-            rowSub.setTextColor(0xD9FFFFFF);
-            rowSub.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-            rowSub.setFontVariationSettings("'wght' 600");
-            rowSub.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
-            rowSub.setPadding(0, (int) (2 * density), 0, 0);
-            row.addView(rowSub);
-
-            final TextView finalRowTitle = rowTitle;
-            final TextView finalRowSub = rowSub;
-            final TextView finalActiveTag = activeTag;
-            row.setOnFocusChangeListener((v, hasFocus) -> {
-                if (hasFocus) {
-                    finalRowTitle.setTextColor(0xFFFFFFFF);
-                    finalRowTitle.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
-                    finalRowSub.setTextColor(0xFFFFFFFF);
-                    finalRowSub.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
-                    if (finalActiveTag != null) {
-                        finalActiveTag.setTextColor(0xFFFFFFFF);
-                        finalActiveTag.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
-                    }
-                } else {
-                    finalRowTitle.setTextColor(0xFFFFFFFF);
-                    finalRowTitle.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
-                    finalRowSub.setTextColor(0xD9FFFFFF);
-                    finalRowSub.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
-                    if (finalActiveTag != null) {
-                        finalActiveTag.setTextColor(0xFFBAE6FD);
-                        finalActiveTag.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
-                    }
-                }
-            });
-
-            final int chosenMin = opt.minutes;
-            row.setOnClickListener(v -> {
-                if (dialogHolder[0] != null) dialogHolder[0].dismiss();
-                SoundEffects.playSelect();
-                getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
-                        .putInt("wallpaper_interval_minutes", chosenMin)
-                        .apply();
-                wallpaperIntervalMs = getWallpaperIntervalMs();
-                handler.removeCallbacks(wallTick);
-                if (wallpaperIntervalMs > 0 && wallpapers != null && wallpapers.size() >= 2) {
-                    wallShownAt = android.os.SystemClock.elapsedRealtime();
-                    handler.postDelayed(wallTick, wallpaperIntervalMs);
-                }
-                String msg = (chosenMin == 0)
-                        ? i18n("⏸️ Automatic change turned off (Change manually)", "⏸️ Pergantian otomatis dimatikan (Ganti manual)", "⏸️ Pertukaran automatik dimatikan (Tukar manual)")
-                        : i18n("✅ Wallpaper will change every ", "✅ Wallpaper akan berganti setiap ", "✅ Wallpaper akan bertukar setiap ") + i18n((chosenMin == 60 ? "1 hour" : chosenMin + " minutes"), (chosenMin == 60 ? "1 jam" : chosenMin + " menit"), (chosenMin == 60 ? "1 jam" : chosenMin + " minit"));
-                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
-                showWallpaperDialog();
-            });
-
-            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            rlp.bottomMargin = (int) (5 * density);
-            list.addView(row, rlp);
-
-            if (isActive && viewToFocus[0] == null) {
-                viewToFocus[0] = row;
-            }
+        List<GlassDialogs.Row> rows = new ArrayList<>();
+        int focus = 0;
+        for (int i = 0; i < minutes.length; i++) {
+            boolean active = minutes[i] == currentMin;
+            if (active) focus = i;
+            rows.add(new GlassDialogs.Row(titles[i], subtitles[i], active));
         }
 
-        scroll.addView(list);
-        layout.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-
-        final LinearLayout footer = GlassDialogs.footer(this);
-        final View backButton = GlassDialogs.button(this, density, AppLanguage.strBack(this), false,
-                () -> {
-                    if (dialogHolder[0] != null) dialogHolder[0].dismiss();
+        GlassDialogs.showList(this, R.drawable.ic_wallpaper,
+                AppLanguage.strWallpaperIntervalTitle(this), AppLanguage.strWallpaperIntervalSub(this),
+                rows, focus, AppLanguage.strBack(this), this::showWallpaperDialog,
+                index -> {
+                    int chosenMin = minutes[index];
+                    SoundEffects.playSelect();
+                    getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
+                            .putInt("wallpaper_interval_minutes", chosenMin)
+                            .apply();
+                    wallpaperIntervalMs = getWallpaperIntervalMs();
+                    handler.removeCallbacks(wallTick);
+                    if (wallpaperIntervalMs > 0 && wallpapers != null && wallpapers.size() >= 2) {
+                        wallShownAt = android.os.SystemClock.elapsedRealtime();
+                        handler.postDelayed(wallTick, wallpaperIntervalMs);
+                    }
+                    String msg = (chosenMin == 0)
+                            ? "Automatic change turned off; change it manually"
+                            : "Wallpaper will change every " + (chosenMin == 60 ? "1 hour" : chosenMin + " minutes");
+                    Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
                     showWallpaperDialog();
                 });
-        footer.addView(backButton);
-        LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        footerParams.topMargin = (int) (10 * density);
-        layout.addView(footer, footerParams);
-
-        final View lastRow = list.getChildCount() > 0 ? list.getChildAt(list.getChildCount() - 1) : null;
-        if (lastRow != null) {
-            lastRow.setOnKeyListener((v, keyCode, event) -> {
-                if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                    backButton.requestFocus();
-                    return true;
-                }
-                return false;
-            });
-            backButton.setOnKeyListener((v, keyCode, event) -> {
-                if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-                    lastRow.requestFocus();
-                    return true;
-                }
-                return false;
-            });
-        }
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.Theme_TvHome_GlassDialog);
-        builder.setView(layout);
-        AlertDialog dialog = builder.create();
-        dialogHolder[0] = dialog;
-        dialog.show();
-        styleGlassDialog(dialog);
-
-        if (dialog.getWindow() != null) {
-            layout.setBackground(new GlassDrawable(layout, 22 * density, density, null, 0.5f,
-                    false, 0x99000000));
-            Backdrop.watch(layout);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(0x00000000));
-            int w = Math.min((int) (520 * density), getResources().getDisplayMetrics().widthPixels - (int) (120 * density));
-            int h = Math.min((int) (470 * density), (int) (getResources().getDisplayMetrics().heightPixels * 0.85f));
-            dialog.getWindow().setLayout(w, h);
-        }
-
-        if (viewToFocus[0] != null) {
-            viewToFocus[0].requestFocus();
-        } else if (list.getChildCount() > 0) {
-            list.getChildAt(0).requestFocus();
-        }
     }
 
     private void triggerGoogleAssistant() {
@@ -5260,47 +4855,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             uploadServer = new WallpaperUploadServer(this, port, listener);
             started = uploadServer.start();
         }
-
         if (!started) {
-            Toast.makeText(this, i18n("Error: Could not start the local upload server.", "Kesalahan: Tidak dapat memulai server unggah lokal.", "Ralat: Tidak dapat memulakan pelayan muat naik tempatan."), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Could not start the local upload server", Toast.LENGTH_LONG).show();
             return;
         }
 
         String uploadUrl = "http://" + localIp + ":" + port;
-        Bitmap qrBmp = QrBitmapUtil.createQrBitmap(uploadUrl, Math.round(260 * density));
+        Bitmap qrBmp = QrBitmapUtil.createQrBitmap(uploadUrl, Math.round(220 * density));
 
-        LinearLayout rootLayout = new LinearLayout(this);
-        rootLayout.setOrientation(LinearLayout.VERTICAL);
-        rootLayout.setGravity(Gravity.CENTER_HORIZONTAL);
-        int padH = Math.round(36 * density);
-        int padV = Math.round(28 * density);
-        rootLayout.setPadding(padH, padV, padH, padV);
-        rootLayout.setBackgroundColor(0xF0131722); // Elegant dark slate
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setGravity(Gravity.CENTER_HORIZONTAL);
 
-        // Title
-        TextView title = new TextView(this);
-        title.setText(i18n("📲 Upload Wallpaper From Phone", "📲 Unggah Wallpaper Dari Ponsel", "📲 Muat Naik Wallpaper Dari Telefon"));
-        title.setTextColor(0xFFFFFFFF);
-        title.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-        title.setFontVariationSettings("'wght' 700");
-        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 21);
-        title.setShadowLayer(4 * density, 0, 1 * density, 0xDD000000);
-        title.setGravity(Gravity.CENTER);
-        rootLayout.addView(title);
-
-        // Subtitle instructions
-        TextView sub = new TextView(this);
-        sub.setText(i18n("Connect your phone to the same Wi-Fi, then scan the QR code below:", "Sambungkan ponsel ke Wi-Fi yang sama, lalu pindai kode QR di bawah:", "Sambungkan telefon pada Wi-Fi yang sama, kemudian imbas kod QR di bawah:"));
-        sub.setTextColor(0xFFE2E8F0);
-        sub.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-        sub.setFontVariationSettings("'wght' 600");
-        sub.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.5f);
-        sub.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
-        sub.setGravity(Gravity.CENTER);
-        sub.setPadding(0, Math.round(6 * density), 0, Math.round(18 * density));
-        rootLayout.addView(sub);
-
-        // QR Code Container (Crisp White Card with subtle margin)
         FrameLayout qrContainer = new FrameLayout(this);
         qrContainer.setBackgroundColor(0xFFFFFFFF);
         int qrPad = Math.round(12 * density);
@@ -5311,83 +4877,53 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         qrContainer.setLayoutParams(qrLp);
 
         qrImageView = new ImageView(this);
-        if (qrBmp != null) {
-            qrImageView.setImageBitmap(qrBmp);
-        }
+        if (qrBmp != null) qrImageView.setImageBitmap(qrBmp);
         int qrDim = Math.round(220 * density);
         FrameLayout.LayoutParams imgLp = new FrameLayout.LayoutParams(qrDim, qrDim);
         imgLp.gravity = Gravity.CENTER;
         qrImageView.setLayoutParams(imgLp);
         qrContainer.addView(qrImageView);
-        rootLayout.addView(qrContainer);
+        content.addView(qrContainer);
 
-        // Web URL pill
         qrUrlText = new TextView(this);
-        qrUrlText.setText("🌐 " + uploadUrl);
-        qrUrlText.setTextColor(0xFF38BDF8);
-        qrUrlText.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-        qrUrlText.setFontVariationSettings("'wght' 700");
+        qrUrlText.setText(uploadUrl);
+        qrUrlText.setTextColor(0xFF7DD3FC);
+        Fonts.apply(qrUrlText, Fonts.BOLD);
         qrUrlText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         qrUrlText.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
         qrUrlText.setGravity(Gravity.CENTER);
         qrUrlText.setPadding(0, Math.round(14 * density), 0, Math.round(4 * density));
-        rootLayout.addView(qrUrlText);
+        content.addView(qrUrlText);
 
-        // Status text
         qrStatusText = new TextView(this);
-        qrStatusText.setText(i18n("📡 Waiting for a camera scan or file from your phone...", "📡 Menunggu pindaian kamera atau file dari ponsel...", "📡 Menunggu imbasan kamera atau fail dari telefon..."));
+        qrStatusText.setText("Waiting for a camera scan or a file from your phone...");
         qrStatusText.setTextColor(0xFFF1F5F9);
-        qrStatusText.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-        qrStatusText.setFontVariationSettings("'wght' 600");
+        Fonts.apply(qrStatusText, Fonts.SEMIBOLD);
         qrStatusText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         qrStatusText.setShadowLayer(3 * density, 0, 1 * density, 0xAA000000);
         qrStatusText.setGravity(Gravity.CENTER);
-        qrStatusText.setPadding(0, 0, 0, Math.round(18 * density));
-        rootLayout.addView(qrStatusText);
+        qrStatusText.setPadding(0, 0, 0, Math.round(10 * density));
+        content.addView(qrStatusText);
 
-        // Close button
-        Button btnClose = new Button(this);
-        btnClose.setText(AppLanguage.strClose(this));
-        btnClose.setTextColor(0xFFFFFFFF);
-        btnClose.setBackgroundResource(R.drawable.pill_bg);
-        btnClose.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-        btnClose.setFontVariationSettings("'wght' 700");
-        btnClose.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
-        btnClose.setFocusable(true);
-        btnClose.setFocusableInTouchMode(true);
-        LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(
-                Math.round(180 * density), Math.round(42 * density));
-        btnLp.gravity = Gravity.CENTER_HORIZONTAL;
-        btnClose.setLayoutParams(btnLp);
-        rootLayout.addView(btnClose);
-
-        // Watermark credit
         TextView credit = new TextView(this);
-        credit.setText("✨ Powered by @imsomangge");
+        credit.setText("Powered by @imsomangge");
         credit.setTextColor(0xFFCBD5E1);
-        credit.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
-        credit.setFontVariationSettings("'wght' 600");
-        credit.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        Fonts.apply(credit, Fonts.SEMIBOLD);
+        credit.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         credit.setGravity(Gravity.CENTER);
-        credit.setPadding(0, Math.round(14 * density), 0, 0);
-        rootLayout.addView(credit);
+        content.addView(credit);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.Theme_TvHome_GlassDialog);
-        builder.setView(rootLayout);
-        qrUploadDialog = builder.create();
-
-        btnClose.setOnClickListener(v -> qrUploadDialog.dismiss());
-
-        trackOverlay(qrUploadDialog, dialog -> {
-            if (uploadServer != null) {
-                uploadServer.stop();
-                uploadServer = null;
-            }
-            qrUploadDialog = null;
-        });
-
-        qrUploadDialog.show();
-        btnClose.requestFocus();
+        qrUploadDialog = GlassDialogs.showCustom(this, R.drawable.ic_wallpaper,
+                "Upload Wallpaper From Phone",
+                "Connect your phone to the same Wi-Fi, then scan the code below",
+                content, null, null, AppLanguage.strClose(this), null, false, null,
+                () -> {
+                    if (uploadServer != null) {
+                        uploadServer.stop();
+                        uploadServer = null;
+                    }
+                    qrUploadDialog = null;
+                });
     }
 
     private WallpaperUploadServer.UploadListener createUploadListener() {
@@ -5577,116 +5113,102 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         File customDir = new File(getFilesDir(), "custom_wallpapers");
         File[] files = customDir.listFiles((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".jpeg"));
         if (files == null || files.length == 0) {
-            AlertDialog dialog = new AlertDialog.Builder(this, R.style.Theme_TvHome_GlassDialog)
-                    .setTitle(i18n("📁 Manage Uploaded Photos", "📁 Kelola Foto yang Diunggah", "📁 Urus Gambar Dimuat Naik"))
-                    .setMessage(i18n("No personal photos found in TV storage. You can upload photos from your phone using a QR code.", "Tidak ada foto pribadi ditemukan di penyimpanan TV. Anda dapat mengunggah foto dari ponsel menggunakan kode QR.", "Tiada gambar peribadi dijumpai di dalam storan TV. Anda boleh memuat naik gambar dari telefon menggunakan kod QR."))
-                    .setPositiveButton(i18n("📲 Open QR Code", "📲 Buka Kode QR", "📲 Buka Kod QR"), (d, w) -> showWallpaperUploadQrDialog())
-                    .setNegativeButton(AppLanguage.strBack(this), (d, w) -> showWallpaperDialog())
-                    .show();
-            styleGlassDialog(dialog);
+            GlassDialogs.show(this, R.drawable.ic_wallpaper, "Manage Uploaded Photos",
+                    "No personal photos found in TV storage. You can upload photos from your phone using a QR code.",
+                    "Open QR Code", this::showWallpaperUploadQrDialog,
+                    AppLanguage.strBack(this), this::showWallpaperDialog);
             return;
         }
 
         Arrays.sort(files, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
+        boolean isSingleMode = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+                .getBoolean("custom_single_mode", false);
+        String singleFile = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+                .getString("custom_single_file", "");
 
-        boolean isSingleMode = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getBoolean("custom_single_mode", false);
-        String singleFile = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getString("custom_single_file", "");
-
-        List<String> items = new ArrayList<>();
+        List<GlassDialogs.Row> rows = new ArrayList<>();
         List<Runnable> actions = new ArrayList<>();
 
-        // Quick Mode Actions at top
-        items.add(i18n("📲 Upload New Photo (Phone QR Code)", "📲 Unggah Foto Baru (Kode QR Ponsel)", "📲 Muat Naik Foto Baharu (QR Code Telefon)"));
+        rows.add(new GlassDialogs.Row("Upload New Photo",
+                "Scan a QR code and send a picture from your phone", false));
         actions.add(this::showWallpaperUploadQrDialog);
 
-        items.add(i18n("🔄 Rotate All Images (Slideshow Mode)", "🔄 Putar Semua Gambar (Mode Slideshow)", "🔄 Putar Semua Gambar (Slideshow Mod)"));
+        rows.add(new GlassDialogs.Row("Rotate All Images",
+                "Slideshow through every uploaded photo", false));
         actions.add(this::onCustomWallpaperSlideshow);
 
-        items.add(i18n("🗑️ Delete All Images (Empty)", "🗑️ Hapus Semua Gambar (Kosongkan)", "🗑️ Padam Semua Gambar (Kosongkan)"));
-        actions.add(() -> {
-            AlertDialog dialog = new AlertDialog.Builder(this, R.style.Theme_TvHome_GlassDialog)
-                    .setTitle(i18n("⚠️ Delete All Images?", "⚠️ Hapus Semua Gambar?", "⚠️ Padam Semua Gambar?"))
-                    .setMessage(i18n("Are you sure you want to delete all ", "Apakah Anda yakin ingin menghapus semua ", "Adakah anda pasti ingin memadam semua ") + files.length + i18n(" uploaded images?", " gambar yang diunggah?", " gambar yang dimuat naik?"))
-                    .setPositiveButton(i18n("Yes, Delete All", "Ya, Hapus Semua", "Ya, Padam Semua"), (d, w) -> {
-                        for (File f : files) f.delete();
-                        onCustomWallpaperCleared();
-                    })
-                    .setNegativeButton(AppLanguage.strCancel(this), null)
-                    .show();
-            styleGlassDialog(dialog);
-        });
+        rows.add(new GlassDialogs.Row("Delete All Images",
+                "Remove every uploaded photo from the TV", false));
+        actions.add(() -> GlassDialogs.show(this, R.drawable.ic_delete, "Delete All Images?",
+                "Are you sure you want to delete all " + files.length + " uploaded images?",
+                "Yes, delete all", () -> {
+                    for (File f : files) f.delete();
+                    onCustomWallpaperCleared();
+                },
+                AppLanguage.strCancel(this), this::showCustomWallpaperManagerDialog));
 
         SimpleDateFormat sdf = new SimpleDateFormat("d MMM, HH:mm", Locale.getDefault());
         for (File f : files) {
             double kb = f.length() / 1024.0;
-            String sizeStr = kb > 1024 ? String.format(Locale.ROOT, "%.1f MB", kb / 1024.0) : String.format(Locale.ROOT, "%.0f KB", kb);
+            String sizeStr = kb > 1024 ? String.format(Locale.ROOT, "%.1f MB", kb / 1024.0)
+                    : String.format(Locale.ROOT, "%.0f KB", kb);
             boolean isCurrent = isSingleMode && f.getName().equals(singleFile);
-            String prefix = isCurrent ? i18n("📌 [Pinned] ", "📌 [Tetap] ", "📌 [Kekal] ") : "🖼️ ";
-            items.add(prefix + f.getName() + " (" + sizeStr + " • " + sdf.format(new Date(f.lastModified())) + ")");
+            rows.add(new GlassDialogs.Row((isCurrent ? "Pinned: " : "") + f.getName(),
+                    sizeStr + " • " + sdf.format(new Date(f.lastModified())), isCurrent));
             actions.add(() -> showSingleCustomActionDialog(f));
         }
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.Theme_TvHome_GlassDialog);
-        builder.setTitle(i18n("📱 TV Image Manager (", "📱 Pengelola Gambar TV (", "📱 Pengurus Gambar TV (") + files.length + i18n(" Photos)", " Foto)", " Foto)"));
-        builder.setItems(items.toArray(new String[0]), (dialog, which) -> {
-            if (which >= 0 && which < actions.size()) {
-                actions.get(which).run();
-            }
-        });
-        builder.setNegativeButton(AppLanguage.strClose(this), (dialog, which) -> dialog.dismiss());
-        AlertDialog dialog = builder.create();
-        dialog.show();
-        styleGlassDialog(dialog);
-        if (dialog.getWindow() != null) {
-            int w = Math.min((int) (520 * density), getResources().getDisplayMetrics().widthPixels - (int) (120 * density));
-            int h = Math.min((int) (440 * density), (int) (getResources().getDisplayMetrics().heightPixels * 0.70f));
-            dialog.getWindow().setLayout(w, h);
-        }
+        GlassDialogs.showList(this, R.drawable.ic_wallpaper,
+                "TV Image Manager (" + files.length + " photos)",
+                "Choose a photo to pin, delete, or keep", rows, -1,
+                AppLanguage.strClose(this), null,
+                index -> {
+                    if (index >= 0 && index < actions.size()) actions.get(index).run();
+                });
     }
 
     private void showSingleCustomActionDialog(File file) {
-        String[] actions = {
-                i18n("📌 Set as Single Wallpaper (Lock This Image)", "📌 Jadikan Wallpaper Tunggal (Kunci Gambar Ini)", "📌 Jadikan Wallpaper Tunggal (Kunci Gambar Ini)"),
-                i18n("🗑️ Delete This Image", "🗑️ Hapus Gambar Ini", "🗑️ Padam Gambar Ini"),
-                i18n("🧹 Keep Only This Image & Delete Others", "🧹 Simpan Gambar Ini Saja & Hapus Yang Lain", "🧹 Simpan Gambar Ini Sahaja & Padam Yang Lain"),
-                i18n("⬅️ Back", "⬅️ Kembali", "⬅️ Kembali")
-        };
+        double kb = file.length() / 1024.0;
+        String sizeStr = kb > 1024 ? String.format(Locale.ROOT, "%.1f MB", kb / 1024.0)
+                : String.format(Locale.ROOT, "%.0f KB", kb);
+        List<GlassDialogs.Row> rows = new ArrayList<>();
+        List<Runnable> actions = new ArrayList<>();
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.Theme_TvHome_GlassDialog);
-        builder.setTitle("🖼️ " + file.getName());
-        builder.setItems(actions, (dialog, which) -> {
-            switch (which) {
-                case 0: // Lock single
-                    onCustomWallpaperSelected(file);
-                    break;
-                case 1: // Delete this
-                    file.delete();
-                    onCustomWallpaperDeleted(file);
-                    break;
-                case 2: // Keep this, delete others
-                    File customDir = new File(getFilesDir(), "custom_wallpapers");
-                    File[] allFiles = customDir.listFiles((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".jpeg"));
-                    if (allFiles != null) {
-                        for (File f : allFiles) {
-                            if (!f.getName().equals(file.getName())) {
-                                f.delete();
-                            }
-                        }
-                    }
-                    onCustomWallpaperSelected(file);
-                    Toast.makeText(this, i18n("🧹 Other images deleted. This image was kept.", "🧹 Gambar lain dihapus. Gambar ini dipertahankan.", "🧹 Gambar lain dipadam. Gambar ini dikekalkan."), Toast.LENGTH_SHORT).show();
-                    break;
-                case 3: // Back
-                    showCustomWallpaperManagerDialog();
-                    break;
-            }
+        rows.add(new GlassDialogs.Row("Set as Single Wallpaper",
+                "Lock this photo and stop the slideshow", false));
+        actions.add(() -> onCustomWallpaperSelected(file));
+
+        rows.add(new GlassDialogs.Row("Delete This Image",
+                "Remove this photo from TV storage", false));
+        actions.add(() -> {
+            file.delete();
+            onCustomWallpaperDeleted(file);
         });
-        builder.setNegativeButton(AppLanguage.strCancel(this), null);
-        AlertDialog dialog = builder.create();
-        dialog.show();
-        styleGlassDialog(dialog);
-    }
 
+        rows.add(new GlassDialogs.Row("Keep Only This Image",
+                "Delete every other uploaded photo", false));
+        actions.add(() -> {
+            File customDir = new File(getFilesDir(), "custom_wallpapers");
+            File[] allFiles = customDir.listFiles((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".jpeg"));
+            if (allFiles != null) {
+                for (File f : allFiles) {
+                    if (!f.getName().equals(file.getName())) f.delete();
+                }
+            }
+            onCustomWallpaperSelected(file);
+            Toast.makeText(this, "Other images deleted; this one was kept", Toast.LENGTH_SHORT).show();
+        });
+
+        rows.add(new GlassDialogs.Row("Back",
+                "Return to the image list", false));
+        actions.add(this::showCustomWallpaperManagerDialog);
+
+        GlassDialogs.showList(this, R.drawable.ic_wallpaper, file.getName(), sizeStr,
+                rows, 0, AppLanguage.strClose(this), null,
+                index -> {
+                    if (index >= 0 && index < actions.size()) actions.get(index).run();
+                });
+    }
     private void showHazeLocationDialog() {
         startActivity(new Intent(this, LocationActivity.class));
     }
@@ -6472,61 +5994,79 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         final Cards.Card card = Cards.firstPending(cards);
         if (card == null) return;
 
-        View panel = getLayoutInflater().inflate(R.layout.dialog_card_prompt, root, false);
-        ((TextView) panel.findViewById(R.id.title)).setText(getString(R.string.card_prompt_title, card.appLabel));
-        ((TextView) panel.findViewById(R.id.body)).setText(card.state == Cards.State.RESIGNED
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+
+        TextView body = new TextView(this);
+        body.setText(card.state == Cards.State.RESIGNED
                 ? getString(R.string.card_prompt_resigned, card.appLabel)
                 : card.state == Cards.State.RELABELLED
                 ? getString(R.string.card_prompt_relabelled, card.appLabel)
                 : getString(R.string.card_prompt_body, card.appLabel));
-        TextView names = panel.findViewById(R.id.names);
-        if (Cards.fold(card.label).equals(Cards.fold(card.appLabel))) names.setVisibility(View.GONE);
-        else names.setText(getString(R.string.card_prompt_names, card.label, card.appLabel));
-        ((TextView) panel.findViewById(R.id.identity)).setText(
-                getString(R.string.card_prompt_identity, card.pkg, Cards.shortDigest(card.digest)));
-        TextView keep = panel.findViewById(R.id.btnKeep);
-        TextView show = panel.findViewById(R.id.btnShow);
+        body.setTextSize(15.5f);
+        body.setTextColor(0xFFFFFFFF);
+        Fonts.apply(body, Fonts.SEMIBOLD);
+        body.setLineSpacing(0, 1.25f);
+        body.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
+        content.addView(body);
 
-        final Dialog dialog = new Dialog(this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(panel);
-        dialog.setCanceledOnTouchOutside(false);
-        Window w = dialog.getWindow();
-        if (w != null) {
-            w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            w.setLayout((int) (440 * density), ViewGroup.LayoutParams.WRAP_CONTENT);
-            w.setDimAmount(0.6f);
+        if (!Cards.fold(card.label).equals(Cards.fold(card.appLabel))) {
+            TextView names = new TextView(this);
+            names.setText(getString(R.string.card_prompt_names, card.label, card.appLabel));
+            names.setTextSize(15.5f);
+            names.setTextColor(0xF0FFFFFF);
+            Fonts.apply(names, Fonts.SEMIBOLD);
+            names.setLineSpacing(0, 1.2f);
+            names.setPadding(0, (int) (6 * density), 0, 0);
+            names.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
+            content.addView(names);
         }
+
+        TextView hint = new TextView(this);
+        hint.setText(R.string.card_prompt_hint);
+        hint.setTextSize(14);
+        hint.setTextColor(0xE6FFFFFF);
+        Fonts.apply(hint, Fonts.SEMIBOLD);
+        hint.setPadding(0, (int) (8 * density), 0, 0);
+        hint.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
+        content.addView(hint);
+
+        TextView identity = new TextView(this);
+        identity.setText(getString(R.string.card_prompt_identity, card.pkg, Cards.shortDigest(card.digest)));
+        identity.setTextSize(13);
+        identity.setTextColor(0xD9FFFFFF);
+        Fonts.apply(identity, Fonts.MEDIUM);
+        identity.setPadding(0, (int) (8 * density), 0, 0);
+        content.addView(identity);
+
         // One decision per prompt: the buttons and Back (cancel) all end here.
         final boolean[] decided = {false};
-        View.OnClickListener choose = v -> {
+        final Runnable keepHidden = () -> {
             if (decided[0]) return;
             decided[0] = true;
             cardPrompt = null;
-            dialog.dismiss();
-            decideCard(card, v.getId() == R.id.btnShow);   // guards its own card calls; the tile reload stays outside
-            restoreFocus();   // the tiles changed under the prompt; this also chains the next prompt
+            decideCard(card, false);
+            restoreFocus();
         };
-        keep.setOnClickListener(choose);
-        show.setOnClickListener(choose);
-        dialog.setOnCancelListener(d -> choose.onClick(keep));
-        trackOverlay(dialog, d -> {
-            if (cardPrompt == dialog) cardPrompt = null;
-        });
-        // Left and Right move between the two buttons; Up and Down stay put; the ends don't wrap.
-        View.OnKeyListener keys = (v, keyCode, event) -> {
-            if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
-            if (keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) return true;
-            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) return v.getId() == R.id.btnKeep;
-            return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && v.getId() == R.id.btnShow;
+        final Runnable showCard = () -> {
+            if (decided[0]) return;
+            decided[0] = true;
+            cardPrompt = null;
+            decideCard(card, true);
+            restoreFocus();
         };
-        keep.setOnKeyListener(keys);
-        show.setOnKeyListener(keys);
-        cardPrompt = dialog;
-        dialog.show();
-        keep.requestFocus();
-    }
 
+        final AlertDialog[] holder = new AlertDialog[1];
+        holder[0] = GlassDialogs.showCustom(this, 0, getString(R.string.card_prompt_title, card.appLabel),
+                null, content,
+                getString(R.string.card_show), showCard,
+                getString(R.string.card_keep_hidden), keepHidden,
+                true, keepHidden::run,
+                () -> {
+                    if (cardPrompt == holder[0]) cardPrompt = null;
+                });
+        cardPrompt = holder[0];
+    }
     /** Writes the owner's decision and rebuilds the tiles; focus is left where it is. */
     private void decideCard(Cards.Card card, boolean show) {
         boolean saved = CardFeature.run(() -> Cards.decide(Cards.storeFile(this), card, show), false);

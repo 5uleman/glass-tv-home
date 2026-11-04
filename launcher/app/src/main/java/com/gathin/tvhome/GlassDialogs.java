@@ -94,7 +94,7 @@ final class GlassDialogs {
         footerParams.topMargin = (int) (16 * density);
         panel.addView(footer, footerParams);
 
-        present(activity, dialog, panel, bodyScroll);
+        present(activity, dialog, panel, bodyScroll, null);
         View focus = footer.getChildCount() > 0
                 ? footer.getChildAt(footer.getChildCount() - 1) : null;
         if (focus != null) {
@@ -160,7 +160,7 @@ final class GlassDialogs {
         footerParams.topMargin = (int) (12 * density);
         panel.addView(footer, footerParams);
 
-        present(activity, dialog, panel, scroll);
+        present(activity, dialog, panel, scroll, null);
         final View target = focusRow[0] != null ? focusRow[0]
                 : (footer.getChildCount() > 0 ? footer.getChildAt(footer.getChildCount() - 1) : null);
         if (target != null) panel.post(target::requestFocus);
@@ -171,7 +171,7 @@ final class GlassDialogs {
     static AlertDialog showCustom(Activity activity, int iconRes, String title, String subtitle,
                                   View content, String primary, Runnable onPrimary,
                                   String secondary, Runnable onSecondary,
-                                  boolean focusSecondary, Runnable onCancel) {
+                                  boolean focusSecondary, Runnable onCancel, Runnable onDismissed) {
         float density = activity.getResources().getDisplayMetrics().density;
         LinearLayout panel = panel(activity, density);
         panel.addView(header(activity, density, iconRes, title, subtitle));
@@ -216,7 +216,7 @@ final class GlassDialogs {
         if (onCancel != null) {
             dialog.setOnCancelListener(d -> onCancel.run());
         }
-        present(activity, dialog, panel, scroll);
+        present(activity, dialog, panel, scroll, onDismissed);
         final View target = focusSecondary && secondaryButton != null ? secondaryButton
                 : (primaryButton != null ? primaryButton : secondaryButton);
         if (target != null) panel.post(target::requestFocus);
@@ -405,7 +405,7 @@ final class GlassDialogs {
      * area takes the remaining height and scrolls, so the header and footer stay in place.
      */
     private static void present(Activity activity, AlertDialog dialog, LinearLayout panel,
-                                ScrollView scroll) {
+                                ScrollView scroll, Runnable onDismissed) {
         float density = activity.getResources().getDisplayMetrics().density;
         int screenW = activity.getResources().getDisplayMetrics().widthPixels;
         int screenH = activity.getResources().getDisplayMetrics().heightPixels;
@@ -430,7 +430,10 @@ final class GlassDialogs {
         final Object overlay = OverlayManager.register(() -> {
             if (dialog.isShowing()) dialog.dismiss();
         });
-        dialog.setOnDismissListener(d -> OverlayManager.unregister(overlay));
+        dialog.setOnDismissListener(d -> {
+            OverlayManager.unregister(overlay);
+            if (onDismissed != null) onDismissed.run();
+        });
     }
 
     /** A LayoutParams alias that reads clearly in the builder methods. */
