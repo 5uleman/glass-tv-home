@@ -998,21 +998,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             android.graphics.BitmapFactory.Options opts = new android.graphics.BitmapFactory.Options();
             opts.inJustDecodeBounds = true;
             android.graphics.BitmapFactory.decodeFile(file.getPath(), opts);
-            int srcW = opts.outWidth, srcH = opts.outHeight;
             int sample = 1;
             while (opts.outWidth / (sample * 2) >= dm.widthPixels && opts.outHeight / (sample * 2) >= dm.heightPixels) sample *= 2;
             opts.inJustDecodeBounds = false;
             opts.inSampleSize = sample;
             opts.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565;
-            // DIAGNOSTIC (temporary): per-wallpaper cost for the lag work; goes with this commit.
-            long startedAt = android.os.SystemClock.elapsedRealtime();
-            android.graphics.Bitmap bmp = android.graphics.BitmapFactory.decodeFile(file.getPath(), opts);
-            long decodeMs = android.os.SystemClock.elapsedRealtime() - startedAt;
-            android.util.Log.i("TvHome.Wall", "decode " + file.getName()
-                    + ": " + file.length() + " bytes on disk, source " + srcW + "x" + srcH
-                    + ", sample " + sample + ", " + decodeMs + " ms, decoded "
-                    + (bmp != null ? bmp.getWidth() + "x" + bmp.getHeight() + " " + bmp.getByteCount() + " bytes" : "null"));
-            return bmp;
+            return android.graphics.BitmapFactory.decodeFile(file.getPath(), opts);
         } catch (Exception | OutOfMemoryError e) {
             // A bad or huge picture must never take the home screen down; the plain colour stays.
             return null;
