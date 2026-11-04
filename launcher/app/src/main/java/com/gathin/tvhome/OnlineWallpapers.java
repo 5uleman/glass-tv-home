@@ -248,8 +248,6 @@ final class OnlineWallpapers {
                     "Lahore Fort at Sunset", "The fort's walls and domes under a warm sky, with the flag on the rampart", "Pakistan_Lahore", "Lahore, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/13239874/pexels-photo-13239874.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
                     "Minar-e-Pakistan in Daylight", "The minaret rising above its lawns and trees under a clear sky", "Pakistan_Lahore", "Lahore, Pakistan"),
-            new WallpaperItem("https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Lahore_Museum_Gandhara_artefacts.jpg/1920px-Lahore_Museum_Gandhara_artefacts.jpg",
-                    "Lahore Museum, Gandhara Gallery", "A 1908 photographic plate of Gandhara sculptures in the Lahore Museum", "Pakistan_Lahore", "Lahore, Pakistan"),
             new WallpaperItem("https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Eiffel_Tower_replica_in_Bahria_Town.jpg/1920px-Eiffel_Tower_replica_in_Bahria_Town.jpg",
                     "Eiffel Tower Replica at Dusk", "The replica tower and its lit grounds on the edge of Bahria Town at evening", "Pakistan_Lahore", "Bahria Town, Lahore"),
             new WallpaperItem("https://images.pexels.com/photos/14394126/pexels-photo-14394126.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
