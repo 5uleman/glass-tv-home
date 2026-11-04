@@ -22,9 +22,10 @@ final class GlassDialogLayout {
     }
 
     /** Height left for the scrolling list between the fixed header and footer. */
-    static int listViewport(int panelPx, int headerPx, int listTopGapPx,
+    static int listViewport(int panelPx, int panelVerticalPaddingPx, int headerPx, int listTopGapPx,
                             int footerPx, int footerTopGapPx) {
-        return Math.max(0, panelPx - headerPx - listTopGapPx - footerPx - footerTopGapPx);
+        return Math.max(0, panelPx - panelVerticalPaddingPx - headerPx - listTopGapPx
+                - footerPx - footerTopGapPx);
     }
 
     /**

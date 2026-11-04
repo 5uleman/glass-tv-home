@@ -7,15 +7,19 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 /**
- * Screen 1920x1080 at 320 dpi (density 2): a 56dp margin leaves 856px, and the dialog chrome is
- * header 60dp, 14dp gap, footer 46dp, 12dp gap. Rows carry the longest two-line subtitle: 72dp +
- * a 5dp gap.
+ * Screen 1920x1080 at 320 dpi (density 2): a 56dp margin leaves 856px. The panel carries 20dp top
+ * and 18dp bottom padding, a 60dp header, a 14dp gap, a 46dp footer and a 12dp gap. Rows carry the
+ * longest two-line subtitle: 72dp plus a 5dp gap. The real chrome is smaller than this model, so
+ * the numbers here are the conservative case.
  */
 public class GlassDialogLayoutTest {
 
     private static final float DENSITY = 2f;       // 320 dpi
     private static final int SCREEN_PX = 1080;
     private static final int MARGIN_DP = 56;
+    private static final int PAD_TOP_PX = 40;      // 20dp
+    private static final int PAD_BOTTOM_PX = 36;   // 18dp
+    private static final int PAD_PX = PAD_TOP_PX + PAD_BOTTOM_PX;
     private static final int HEADER_PX = 120;      // 60dp
     private static final int LIST_GAP_PX = 28;     // 14dp
     private static final int FOOTER_PX = 92;       // 46dp
@@ -29,20 +33,34 @@ public class GlassDialogLayoutTest {
     }
 
     private static int content(int rows) {
-        return HEADER_PX + LIST_GAP_PX + rows * (ROW_PX + ROW_GAP_PX)
+        return PAD_PX + HEADER_PX + LIST_GAP_PX + rows * (ROW_PX + ROW_GAP_PX)
                 + FOOTER_GAP_PX + FOOTER_PX;
     }
 
-    private static void assertNoOverlap(int panel, int rows) {
-        int viewport = GlassDialogLayout.listViewport(panel, HEADER_PX, LIST_GAP_PX,
+    private static int viewportFor(int panel) {
+        return GlassDialogLayout.listViewport(panel, PAD_PX, HEADER_PX, LIST_GAP_PX,
                 FOOTER_PX, FOOTER_GAP_PX);
-        int listTop = HEADER_PX + LIST_GAP_PX;
-        int listBottom = listTop + viewport;
-        int footerTop = panel - FOOTER_PX;
+    }
+
+    private static int listTop() {
+        return PAD_TOP_PX + HEADER_PX + LIST_GAP_PX;
+    }
+
+    private static int footerTop(int panel) {
+        return panel - PAD_BOTTOM_PX - FOOTER_PX;
+    }
+
+    private static void assertNoOverlap(int panel, int rows) {
+        int viewport = viewportFor(panel);
+        int listBottom = listTop() + viewport;
+        assertTrue("rows=" + rows + " the list region has height", viewport > 0);
         assertFalse("rows=" + rows + " list must not touch the header",
-                GlassDialogLayout.overlaps(listTop, listBottom, HEADER_PX, footerTop));
-        assertTrue("rows=" + rows + " list bottom is above the footer", listBottom <= footerTop);
-        assertEquals("rows=" + rows + " the panel fits the screen", Math.min(content(rows), maxPanel()), panel);
+                GlassDialogLayout.overlaps(listTop(), listBottom,
+                        PAD_TOP_PX + HEADER_PX, footerTop(panel)));
+        assertTrue("rows=" + rows + " list bottom is above the footer",
+                listBottom <= footerTop(panel));
+        assertEquals("rows=" + rows + " the panel fits the screen",
+                Math.min(content(rows), maxPanel()), panel);
     }
 
     @Test
@@ -69,20 +87,25 @@ public class GlassDialogLayoutTest {
 
     @Test
     public void aCappedPanelLeavesLessThanTheFullListHeightToScroll() {
-        int cappedViewport = GlassDialogLayout.listViewport(maxPanel(), HEADER_PX, LIST_GAP_PX,
-                FOOTER_PX, FOOTER_GAP_PX);
-        int uncappedViewport = GlassDialogLayout.listViewport(content(20), HEADER_PX, LIST_GAP_PX,
-                FOOTER_PX, FOOTER_GAP_PX);
+        int cappedViewport = viewportFor(maxPanel());
+        int uncappedViewport = viewportFor(content(20));
+        assertEquals(516, cappedViewport);
         assertTrue("the cap shortens the list viewport", cappedViewport < uncappedViewport);
         assertTrue(cappedViewport > 0);
-        assertTrue("the viewport is still smaller than the list content", cappedViewport < 20 * (ROW_PX + ROW_GAP_PX));
+        assertTrue("the viewport is still smaller than the list content",
+                cappedViewport < 20 * (ROW_PX + ROW_GAP_PX));
+    }
+
+    @Test
+    public void shortListsShowEveryRowWithoutScrolling() {
+        assertEquals(154, viewportFor(GlassDialogLayout.panelHeight(content(1), maxPanel())));
+        assertEquals(462, viewportFor(GlassDialogLayout.panelHeight(content(3), maxPanel())));
     }
 
     @Test
     public void focusedRowAtTheTopMiddleAndBottomStaysFullyInsideTheViewport() {
         int rows = 20;
-        int viewport = GlassDialogLayout.listViewport(maxPanel(), HEADER_PX, LIST_GAP_PX,
-                FOOTER_PX, FOOTER_GAP_PX);
+        int viewport = viewportFor(maxPanel());
         int contentHeight = rows * (ROW_PX + ROW_GAP_PX);
         int maxScroll = contentHeight - viewport;
 
