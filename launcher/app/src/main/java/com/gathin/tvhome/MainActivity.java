@@ -703,7 +703,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         // The grid only shows the shape on the tray.
         glider.addCompanion(grid, tray.area);
-        for (int id : new int[]{R.id.btnInputs, R.id.btnWifi, R.id.btnAssistant, R.id.btnCandyBox, R.id.btnRecents, R.id.btnSettings}) {
+        for (int id : new int[]{R.id.btnInputs, R.id.btnWifi, R.id.btnAssistant, R.id.btnCandyBox, R.id.btnSettings}) {
             View pill = findViewById(id);
             if (pill == null) continue;
             float radius = 21f * density;
@@ -814,14 +814,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 return true;
             });
         }
-        View btnRecents = findViewById(R.id.btnRecents);
-        if (btnRecents != null) {
-            btnRecents.setOnClickListener(v -> {
-                SoundEffects.playSelect();
-                showRecentsDeck();
-            });
-        }
-
         // Keep focus on the top bar at its ends and at the top: Android's focus finder would otherwise
         // jump to a tile far below when there is nothing in that direction.
         View.OnKeyListener pillKeys = (v, keyCode, event) -> {
@@ -1847,7 +1839,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private boolean isTopPill(View v) {
         int id = v.getId();
-        return id == R.id.btnInputs || id == R.id.btnWifi || id == R.id.btnAssistant || id == R.id.btnCandyBox || id == R.id.btnRecents || id == R.id.btnSettings;
+        return id == R.id.btnInputs || id == R.id.btnWifi || id == R.id.btnAssistant || id == R.id.btnCandyBox || id == R.id.btnSettings;
     }
 
     /** Sends the focus shape onto a pill: from a tile it glides up and narrows into the pill. */
@@ -2877,7 +2869,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             Drawable[] icons = btnWifi.getCompoundDrawablesRelative();
             if (icons[0] != null) iconRoom = icons[0].getIntrinsicWidth() + btnWifi.getCompoundDrawablePadding();
             int room = btnWifi.getMaxWidth() - btnWifi.getPaddingLeft() - btnWifi.getPaddingRight() - iconRoom;
-            int labelRoom = Math.max(0, room - chipWidth - (int) (7 * density));
+            int gap = (int) (9 * density);
+            int space = (int) Math.ceil(btnWifi.getPaint().measureText(" "));
+            // The label gives way first: the chip and its gap are reserved before the text is cut.
+            int labelRoom = Math.max(0, room - chipWidth - gap - space);
             CharSequence cut = TextUtils.ellipsize(text, btnWifi.getPaint(), labelRoom, TextUtils.TruncateAt.END);
             android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder(cut).append(' ');
             int start = sb.length();
@@ -3134,6 +3129,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             SoundEffects.playSelect();
             closeMenu(false);
             showCleanTvCacheDialog();
+        });
+
+        // Row 5: Recent apps — the deck without needing the accessibility service.
+        addInputRow(rows, close, R.drawable.ic_recents, getString(R.string.recents_open), -1, () -> {
+            SoundEffects.playSelect();
+            closeMenu(false);
+            showRecentsDeck();
         });
 
         // Row 4: Wallpaper — hidden by the menu cleanup (wallpaper control lives in the Candy Box menu).
@@ -4351,14 +4353,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
             StateListDrawable bg = new StateListDrawable();
             GradientDrawable on = new GradientDrawable();
-            on.setColor(0xFFFFFFFF);
-            on.setCornerRadius(10 * density);
+            on.setColor(0x2EFFFFFF);
+            on.setStroke((int) (2f * density), 0xFFFFFFFF);
+            on.setCornerRadius(12 * density);
             GradientDrawable off = new GradientDrawable();
-            off.setColor(isActive ? 0x334A90E2 : 0x1AFFFFFF);
+            off.setColor(isActive ? 0x2A4A90E2 : 0x1AFFFFFF);
             if (isActive) {
-                off.setStroke((int) (1.8f * density), 0xFF38BDF8);
+                off.setStroke((int) (1.5f * density), 0xFF38BDF8);
             }
-            off.setCornerRadius(10 * density);
+            off.setCornerRadius(12 * density);
             bg.addState(new int[]{android.R.attr.state_focused}, on);
             bg.addState(new int[]{}, off);
             row.setBackground(bg);
@@ -4404,13 +4407,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             final TextView finalActiveTag = activeTag;
             row.setOnFocusChangeListener((v, hasFocus) -> {
                 if (hasFocus) {
-                    finalRowTitle.setTextColor(0xFF0F172A);
-                    finalRowTitle.setShadowLayer(0, 0, 0, 0);
-                    finalRowSub.setTextColor(0xFF334155);
-                    finalRowSub.setShadowLayer(0, 0, 0, 0);
+                    finalRowTitle.setTextColor(0xFFFFFFFF);
+                    finalRowTitle.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
+                    finalRowSub.setTextColor(0xFFFFFFFF);
+                    finalRowSub.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
                     if (finalActiveTag != null) {
-                        finalActiveTag.setTextColor(0xFF0284C7);
-                        finalActiveTag.setShadowLayer(0, 0, 0, 0);
+                        finalActiveTag.setTextColor(0xFF7DD3FC);
+                        finalActiveTag.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
                     }
                 } else {
                     finalRowTitle.setTextColor(0xFFFFFFFF);
@@ -4493,14 +4496,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
             if (isActive && viewToFocus[0] == null) {
                 viewToFocus[0] = row;
-                rowTitle.setTextColor(0xFF0F172A);
-                rowTitle.setShadowLayer(0, 0, 0, 0);
-                rowSub.setTextColor(0xFF334155);
-                rowSub.setShadowLayer(0, 0, 0, 0);
-                if (activeTag != null) {
-                    activeTag.setTextColor(0xFF0284C7);
-                    activeTag.setShadowLayer(0, 0, 0, 0);
-                }
             }
         }
 
@@ -4516,6 +4511,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         styleGlassDialog(dialog);
 
         if (dialog.getWindow() != null) {
+            layout.setBackground(new GlassDrawable(layout, 22 * density, density, null, 0.5f));
+            Backdrop.watch(layout);
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(0x00000000));
             int w = Math.min((int) (520 * density), getResources().getDisplayMetrics().widthPixels - (int) (120 * density));
             int h = Math.min((int) (470 * density), (int) (getResources().getDisplayMetrics().heightPixels * 0.85f));
             dialog.getWindow().setLayout(w, h);
@@ -4612,14 +4610,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
             StateListDrawable bg = new StateListDrawable();
             GradientDrawable on = new GradientDrawable();
-            on.setColor(0xFFFFFFFF);
-            on.setCornerRadius(10 * density);
+            on.setColor(0x2EFFFFFF);
+            on.setStroke((int) (2f * density), 0xFFFFFFFF);
+            on.setCornerRadius(12 * density);
             GradientDrawable off = new GradientDrawable();
-            off.setColor(isActive ? 0x334A90E2 : 0x1AFFFFFF);
+            off.setColor(isActive ? 0x2A4A90E2 : 0x1AFFFFFF);
             if (isActive) {
-                off.setStroke((int) (1.8f * density), 0xFF38BDF8);
+                off.setStroke((int) (1.5f * density), 0xFF38BDF8);
             }
-            off.setCornerRadius(10 * density);
+            off.setCornerRadius(12 * density);
             bg.addState(new int[]{android.R.attr.state_focused}, on);
             bg.addState(new int[]{}, off);
             row.setBackground(bg);
@@ -4664,13 +4663,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             final TextView finalActiveTag = activeTag;
             row.setOnFocusChangeListener((v, hasFocus) -> {
                 if (hasFocus) {
-                    finalRowTitle.setTextColor(0xFF0F172A);
-                    finalRowTitle.setShadowLayer(0, 0, 0, 0);
-                    finalRowSub.setTextColor(0xFF334155);
-                    finalRowSub.setShadowLayer(0, 0, 0, 0);
+                    finalRowTitle.setTextColor(0xFFFFFFFF);
+                    finalRowTitle.setShadowLayer(3 * density, 0, 1 * density, 0xCC000000);
+                    finalRowSub.setTextColor(0xFFFFFFFF);
+                    finalRowSub.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
                     if (finalActiveTag != null) {
-                        finalActiveTag.setTextColor(0xFF0284C7);
-                        finalActiveTag.setShadowLayer(0, 0, 0, 0);
+                        finalActiveTag.setTextColor(0xFF7DD3FC);
+                        finalActiveTag.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
                     }
                 } else {
                     finalRowTitle.setTextColor(0xFFFFFFFF);
@@ -4710,14 +4709,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
             if (isActive && viewToFocus[0] == null) {
                 viewToFocus[0] = row;
-                rowTitle.setTextColor(0xFF0F172A);
-                rowTitle.setShadowLayer(0, 0, 0, 0);
-                rowSub.setTextColor(0xFF334155);
-                rowSub.setShadowLayer(0, 0, 0, 0);
-                if (activeTag != null) {
-                    activeTag.setTextColor(0xFF0284C7);
-                    activeTag.setShadowLayer(0, 0, 0, 0);
-                }
             }
         }
 
@@ -4736,6 +4727,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         styleGlassDialog(dialog);
 
         if (dialog.getWindow() != null) {
+            layout.setBackground(new GlassDrawable(layout, 22 * density, density, null, 0.5f));
+            Backdrop.watch(layout);
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(0x00000000));
             int w = Math.min((int) (520 * density), getResources().getDisplayMetrics().widthPixels - (int) (120 * density));
             int h = Math.min((int) (470 * density), (int) (getResources().getDisplayMetrics().heightPixels * 0.85f));
             dialog.getWindow().setLayout(w, h);

@@ -36,6 +36,55 @@ final class RecentsCleaner {
         void onDone(int apps, long freedBytes);
     }
 
+    interface OneCallback {
+        /**
+         * {@code closed} says the system was asked to stop the app; {@code keptForVpn} says it was
+         * left alone only because a VPN is connected.
+         */
+        void onDone(boolean closed, boolean keptForVpn, long freedBytes);
+    }
+
+    /** The listed app a connected VPN is holding open, or null when there is nothing to say. */
+    static String vpnKeptLabel(Context context, List<RecentAppItem> items) {
+        if (items == null || !vpnActive(context)) return null;
+        Set<String> keep = protectedPackages(context);
+        for (RecentAppItem item : items) {
+            if (item != null && !item.isCloseAll && item.packageName != null
+                    && keep.contains(item.packageName)) {
+                return item.label;
+            }
+        }
+        return null;
+    }
+
+    /** Same rules as {@link #clear}, for one card in the deck. */
+    static void closeOne(Context context, RecentAppItem item, OneCallback callback) {
+        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        if (am == null || item == null || callback == null) {
+            if (callback != null) callback.onDone(false, false, 0);
+            return;
+        }
+        long before = availBytes(am);
+        Set<String> keep = protectedPackages(context);
+        PackageManager pm = context.getPackageManager();
+        String self = context.getPackageName();
+        String pkg = item.packageName;
+        boolean vpn = vpnActive(context);
+        boolean allowed = shouldKill(pkg, self, isSystemApp(pm, pkg), isPersistent(pm, pkg), keep);
+        boolean keptForVpn = !allowed && vpn && pkg != null && keep.contains(pkg);
+        if (allowed) {
+            try {
+                am.killBackgroundProcesses(pkg);
+                RecentsDeckItems.forget(context, java.util.Collections.singleton(pkg));
+            } catch (Exception e) {
+                Log.w(TAG, "Could not ask the system to stop " + pkg, e);
+            }
+        }
+        new Handler(Looper.getMainLooper()).postDelayed(
+                () -> callback.onDone(allowed, keptForVpn, allowed ? Math.max(0, availBytes(am) - before) : 0),
+                SETTLE_MS);
+    }
+
     private RecentsCleaner() {
     }
 

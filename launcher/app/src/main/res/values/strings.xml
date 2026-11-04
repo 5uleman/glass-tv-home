@@ -53,7 +53,8 @@
     <string name="tile_app_info">App info</string>
     <string name="recents_title">Recent apps</string>
     <string name="recents_empty">Nothing here yet. Open an app from Home and it shows up here.</string>
-    <string name="recents_hint">OK opens · Back closes</string>
+    <string name="recents_hint">Up closes an app · OK opens · Back closes</string>
+    <string name="recents_vpn_kept">%1$s is connected, so it was left open</string>
     <string name="recents_open">Recent apps</string>
     <string name="recents_clear_all">Clear all</string>
     <string name="recents_freed">Freed about %1$d MB</string>
