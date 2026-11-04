@@ -2870,11 +2870,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (icons[0] != null) iconRoom = icons[0].getIntrinsicWidth() + btnWifi.getCompoundDrawablePadding();
             int room = btnWifi.getMaxWidth() - btnWifi.getPaddingLeft() - btnWifi.getPaddingRight() - iconRoom;
             int gap = (int) (9 * density);
-            int space = (int) Math.ceil(btnWifi.getPaint().measureText(" "));
-            // The label gives way first: the chip and its gap are reserved before the text is cut.
-            int labelRoom = Math.max(0, room - chipWidth - gap - space);
+            int space = Math.max(1, (int) Math.ceil(btnWifi.getPaint().measureText(" ")));
+            // The label gives way first: the chip and the 9dp gap before it are reserved.
+            int labelRoom = Math.max(0, room - chipWidth - gap);
             CharSequence cut = TextUtils.ellipsize(text, btnWifi.getPaint(), labelRoom, TextUtils.TruncateAt.END);
             android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder(cut).append(' ');
+            int spaceAt = sb.length() - 1;
+            sb.setSpan(new android.text.style.ScaleXSpan(gap / (float) space),
+                    spaceAt, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             int start = sb.length();
             sb.append(chip);
             sb.setSpan(new VpnChipSpan(textSize, padH, density, 0xFF15703A, btnWifi.getTypeface()),
@@ -4385,7 +4388,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 activeTag = new TextView(this);
                 activeTag.setText("✓ " + AppLanguage.strNowBadge(this));
                 activeTag.setTextSize(13);
-                activeTag.setTextColor(0xFF38BDF8);
+                activeTag.setTextColor(0xFFBAE6FD);
                 activeTag.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
                 activeTag.setFontVariationSettings("'wght' 700");
                 topRow.addView(activeTag);
@@ -4412,7 +4415,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     finalRowSub.setTextColor(0xFFFFFFFF);
                     finalRowSub.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
                     if (finalActiveTag != null) {
-                        finalActiveTag.setTextColor(0xFF7DD3FC);
+                        finalActiveTag.setTextColor(0xFFFFFFFF);
                         finalActiveTag.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
                     }
                 } else {
@@ -4421,7 +4424,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     finalRowSub.setTextColor(0xD9FFFFFF);
                     finalRowSub.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
                     if (finalActiveTag != null) {
-                        finalActiveTag.setTextColor(0xFF38BDF8);
+                        finalActiveTag.setTextColor(0xFFBAE6FD);
                         finalActiveTag.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
                     }
                 }
@@ -4511,7 +4514,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         styleGlassDialog(dialog);
 
         if (dialog.getWindow() != null) {
-            layout.setBackground(new GlassDrawable(layout, 22 * density, density, null, 0.5f));
+            layout.setBackground(new GlassDrawable(layout, 22 * density, density, null, 0.5f,
+                    false, 0x99000000));
             Backdrop.watch(layout);
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(0x00000000));
             int w = Math.min((int) (520 * density), getResources().getDisplayMetrics().widthPixels - (int) (120 * density));
@@ -4641,7 +4645,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 activeTag = new TextView(this);
                 activeTag.setText("✓ " + AppLanguage.strNowBadge(this));
                 activeTag.setTextSize(13);
-                activeTag.setTextColor(0xFF38BDF8);
+                activeTag.setTextColor(0xFFBAE6FD);
                 activeTag.setTypeface(getResources().getFont(R.font.outfit), Typeface.BOLD);
                 activeTag.setFontVariationSettings("'wght' 700");
                 topRow.addView(activeTag);
@@ -4668,7 +4672,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     finalRowSub.setTextColor(0xFFFFFFFF);
                     finalRowSub.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
                     if (finalActiveTag != null) {
-                        finalActiveTag.setTextColor(0xFF7DD3FC);
+                        finalActiveTag.setTextColor(0xFFFFFFFF);
                         finalActiveTag.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
                     }
                 } else {
@@ -4677,7 +4681,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     finalRowSub.setTextColor(0xD9FFFFFF);
                     finalRowSub.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
                     if (finalActiveTag != null) {
-                        finalActiveTag.setTextColor(0xFF38BDF8);
+                        finalActiveTag.setTextColor(0xFFBAE6FD);
                         finalActiveTag.setShadowLayer(2 * density, 0, 1 * density, 0xAA000000);
                     }
                 }
@@ -4727,7 +4731,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         styleGlassDialog(dialog);
 
         if (dialog.getWindow() != null) {
-            layout.setBackground(new GlassDrawable(layout, 22 * density, density, null, 0.5f));
+            layout.setBackground(new GlassDrawable(layout, 22 * density, density, null, 0.5f,
+                    false, 0x99000000));
             Backdrop.watch(layout);
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(0x00000000));
             int w = Math.min((int) (520 * density), getResources().getDisplayMetrics().widthPixels - (int) (120 * density));
