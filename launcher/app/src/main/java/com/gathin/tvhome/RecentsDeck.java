@@ -133,8 +133,12 @@ final class RecentsDeck {
         ramPill.setOrientation(LinearLayout.VERTICAL);
         ramPill.setPadding((int) (16 * density), (int) (9 * density),
                 (int) (16 * density), (int) (10 * density));
-        ramPill.setBackground(new GlassDrawable(ramPill, 16 * density, density, null, 0.5f,
-                false, 0x4D000000));
+        // Quieter than the cards: more dark smoke and less of the white veil, so the pill recedes
+        // against the deck scrim while the white RAM text still keeps 4.5:1.
+        GlassDrawable ramGlass = new GlassDrawable(ramPill, 16 * density, density, null, 0.5f,
+                false, 0x8C000000);
+        ramGlass.setVeilColor(0x08FFFFFF);
+        ramPill.setBackground(ramGlass);
         Backdrop.watch(ramPill);
         header.addView(ramPill, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));

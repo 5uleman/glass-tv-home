@@ -18,6 +18,8 @@ import androidx.annotation.NonNull;
 final class GlassDrawable extends Drawable {
 
     private static final int VEIL_ALPHA = 0x14;
+    /** The even white veil over the blurred wallpaper; a quieter pill can lower it. */
+    private int veilColor = VEIL_ALPHA << 24 | 0xFFFFFF;
     private final View owner;
     private final float radius;
     private final Backdrop.Fill fill = new Backdrop.Fill();
@@ -64,8 +66,15 @@ final class GlassDrawable extends Drawable {
         this.owner = owner;
         this.highlight = highlight;
         this.radius = radius;
-        veil.setColor(0xFFFFFF | VEIL_ALPHA << 24);
+        veil.setColor(veilColor);
         rim = new GlassRim(1.5f * density, 0xD9FFFFFF, 0x1AFFFFFF, reach);
+    }
+
+    /** Overrides the white veil for one surface, e.g. a pill that should sit quieter. */
+    void setVeilColor(int color) {
+        veilColor = color;
+        veil.setColor(color);
+        invalidateSelf();
     }
 
     @Override
@@ -83,7 +92,7 @@ final class GlassDrawable extends Drawable {
         float glass = (1f - covered) * fade;
         if (glass > 0f) {
             fill.draw(canvas, owner, rect, radius, glass);
-            veil.setAlpha(Math.round(VEIL_ALPHA * glass));
+            veil.setAlpha(Math.round((veilColor >>> 24) * glass));
             canvas.drawRoundRect(rect, radius, radius, veil);
             if ((smokeColor >>> 24) != 0) {
                 smoke.setAlpha(Math.round((smokeColor >>> 24) * glass));
