@@ -242,7 +242,20 @@ final class OnlineWallpapers {
             new WallpaperItem("https://images.pexels.com/photos/815880/pexels-photo-815880.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
                     "Derawar Fort", "The fort's round towers rising from the Cholistan desert at sunset", "Pakistan_Bahawalpur", "Bahawalpur, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/34535290/pexels-photo-34535290.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
-                    "Makli Necropolis", "Carved stone columns along a corridor of tombs at Makli", "Pakistan_Thatta", "Thatta, Pakistan")
+                    "Makli Necropolis", "Carved stone columns along a corridor of tombs at Makli", "Pakistan_Thatta", "Thatta, Pakistan"),
+            // Landmarks
+            new WallpaperItem("https://images.pexels.com/photos/14926132/pexels-photo-14926132.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
+                    "Lahore Fort at Sunset", "The fort's walls and domes under a warm sky, with the flag on the rampart", "Pakistan_Lahore", "Lahore, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/13239874/pexels-photo-13239874.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
+                    "Minar-e-Pakistan in Daylight", "The minaret rising above its lawns and trees under a clear sky", "Pakistan_Lahore", "Lahore, Pakistan"),
+            new WallpaperItem("https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Lahore_Museum_Gandhara_artefacts.jpg/1920px-Lahore_Museum_Gandhara_artefacts.jpg",
+                    "Lahore Museum, Gandhara Gallery", "A 1908 photographic plate of Gandhara sculptures in the Lahore Museum", "Pakistan_Lahore", "Lahore, Pakistan"),
+            new WallpaperItem("https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Eiffel_Tower_replica_in_Bahria_Town.jpg/1920px-Eiffel_Tower_replica_in_Bahria_Town.jpg",
+                    "Eiffel Tower Replica at Dusk", "The replica tower and its lit grounds on the edge of Bahria Town at evening", "Pakistan_Lahore", "Bahria Town, Lahore"),
+            new WallpaperItem("https://images.pexels.com/photos/14394126/pexels-photo-14394126.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
+                    "Pakistan Monument at Night", "The lit petals of the monument around its central star", "Pakistan_Islamabad", "Islamabad, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/4253018/pexels-photo-4253018.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
+                    "Abbasi Mosque at Derawar", "The mosque's white domes seen through the ruined walls of Derawar Fort", "Pakistan_Bahawalpur", "Bahawalpur, Pakistan")
     };
 
     private OnlineWallpapers() {
