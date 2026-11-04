@@ -13,11 +13,12 @@ city.
 
 ## Download
 
-The current build is **3.7.0** (`versionCode 24`), 647 KB, package id **`com.suleman.glasstv`**.
-Download it from the [Releases page](https://github.com/5uleman/glass-tv-home/releases/latest) —
-release binaries are attached there, not committed to this repository.
+The current build is **3.7.0** (`versionCode 24`), 661,445 bytes (646 KB), package id
+**`com.suleman.glasstv`**. Download it from the
+[Releases page](https://github.com/5uleman/glass-tv-home/releases/latest) — release binaries are
+attached there, not committed to this repository.
 
-SHA-256: to be filled after the TV test.
+SHA-256 (`glasstv-3.7.0-signed.apk`): `366ab333c0b19d2a52ca102ad5db08bf54884701483f27788f0a1bc9b7c29708`
 
 > The APKs still under `release/` (`glass-tv-home.apk`, `glass-tv-installer.apk`) are upstream's original
 > builds, kept for reference. Do not install them as this edition — use only the Releases page.
