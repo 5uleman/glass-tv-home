@@ -14,6 +14,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
@@ -46,6 +47,8 @@ final class RecentsDeck {
 
     private DeckLayer layer;
     private LinearLayout column;
+    /** Fixed card area: the card row and the empty message take turns inside it, so no reflow. */
+    private FrameLayout stage;
     private HorizontalScrollView scroll;
     private LinearLayout row;
     private LinearLayout clearPill;
@@ -55,6 +58,9 @@ final class RecentsDeck {
     private View lastFocused;
     private boolean open;
     private boolean clearing;
+    private boolean emptyScheduled;
+    private boolean emptyShown;
+    private final Runnable emptyTransition = this::runEmptyTransition;
     private final List<View> cards = new ArrayList<>();
     private final Runnable ramTick = new Runnable() {
         @Override
@@ -68,7 +74,8 @@ final class RecentsDeck {
     private final Runnable hideFreed = () -> {
         if (hintText == null) return;
         if (cards.isEmpty()) {
-            hintText.setVisibility(View.GONE);
+            // INVISIBLE keeps the hint's slot, so the risen empty message does not move.
+            hintText.setVisibility(View.INVISIBLE);
             return;
         }
         hintText.setText(hintDefault);
@@ -91,6 +98,8 @@ final class RecentsDeck {
     void show() {
         if (open) return;
         clearing = false;
+        emptyScheduled = false;
+        emptyShown = false;
         cards.clear();
         lastFocused = null;
         List<RecentAppItem> items = RecentsDeckItems.load(activity);
@@ -155,8 +164,13 @@ final class RecentsDeck {
         barParams.topMargin = (int) (6 * density);
         ramPill.addView(ramBar, barParams);
 
+        // One fixed slot for whichever of the card row and the empty message is showing.
+        stage = new FrameLayout(activity);
+        column.addView(stage, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+
         if (items.isEmpty()) {
-            addEmptyText();
+            addEmptyText(false);
         } else {
             scroll = new HorizontalScrollView(activity);
             scroll.setHorizontalScrollBarEnabled(false);
@@ -164,8 +178,8 @@ final class RecentsDeck {
             scroll.setClipChildren(false);
             scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
             scroll.setFillViewport(true);
-            column.addView(scroll, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+            stage.addView(scroll, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
             row = new LinearLayout(activity);
             row.setOrientation(LinearLayout.HORIZONTAL);
@@ -275,9 +289,11 @@ final class RecentsDeck {
         open = false;
         handler.removeCallbacks(ramTick);
         handler.removeCallbacks(hideFreed);
+        handler.removeCallbacks(emptyTransition);
         DeckLayer panel = layer;
         layer = null;
         column = null;
+        stage = null;
         scroll = null;
         row = null;
         clearPill = null;
@@ -286,6 +302,8 @@ final class RecentsDeck {
         hintText = null;
         hintDefault = null;
         emptyText = null;
+        emptyScheduled = false;
+        emptyShown = false;
         cards.clear();
         if (panel == null) return;
         panel.animate().alpha(0f).setDuration(reducedMotion ? 0 : 150).withEndAction(() -> {
@@ -482,26 +500,51 @@ final class RecentsDeck {
                 .setDuration(reducedMotion ? 0 : 220).start();
     }
 
+    /** Cards have flown away: fade the leftover chrome, then let the empty message rise in. */
     private void showEmptyAfterClear() {
-        if (layer == null || column == null) return;
-        if (scroll != null) scroll.setVisibility(View.GONE);
-        if (clearPill != null) clearPill.setVisibility(View.GONE);
-        if (hintText != null) hintText.setVisibility(View.GONE);
-        addEmptyText();
-        layer.requestFocus();
+        if (layer == null || column == null || emptyScheduled || emptyShown) return;
+        emptyScheduled = true;
+        handler.postDelayed(emptyTransition, reducedMotion ? 0 : 240);
     }
 
-    private void addEmptyText() {
+    private void runEmptyTransition() {
+        if (!open || layer == null || column == null || emptyShown) return;
+        emptyShown = true;
+        // The layer's key listener owns Back, so it keeps working through the whole animation.
+        layer.requestFocus();
+        int fade = reducedMotion ? 0 : 160;
+        if (scroll != null) scroll.animate().alpha(0f).setDuration(fade).start();
+        if (clearPill != null) {
+            clearPill.setFocusable(false);
+            clearPill.animate().alpha(0f).setDuration(fade)
+                    .withEndAction(() -> clearPill.setVisibility(View.INVISIBLE)).start();
+        }
+        if (hintText != null) {
+            hintText.animate().alpha(0f).setDuration(fade)
+                    .withEndAction(() -> hintText.setVisibility(View.INVISIBLE)).start();
+        }
+        addEmptyText(true);
+        if (emptyText == null) return;
+        emptyText.animate().alpha(0.85f).translationY(0f)
+                .setStartDelay(fade)
+                .setDuration(reducedMotion ? 0 : 300)
+                .setInterpolator(new DecelerateInterpolator(1.6f)).start();
+    }
+
+    private void addEmptyText(boolean animateIn) {
+        if (emptyText != null || stage == null) return;
         emptyText = text(activity.getString(R.string.recents_empty), 16, Fonts.MEDIUM);
         emptyText.setGravity(Gravity.CENTER);
-        emptyText.setAlpha(0.85f);
-        column.addView(emptyText, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, 0, 1f));
+        emptyText.setAlpha(animateIn ? 0f : 0.85f);
+        emptyText.setTranslationY(animateIn ? 12 * density : 0f);
+        stage.addView(emptyText, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
     /** Shows the freed-memory or failure message in the line under the cards, so the deck never resizes. */
     private void showInline(String message) {
-        if (hintText == null) return;
+        // In the empty state the "nothing here" line is the message; the hint row has faded out.
+        if (hintText == null || cards.isEmpty()) return;
         handler.removeCallbacks(hideFreed);
         hintText.setText(message);
         hintText.setTextColor(0xFF7DD3FC);
