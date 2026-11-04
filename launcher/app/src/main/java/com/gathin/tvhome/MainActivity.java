@@ -215,6 +215,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private float heroBottom;
     private View btnInputs;
     private TextView btnWifi;
+    /** The VPN row's right-hand status, while the network dropdown is open. */
+    private TextView vpnRowStatus;
+    private View vpnRowDot;
     private View btnAssistant;
     private View btnCandyBox;
     private TextView ampmView, dateView;
@@ -2881,6 +2884,28 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // The style tints compound drawables white; the offline icon keeps its own soft red.
         btnWifi.setCompoundDrawableTintList(null);
         btnWifi.setCompoundDrawablesRelativeWithIntrinsicBounds(icon, 0, 0, 0);
+        updateVpnRowStatus(vpn);
+    }
+
+    /** True while any VPN transport is up; the same rule the pill's VPN chip uses. */
+    private boolean isVpnConnected() {
+        try {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            for (Network net : cm != null ? cm.getAllNetworks() : new Network[0]) {
+                NetworkCapabilities caps = cm.getNetworkCapabilities(net);
+                if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return true;
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
+    /** Keeps the open network dropdown's VPN row in step with the VPN callback. */
+    private void updateVpnRowStatus(boolean connected) {
+        if (vpnRowStatus == null || vpnRowDot == null) return;
+        vpnRowStatus.setVisibility(connected ? View.VISIBLE : View.GONE);
+        vpnRowDot.setVisibility(connected ? View.VISIBLE : View.GONE);
+        if (connected) vpnRowStatus.setText(R.string.connected);
     }
 
     /** Shows an Apple TV-style frosted glass Wi-Fi control center popup. */
@@ -2934,12 +2959,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
         });
 
-        // Row 2: VPN — opens Proton VPN; its TV build has its own leanback entry point.
-        addInputRow(rows, close, R.drawable.ic_vpn, getString(R.string.vpn), -1, () -> {
+        // Row 2: VPN — opens Proton VPN; its TV build has its own leanback entry point. Its status
+        // is kept live by updateWifiLabel, which the VPN network callback runs.
+        boolean vpn = isVpnConnected();
+        View vpnRow = addInputRow(rows, close, R.drawable.ic_vpn, getString(R.string.vpn),
+                vpn ? TvInputManager.INPUT_STATE_CONNECTED : -1, () -> {
             SoundEffects.playSelect();
             closeMenu(false);
             openVpnApp();
         });
+        vpnRowStatus = vpnRow.findViewById(R.id.status);
+        vpnRowDot = vpnRow.findViewById(R.id.dot);
+        updateVpnRowStatus(vpn);
 
         addSeparator(rows);
 
@@ -6300,6 +6331,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (panel == null) return;
         SoundEffects.playNav();
         openMenu = null;
+        vpnRowStatus = null;
+        vpnRowDot = null;
         if (toAnchor && menuAnchor != null) menuAnchor.requestFocus();
         menuAnchor = null;
         panel.animate().alpha(0f).setDuration(reducedMotion ? 80 : 150).withEndAction(() -> {
@@ -6351,7 +6384,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         rows.addView(line, lp);
     }
 
-    private void addInputRow(LinearLayout rows, Runnable close, int iconRes, String title, int state, Runnable action) {
+    private View addInputRow(LinearLayout rows, Runnable close, int iconRes, String title, int state, Runnable action) {
         View row = getLayoutInflater().inflate(R.layout.item_input, rows, false);
         ImageView rowIcon = row.findViewById(R.id.icon);
         rowIcon.setImageResource(iconRes);
@@ -6377,6 +6410,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             action.run();
         });
         rows.addView(row);
+        return row;
     }
 
     // ---- module cards ----------------------------------------------------------------------------
