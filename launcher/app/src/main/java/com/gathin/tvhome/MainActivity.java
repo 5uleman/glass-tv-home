@@ -2871,8 +2871,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             int room = btnWifi.getMaxWidth() - btnWifi.getPaddingLeft() - btnWifi.getPaddingRight() - iconRoom;
             int gap = (int) (9 * density);
             int space = Math.max(1, (int) Math.ceil(btnWifi.getPaint().measureText(" ")));
-            // The label gives way first: the chip and the 9dp gap before it are reserved.
-            int labelRoom = Math.max(0, room - chipWidth - gap);
+            // The label gives way first: the chip and the 9dp gap before it are reserved, plus 1dp
+            // of slack so letter spacing can never push the chip past the pill's maxWidth.
+            int labelRoom = Math.max(0, room - chipWidth - gap - (int) density);
             CharSequence cut = TextUtils.ellipsize(text, btnWifi.getPaint(), labelRoom, TextUtils.TruncateAt.END);
             android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder(cut).append(' ');
             int spaceAt = sb.length() - 1;
