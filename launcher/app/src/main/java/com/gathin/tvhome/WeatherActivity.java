@@ -278,15 +278,15 @@ public class WeatherActivity extends Activity {
         
         // Display Condition text matching active atmosphere
         if (conditionType == WeatherBackgroundView.ConditionType.SUNNY) {
-            weatherMainCondition.setText("Cerah");
+            weatherMainCondition.setText(getString(R.string.weather_sunny));
         } else if (conditionType == WeatherBackgroundView.ConditionType.NIGHT) {
-            weatherMainCondition.setText("Malam Tenang");
+            weatherMainCondition.setText(getString(R.string.weather_calm_night));
         } else if (conditionType == WeatherBackgroundView.ConditionType.THUNDERSTORM) {
-            weatherMainCondition.setText("Ribut Petir");
+            weatherMainCondition.setText(getString(R.string.weather_thunderstorm));
         } else if (conditionType == WeatherBackgroundView.ConditionType.RAIN) {
-            weatherMainCondition.setText("Hujan");
+            weatherMainCondition.setText(getString(R.string.weather_rain));
         } else {
-            weatherMainCondition.setText("Mendung");
+            weatherMainCondition.setText(getString(R.string.weather_cloudy));
         }
 
         weatherMainSub.setText(String.format(Locale.ROOT, "H:%d°  L:%d°", w.highTemp, w.lowTemp));

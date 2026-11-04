@@ -4869,15 +4869,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         restoreWallpaperVisuals();
         String displayLabel;
         if ("Malaysia".equalsIgnoreCase(category)) {
-            displayLabel = "Tempat Menarik di Malaysia";
+            displayLabel = getString(R.string.category_malaysia);
         } else if ("Minimalist".equalsIgnoreCase(category)) {
-            displayLabel = "Minimalis Gelap (OLED)";
+            displayLabel = getString(R.string.category_minimalist);
         } else if ("Pakistan".equalsIgnoreCase(category)) {
             displayLabel = "Lahore & Pakistan";
         } else {
             displayLabel = category;
         }
-        Toast.makeText(this, "Kategori: " + displayLabel, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.category_toast, displayLabel), Toast.LENGTH_SHORT).show();
 
         if ("Custom".equalsIgnoreCase(category)) {
             placesMode = false;
@@ -5403,7 +5403,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             wallpapers = Collections.singletonList(file);
             getSharedPreferences("wallpaper", MODE_PRIVATE).edit().putInt("index", -1).apply();
             showNextWallpaper(true);
-            Toast.makeText(this, "📌 Kunci 1 Wallpaper: " + file.getName(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.wallpaper_locked, file.getName()), Toast.LENGTH_SHORT).show();
         });
     }
 

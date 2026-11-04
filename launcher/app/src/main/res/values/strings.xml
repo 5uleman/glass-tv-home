@@ -55,6 +55,17 @@
     <string name="recents_empty">Nothing here yet. Open an app from Home and it shows up here.</string>
     <string name="recents_hint">Up closes an app · OK opens · Back closes</string>
     <string name="recents_vpn_kept">%1$s is connected, so it was left open</string>
+    <string name="category_toast">Category: %1$s</string>
+    <string name="category_malaysia">Attractions in Malaysia</string>
+    <string name="category_minimalist">Dark Minimalist (OLED)</string>
+    <string name="wallpaper_locked">📌 Wallpaper 1 locked: %1$s</string>
+    <string name="tv_location_toast">📍 TV location: %1$s</string>
+    <string name="custom_location">Custom location</string>
+    <string name="weather_sunny">Sunny</string>
+    <string name="weather_calm_night">Calm night</string>
+    <string name="weather_thunderstorm">Thunderstorm</string>
+    <string name="weather_rain">Rain</string>
+    <string name="weather_cloudy">Cloudy</string>
     <string name="recents_open">Recent apps</string>
     <string name="recents_clear_all">Clear all</string>
     <string name="recents_freed">Freed about %1$d MB</string>
