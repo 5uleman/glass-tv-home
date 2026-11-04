@@ -33,8 +33,8 @@ import java.util.List;
 final class RecentsDeck {
 
     private static final long RAM_REFRESH_MS = 1000;
-    private static final int CARD_W_DP = 300;
-    private static final int CARD_H_DP = 340;
+    private static final int CARD_W_DP = 340;
+    private static final int CARD_H_DP = 190;
     private static final int OVERLAP_DP = 34;
     private static final float IDLE_SCALE = 0.82f;
 
@@ -171,8 +171,10 @@ final class RecentsDeck {
             int focusWidth = (int) (CARD_W_DP * density);
             int rowSide = Math.max(0, (getScreenWidth() - focusWidth) / 2);
             row.setPadding(rowSide, 0, rowSide, 0);
-            scroll.addView(row, new HorizontalScrollView.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            HorizontalScrollView.LayoutParams rowParams = new HorizontalScrollView.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            rowParams.gravity = Gravity.CENTER_VERTICAL;
+            scroll.addView(row, rowParams);
 
             for (int i = 0; i < items.size(); i++) {
                 View card = card(items.get(i), i == 0);
@@ -292,31 +294,66 @@ final class RecentsDeck {
         final FrameLayout card = new FrameLayout(activity);
         card.setFocusable(true);
         card.setClickable(true);
-        card.setTag(item);
+        card.setClipToOutline(true);
 
-        LinearLayout content = new LinearLayout(activity);
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.setGravity(Gravity.CENTER);
-        content.setPadding((int) (18 * density), 0, (int) (18 * density), 0);
-        card.addView(content, new FrameLayout.LayoutParams(
+        GradientDrawable base = new GradientDrawable();
+        base.setCornerRadius(20 * density);
+        base.setColor(0xF0141821);
+        base.setStroke((int) density, 0x2EFFFFFF);
+        card.setBackground(base);
+
+        final ImageView face = new ImageView(activity);
+        face.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        card.addView(face, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         final ImageView icon = new ImageView(activity);
         icon.setImageDrawable(item.icon);
-        content.addView(icon, new LinearLayout.LayoutParams(
-                (int) (92 * density), (int) (92 * density)));
+        FrameLayout.LayoutParams iconParams = new FrameLayout.LayoutParams(
+                (int) (76 * density), (int) (76 * density));
+        iconParams.gravity = Gravity.CENTER;
+        iconParams.bottomMargin = (int) (18 * density);
+        card.addView(icon, iconParams);
+
+        // Dims a side card without touching its name, which sits above this layer.
+        final View dim = new View(activity);
+        dim.setBackgroundColor(0x66000000);
+        card.addView(dim, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        View scrim = new View(activity);
+        scrim.setBackground(new GradientDrawable(
+                GradientDrawable.Orientation.BOTTOM_TOP, new int[]{0xE6000000, 0x00000000}));
+        FrameLayout.LayoutParams scrimParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, (int) (78 * density));
+        scrimParams.gravity = Gravity.BOTTOM;
+        card.addView(scrim, scrimParams);
 
         final TextView label = text(item.label, 16, Fonts.SEMIBOLD);
         label.setSingleLine(true);
         label.setEllipsize(TextUtils.TruncateAt.END);
-        label.setGravity(Gravity.CENTER);
-        label.setMaxWidth((int) ((CARD_W_DP - 44) * density));
-        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
+        label.setMaxWidth((int) ((CARD_W_DP - 32) * density));
+        label.setGravity(Gravity.BOTTOM);
+        FrameLayout.LayoutParams labelParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        labelParams.topMargin = (int) (18 * density);
-        content.addView(label, labelParams);
+        labelParams.gravity = Gravity.BOTTOM | Gravity.START;
+        labelParams.leftMargin = (int) (16 * density);
+        labelParams.rightMargin = (int) (16 * density);
+        labelParams.bottomMargin = (int) (13 * density);
+        card.addView(label, labelParams);
 
-        paintCard(card, label, false);
+        if (item.banner != null) {
+            face.setImageDrawable(item.banner);
+            icon.setVisibility(View.GONE);
+        }
+
+        final GradientDrawable ring = new GradientDrawable();
+        ring.setCornerRadius(20 * density);
+        ring.setStroke((int) (3 * density), 0xFFFFFFFF);
+        ring.setColor(Color.TRANSPARENT);
+        card.setForeground(ring);
+        card.getForeground().setAlpha(0);
+        card.setElevation(3 * density);
 
         card.setOnClickListener(v -> openApp(item));
         card.setOnKeyListener((v, keyCode, event) -> {
@@ -346,10 +383,10 @@ final class RecentsDeck {
         });
 
         card.setOnFocusChangeListener((v, has) -> {
-            FrameLayout c = (FrameLayout) v;
-            TextView name = (TextView) ((LinearLayout) c.getChildAt(0)).getChildAt(1);
-            paintCard(c, name, has);
-            animateScale(c, has ? 1f : IDLE_SCALE);
+            card.getForeground().setAlpha(has ? 255 : 0);
+            dim.setAlpha(has ? 0f : 1f);
+            card.setElevation((has ? 16 : 3) * density);
+            animateScale(card, has ? 1f : IDLE_SCALE);
             if (has) {
                 lastFocused = v;
                 SoundEffects.playNav();
@@ -362,22 +399,6 @@ final class RecentsDeck {
         card.setScaleX(firstCard ? 1f : IDLE_SCALE);
         card.setScaleY(firstCard ? 1f : IDLE_SCALE);
         return card;
-    }
-
-    /** The focused card is near-white with dark text; the others are dark glass with white text. */
-    private void paintCard(FrameLayout card, TextView label, boolean focused) {
-        GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius((focused ? 28 : 24) * density);
-        if (focused) {
-            bg.setColor(0xFFF4F5F7);
-        } else {
-            bg.setColor(0xF01A1E26);
-            bg.setStroke((int) (1 * density), 0x2EFFFFFF);
-        }
-        card.setBackground(bg);
-        card.setElevation((focused ? 16 : 3) * density);
-        label.setTextColor(focused ? 0xFF111827 : 0xFFFFFFFF);
-        label.setShadowLayer(focused ? 0 : 3 * density, 0, 1 * density, 0xCC000000);
     }
 
     private void animateScale(View view, float scale) {

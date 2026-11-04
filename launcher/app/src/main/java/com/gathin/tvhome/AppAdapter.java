@@ -268,6 +268,12 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
     }
 
     private Drawable loadBanner(PackageManager pm, ResolveInfo ri) {
+        return loadBanner(ctx, pm, ri);
+    }
+
+    /** The banner the dock shows for this activity, or its app's banner, or null. */
+    static Drawable loadBanner(Context ctx, PackageManager pm, ResolveInfo ri) {
+        if (ri == null || ri.activityInfo == null) return null;
         int id = ri.activityInfo.banner;
         if (id == 0) id = ri.activityInfo.applicationInfo.banner;
         if (id != 0) {

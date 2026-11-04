@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 
 import java.util.ArrayList;
@@ -64,7 +65,9 @@ final class RecentsDeckItems {
                 if (launch == null) continue;
                 CharSequence label = info.loadLabel(pm);
                 Drawable icon = info.loadIcon(pm);
-                out.add(new RecentAppItem(pkg, String.valueOf(label), icon, launch));
+                ResolveInfo ri = pm.resolveActivity(launch, 0);
+                Drawable banner = AppAdapter.loadBanner(ctx, pm, ri);
+                out.add(new RecentAppItem(pkg, String.valueOf(label), icon, banner, launch));
             } catch (PackageManager.NameNotFoundException ignored) {
             } catch (Exception ignored) {
             }
