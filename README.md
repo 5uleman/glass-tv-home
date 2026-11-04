@@ -152,12 +152,13 @@ in the passwords; without that file the build falls back to the debug key, which
 - Pictures of places and their captions are Bing's daily images (Microsoft). The launcher fetches them on your
   own TV; any promo or screenshot pictures in this repository show three of them.
 - "Cyberpunk Neon Night" in the city collection — Cash Macanaya ([photo](https://unsplash.com/photos/a-city-at-night-with-neon-signs-and-buildings-kUpA8qN28GE)).
-- The Lahore & Pakistan wallpaper collection uses photos from Pexels, free under their licence, and one from
-  Wikimedia Commons with the licence noted. Photographers and authors, in the order the collection lists them:
+- The Lahore & Pakistan wallpaper collection uses photos from Pexels and Unsplash, free under their licences,
+  and one from Wikimedia Commons with the licence noted. Photographers and authors, in the order the collection lists them:
   - Badshahi Mosque under the Milky Way — Aitizaz Naqvi ([photo](https://www.pexels.com/photo/5487986/))
   - Alamgiri Gate, Lahore Fort — Salman Rafique ([photo](https://www.pexels.com/photo/11774127/))
   - Lahore at night — Wasif Mehmood ([photo](https://www.pexels.com/photo/16021536/))
   - Faisal Mosque at dusk — Bilal ([photo](https://www.pexels.com/photo/16693762/))
+  - Faisal Mosque in golden mist — Ali Hamza Tullah ([photo](https://unsplash.com/photos/MpfeZ1bvViw))
   - Rawal Lake at sunset — Ashraf Hussain ([photo](https://www.pexels.com/photo/38459967/))
   - Islamabad from above — Ahmed Ismail ([photo](https://www.pexels.com/photo/38773558/))
   - Karachi at night — Tahamie Farooqui ([photo](https://www.pexels.com/photo/34096455/))

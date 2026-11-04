@@ -208,6 +208,8 @@ final class OnlineWallpapers {
             // Islamabad
             new WallpaperItem("https://images.pexels.com/photos/16693762/pexels-photo-16693762.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
                     "Faisal Mosque at Dusk", "The white tents and minarets of Faisal Mosque below the Margalla Hills at twilight", "Pakistan_Islamabad", "Islamabad, Pakistan"),
+            new WallpaperItem("https://images.unsplash.com/photo-1706511920650-b690cd6619e8?auto=format&fit=crop&crop=entropy&w=1920&h=1080&q=85",
+                    "Faisal Mosque in Golden Mist", "The white mosque and its four minarets rising through gold morning haze", "Pakistan_Islamabad", "Islamabad, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/38459967/pexels-photo-38459967.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
                     "Rawal Lake at Sunset", "The sun setting behind the Margalla Hills, reflected across Rawal Lake", "Pakistan_Islamabad", "Islamabad, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/38773558/pexels-photo-38773558.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",

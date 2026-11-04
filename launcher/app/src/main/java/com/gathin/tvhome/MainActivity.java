@@ -4204,7 +4204,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         // Category 7: Lahore & Pakistan
         options.add(new WallpaperOption("Pakistan", "🇵🇰 Lahore & Pakistan",
-                "26 photos: Lahore, Islamabad, Karachi, the northern valleys, landmarks and historic sites"));
+                "25 photos: Lahore, Islamabad, Karachi, the northern valleys, landmarks and historic sites"));
 
         // Special: no wallpaper at all - a plain solid black home screen
         String tDark = AppLanguage.LANG_EN.equals(curLang) ? "🌑 No wallpaper (dark screen)" : (AppLanguage.LANG_ID.equals(curLang) ? "🌑 Tanpa wallpaper (layar gelap)" : "🌑 Tiada wallpaper (skrin gelap)");
