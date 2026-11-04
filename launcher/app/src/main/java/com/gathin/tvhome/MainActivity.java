@@ -3064,7 +3064,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit().putBoolean("dynamic_weather_overlay", newMode).apply();
             testWeatherOverride = null;
             updateWeatherOverlay(HomeWeather.last(this));
-            Toast.makeText(this, newMode ? i18n("🌧️ Dynamic Weather Turned On (ON)", "🌧️ Cuaca Dinamis Dihidupkan (ON)", "🌧️ Cuaca Dinamik Dihidupkan (ON)") : i18n("⛅ Dynamic Weather Turned Off (OFF)", "⛅ Cuaca Dinamis Dimatikan (OFF)", "⛅ Cuaca Dinamik Dimatikan (OFF)"), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, newMode ? "Dynamic weather turned on" : "Dynamic weather turned off", Toast.LENGTH_SHORT).show();
             closeMenu(false);
             showCandyBoxPopup();
         });
@@ -4958,7 +4958,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void onCustomWallpaperUploaded(File file) {
         runOnUiThread(() -> {
             SoundEffects.playSelect();
-            Toast.makeText(this, i18n("✅ Wallpaper uploaded successfully from phone!", "✅ Wallpaper berhasil diunggah dari ponsel!", "✅ Wallpaper berjaya dimuat naik dari telefon!"), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Wallpaper uploaded successfully from phone", Toast.LENGTH_LONG).show();
 
             getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
                     .putString("active_category", "Custom")
@@ -5056,7 +5056,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 getSharedPreferences("wallpaper", MODE_PRIVATE).edit().putInt("index", -1).apply();
                 showNextWallpaper(true);
                 startWallpaperRotation();
-                Toast.makeText(this, i18n("🔄 Rotate All Wallpapers Active (", "🔄 Mode Putar Semua Wallpaper Aktif (", "🔄 Mod Putar Semua Wallpaper Aktif (") + files.length + i18n(" photos)", " foto)", " foto)"), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Rotate all wallpapers active (" + files.length + " photos)", Toast.LENGTH_SHORT).show();
             } else {
                 switchWallpaperCategory("Natural");
             }
@@ -5083,13 +5083,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     wallpapers = new ArrayList<>(Arrays.asList(files));
                     getSharedPreferences("wallpaper", MODE_PRIVATE).edit().putInt("index", -1).apply();
                     showNextWallpaper(true);
-                    Toast.makeText(this, i18n("🗑️ Image deleted. ", "🗑️ Gambar dihapus. Tersisa ", "🗑️ Gambar dipadam. Tinggal ") + files.length + i18n(" photos left.", " foto.", " foto."), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Image deleted. " + files.length + " photos left.", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(this, i18n("All images have been deleted. Switching to Natural.", "Semua gambar telah dihapus. Beralih ke Natural.", "Semua gambar telah dipadam. Beralih ke Natural."), Toast.LENGTH_SHORT).show();
                     switchWallpaperCategory("Natural");
                 }
             } else {
-                Toast.makeText(this, i18n("🗑️ Image deleted from storage.", "🗑️ Gambar dihapus dari penyimpanan.", "🗑️ Gambar dipadam dari simpanan."), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Image deleted from storage", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -5105,7 +5105,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if ("Custom".equalsIgnoreCase(activeCat)) {
                 switchWallpaperCategory("Natural");
             }
-            Toast.makeText(this, i18n("🧹 All uploaded images have been cleared.", "🧹 Semua gambar unggahan telah dibersihkan.", "🧹 Semua gambar muat naik telah dibersihkan."), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "All uploaded images have been cleared", Toast.LENGTH_SHORT).show();
         });
     }
 
