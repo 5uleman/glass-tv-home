@@ -154,9 +154,9 @@ final class GlassDialogs {
         button.setLayoutParams(params);
 
         button.setOnClickListener(v -> action.run());
+        // No focus scale: the 2dp ring is the background, and scaling a button that is flush with
+        // the footer's right edge pushed the ring outside it (clipChildren), cutting the right side.
         button.setOnFocusChangeListener((v, has) -> {
-            v.animate().scaleX(has ? 1.04f : 1f).scaleY(has ? 1.04f : 1f)
-                    .setDuration(120).start();
             if (has) SoundEffects.playNav();
         });
         return button;

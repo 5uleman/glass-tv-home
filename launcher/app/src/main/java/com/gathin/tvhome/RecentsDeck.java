@@ -246,7 +246,7 @@ final class RecentsDeck {
             column.addView(clearPill, pillParams);
 
             clearPill.setOnFocusChangeListener((v, has) -> {
-                animateScale(v, has ? 1.05f : 1f);
+                // The ring is drawn at the pill's bounds; scaling it here let the column clip it.
                 v.getForeground().setAlpha(has ? 255 : 0);
                 if (has) SoundEffects.playNav();
             });
