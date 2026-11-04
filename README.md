@@ -13,7 +13,7 @@ city.
 
 ## Download
 
-The current build is **3.7.0** (`versionCode 24`), 645 KB, package id **`com.suleman.glasstv`**.
+The current build is **3.7.0** (`versionCode 24`), 647 KB, package id **`com.suleman.glasstv`**.
 Download it from the [Releases page](https://github.com/5uleman/glass-tv-home/releases/latest) —
 release binaries are attached there, not committed to this repository.
 
@@ -49,11 +49,12 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   from Wikimedia Commons: Lahore, Islamabad, Karachi, the northern valleys and landmarks. Credits are below.
 - **A glass wallpaper dialog.** The category list is frosted glass with a white focus ring, and a dark smoke
   layer keeps the white text readable over bright pictures.
-- **A recent-apps deck.** Double-press Home. Cards scroll horizontally like a cover flow; **Up** closes
-  the focused app, **OK** opens it, **Down** moves to Clear all, and **Back** closes the deck. A live RAM
-  meter updates about once a second. **Clear all only ends background processes**, so the memory freed may be
-  small; it never force-stops an app. The launcher, system and persistent apps, the keyboard, accessibility
-  services and a connected VPN are left alone, and the deck says when a VPN was kept.
+- **A recent-apps deck.** Double-press Home. Cards scroll horizontally in 16:9, using each app's TV
+  banner (or a large icon and the name on a glass card); **Up** closes the focused app, **OK** opens it,
+  **Down** moves to Clear all, and **Back** closes the deck. A live RAM meter updates about once a second.
+  **Clear all only ends background processes**, so the memory freed may be small; it never force-stops an
+  app. The launcher, system and persistent apps, the keyboard, accessibility services and a connected VPN are
+  left alone, and the deck says when a VPN was kept.
 - **The self-updater is off.** This build never reads a release feed or shows an update prompt; new versions are
   built and installed by hand.
 - **Four-column grid** and a hero title that uses the full width, so a long place name is not cut with an
