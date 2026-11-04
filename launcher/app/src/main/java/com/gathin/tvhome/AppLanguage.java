@@ -652,9 +652,9 @@ final class AppLanguage {
     // --- Wallpaper Dialog ---
     public static String strWallpaperDialogTitle(Context ctx) {
         switch (getLanguage(ctx)) {
-            case LANG_EN: return "🖼️ Select Wallpaper Collection";
-            case LANG_ID: return "🖼️ Pilih Koleksi Wallpaper 4K";
-            case LANG_MS: default: return "🖼️ Pilih Koleksi Wallpaper 4K";
+            case LANG_EN: return "Select Wallpaper Collection";
+            case LANG_ID: return "Pilih Koleksi Wallpaper 4K";
+            case LANG_MS: default: return "Pilih Koleksi Wallpaper 4K";
         }
     }
 
@@ -668,9 +668,9 @@ final class AppLanguage {
 
     public static String strWallpaperIntervalTitle(Context ctx) {
         switch (getLanguage(ctx)) {
-            case LANG_EN: return "⏱️ Wallpaper Shuffle Interval";
-            case LANG_ID: return "⏱️ Interval Shuffle Wallpaper";
-            case LANG_MS: default: return "⏱️ Selang Masa Shuffle Wallpaper";
+            case LANG_EN: return "Wallpaper Shuffle Interval";
+            case LANG_ID: return "Interval Shuffle Wallpaper";
+            case LANG_MS: default: return "Selang Masa Shuffle Wallpaper";
         }
     }
 
