@@ -26,6 +26,9 @@ final class GlassDrawable extends Drawable {
     private final Glider highlight;
     /** Paints the focus shape over the glass (a menu), rather than fading the glass for it (a pill). */
     private final boolean paintsShape;
+    /** A dark layer over the glass, under the content, so white text keeps its contrast on bright pictures. */
+    private final int smokeColor;
+    private final Paint smoke = new Paint(Paint.ANTI_ALIAS_FLAG);
     /** How far the glass is shown, 0 to 1, for a panel fading in or out. */
     private float fade = 1f;
     private final int[] at = new int[2], highlightAt = new int[2];
@@ -46,7 +49,18 @@ final class GlassDrawable extends Drawable {
      * never hides it.
      */
     GlassDrawable(View owner, float radius, float density, Glider highlight, float reach, boolean paintsShape) {
+        this(owner, radius, density, highlight, reach, paintsShape, 0);
+    }
+
+    /**
+     * With {@code smokeColor}, a translucent dark layer is painted over the glass and under the
+     * content, so text keeps its contrast even when a bright patch of the wallpaper lies behind.
+     */
+    GlassDrawable(View owner, float radius, float density, Glider highlight, float reach,
+                  boolean paintsShape, int smokeColor) {
         this.paintsShape = paintsShape;
+        this.smokeColor = smokeColor;
+        smoke.setColor(smokeColor);
         this.owner = owner;
         this.highlight = highlight;
         this.radius = radius;
@@ -71,6 +85,10 @@ final class GlassDrawable extends Drawable {
             fill.draw(canvas, owner, rect, radius, glass);
             veil.setAlpha(Math.round(VEIL_ALPHA * glass));
             canvas.drawRoundRect(rect, radius, radius, veil);
+            if ((smokeColor >>> 24) != 0) {
+                smoke.setAlpha(Math.round((smokeColor >>> 24) * glass));
+                canvas.drawRoundRect(rect, radius, radius, smoke);
+            }
             if (paintsShape && highlight != null && highlight.isShowing()) {
                 owner.getLocationInWindow(at);
                 highlight.getLocationInWindow(highlightAt);

@@ -50,8 +50,9 @@ final class RecentsDeck {
     private HorizontalScrollView scroll;
     private LinearLayout row;
     private LinearLayout clearPill;
-    private TextView ramText, freedText, hintText, emptyText;
+    private TextView ramText, hintText, emptyText;
     private ProgressBar ramBar;
+    private String hintDefault;
     private View lastFocused;
     private boolean open;
     private boolean clearing;
@@ -64,8 +65,16 @@ final class RecentsDeck {
             handler.postDelayed(this, RAM_REFRESH_MS);
         }
     };
+    /** Puts the line under the cards back to the navigation hint, or hides it in the empty state. */
     private final Runnable hideFreed = () -> {
-        if (freedText != null) freedText.setVisibility(View.GONE);
+        if (hintText == null) return;
+        if (cards.isEmpty()) {
+            hintText.setVisibility(View.GONE);
+            return;
+        }
+        hintText.setText(hintDefault);
+        hintText.setTextColor(Color.WHITE);
+        hintText.setAlpha(0.75f);
     };
 
     RecentsDeck(Activity activity, FrameLayout root, float density, boolean reducedMotion) {
@@ -106,7 +115,7 @@ final class RecentsDeck {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         int side = (int) (42 * density);
-        column.setPadding(side, (int) (28 * density), side, (int) (26 * density));
+        column.setPadding(side, (int) (26 * density), side, (int) (24 * density));
 
         // Header: title on the left, glass RAM pill with the inline message underneath it.
         LinearLayout header = new LinearLayout(activity);
@@ -125,7 +134,8 @@ final class RecentsDeck {
         ramPill.setOrientation(LinearLayout.VERTICAL);
         ramPill.setPadding((int) (16 * density), (int) (9 * density),
                 (int) (16 * density), (int) (10 * density));
-        ramPill.setBackground(new GlassDrawable(ramPill, 16 * density, density, null, 0.5f));
+        ramPill.setBackground(new GlassDrawable(ramPill, 16 * density, density, null, 0.5f,
+                false, 0x4D000000));
         Backdrop.watch(ramPill);
         header.addView(ramPill, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -141,16 +151,6 @@ final class RecentsDeck {
                 (int) (210 * density), (int) (3 * density));
         barParams.topMargin = (int) (6 * density);
         ramPill.addView(ramBar, barParams);
-
-        freedText = text("", 12, false);
-        freedText.setTextColor(0xFF7DD3FC);
-        freedText.setVisibility(View.GONE);
-        freedText.setGravity(Gravity.END);
-        LinearLayout.LayoutParams freedParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        freedParams.topMargin = (int) (6 * density);
-        freedParams.bottomMargin = (int) (2 * density);
-        ramPill.addView(freedText, freedParams);
 
         if (items.isEmpty()) {
             addEmptyText();
@@ -187,6 +187,9 @@ final class RecentsDeck {
             hintText = text(activity.getString(R.string.recents_hint), 13, false);
             hintText.setAlpha(0.75f);
             hintText.setGravity(Gravity.CENTER);
+            hintText.setMaxLines(2);
+            hintText.setEllipsize(TextUtils.TruncateAt.END);
+            hintDefault = hintText.getText().toString();
             LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             hintParams.topMargin = (int) (6 * density);
@@ -200,7 +203,8 @@ final class RecentsDeck {
             clearPill.setClickable(true);
             clearPill.setPadding((int) (26 * density), (int) (12 * density),
                     (int) (26 * density), (int) (12 * density));
-            clearPill.setBackground(new GlassDrawable(clearPill, 24 * density, density, null, 0.5f));
+            clearPill.setBackground(new GlassDrawable(clearPill, 24 * density, density, null, 0.5f,
+                    false, 0x4D000000));
             Backdrop.watch(clearPill);
             GradientDrawable ring = new GradientDrawable();
             ring.setCornerRadius(24 * density);
@@ -274,8 +278,8 @@ final class RecentsDeck {
         clearPill = null;
         ramText = null;
         ramBar = null;
-        freedText = null;
         hintText = null;
+        hintDefault = null;
         emptyText = null;
         cards.clear();
         if (panel == null) return;
@@ -438,13 +442,13 @@ final class RecentsDeck {
             if (vpnKept != null) {
                 message = message + " - " + activity.getString(R.string.recents_vpn_kept, vpnKept);
             }
-            showInline(message);
             for (int i = 0; i < cards.size(); i++) {
                 animateAwayOnly(cards.get(i));
             }
             cards.clear();
             lastFocused = null;
             showEmptyAfterClear();
+            showInline(message);
             updateRam();
         });
     }
@@ -471,11 +475,14 @@ final class RecentsDeck {
                 ViewGroup.LayoutParams.WRAP_CONTENT, 0, 1f));
     }
 
+    /** Shows the freed-memory or failure message in the line under the cards, so the deck never resizes. */
     private void showInline(String message) {
-        if (freedText == null) return;
+        if (hintText == null) return;
         handler.removeCallbacks(hideFreed);
-        freedText.setText(message);
-        freedText.setVisibility(View.VISIBLE);
+        hintText.setText(message);
+        hintText.setTextColor(0xFF7DD3FC);
+        hintText.setAlpha(1f);
+        hintText.setVisibility(View.VISIBLE);
         handler.postDelayed(hideFreed, 4500);
     }
 
