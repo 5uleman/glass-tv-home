@@ -87,6 +87,11 @@ final class GlassDialogs {
                 .create();
         holder[0] = dialog;
         dialog.show();
+        // Home closes every launcher overlay through this registry, like Back closes this one.
+        final Object overlay = OverlayManager.register(() -> {
+            if (dialog.isShowing()) dialog.dismiss();
+        });
+        dialog.setOnDismissListener(d -> OverlayManager.unregister(overlay));
 
         Window window = dialog.getWindow();
         if (window != null) {

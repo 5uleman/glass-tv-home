@@ -431,8 +431,16 @@ public class HomeKeyService extends AccessibilityService {
             }
             // Home twice in quick succession opens the recent-apps deck. The first press still goes
             // Home at once: delaying it to see whether a second one follows would slow every press.
+            // An open overlay wins: this press closes it and is not counted as the first of a pair.
             if (keyCode == KeyEvent.KEYCODE_HOME) {
-                if (recentsPress.isDoublePress(SystemClock.uptimeMillis())) {
+                boolean overlay = MainActivity.dismissOverlaysIfAny();
+                boolean doublePress = !overlay && recentsPress.isDoublePress(SystemClock.uptimeMillis());
+                int action = HomeKeyDecision.decide(overlay, doublePress);
+                if (action == HomeKeyDecision.DISMISS_OVERLAY) {
+                    recentsPress.reset();
+                    return true;
+                }
+                if (action == HomeKeyDecision.OPEN_RECENTS) {
                     openRecentsDeckGlobal();
                     return true;
                 }

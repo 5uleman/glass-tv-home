@@ -128,6 +128,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         return inst != null && inst.recentsDeck != null && inst.recentsDeck.isShowing();
     }
 
+    /** Closes every open launcher overlay (deck, dialogs, menus, popups) for a Home press. */
+    static boolean dismissOverlaysIfAny() {
+        return OverlayManager.dismissAll();
+    }
+
     public static void dismissRecentsFromGlobal() {
         MainActivity inst = getInstance();
         if (inst != null) {
@@ -281,6 +286,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean promptsPaused;
     /** The Inputs or Module cards dropdown while one is open, so onPause can close it. */
     private PopupWindow openPopup;
+    private Object popupOverlayToken;
     private RecentsDeck recentsDeck;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -1338,6 +1344,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             dismissScreensaver();
             return;
         }
+        // Home closes an open overlay like Back does, and this press does not count as the first
+        // press of a double Home (HomeKeyService resets its timer when it closes one).
+        if (OverlayManager.dismissAll()) return;
         // Single home pressed on Home
         if (cardPrompt != null) cardPrompt.dismiss();
         if (openPopup != null) openPopup.dismiss();
@@ -4133,6 +4142,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (btnCloseDialog != null) btnCloseDialog.setOnFocusChangeListener(btnFocus);
 
         dialog.show();
+        trackOverlay(dialog);
         if (btnPlayPause != null) {
             btnPlayPause.requestFocus();
         }
@@ -4864,8 +4874,28 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
+    /** Registers a dialog with the overlay sweep; a Home press closes it like Back. */
+    private void trackOverlay(android.app.Dialog dialog) {
+        trackOverlay(dialog, null);
+    }
+
+    private void trackOverlay(android.app.Dialog dialog, DialogInterface.OnDismissListener extra) {
+        final Object token = OverlayManager.register(() -> {
+            try {
+                if (dialog.isShowing()) dialog.dismiss();
+            } catch (RuntimeException ignored) {
+            }
+        });
+        dialog.setOnDismissListener(d -> {
+            OverlayManager.unregister(token);
+            if (extra != null) extra.onDismiss(d);
+        });
+    }
+
     private void styleGlassDialog(AlertDialog dialog) {
         if (dialog == null) return;
+        // Home closes every glass dialog through the same sweep, whatever the styling does.
+        trackOverlay(dialog);
         try {
             TextView titleView = dialog.findViewById(android.R.id.title);
             if (titleView != null) {
@@ -5349,7 +5379,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         btnClose.setOnClickListener(v -> qrUploadDialog.dismiss());
 
-        qrUploadDialog.setOnDismissListener(dialog -> {
+        trackOverlay(qrUploadDialog, dialog -> {
             if (uploadServer != null) {
                 uploadServer.stop();
                 uploadServer = null;
@@ -6116,6 +6146,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** The glass menu while one is open (Inputs, or an app's), and what it opened from. */
     private View openMenu;
     private View menuAnchor;
+    private Object menuOverlayToken;
     private final int[] menuAt = new int[2], menuGliderAt = new int[2];
 
     /**
@@ -6232,6 +6263,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         root.addView(panel, lp);
         openMenu = panel;
         menuAnchor = anchor;
+        menuOverlayToken = OverlayManager.register(() -> closeMenu(true));
 
         // Focus stays in the menu until it closes. Leaving it towards the anchor closes it, and the
         // selection glides back into what it opened from.
@@ -6332,6 +6364,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (panel == null) return;
         SoundEffects.playNav();
         openMenu = null;
+        OverlayManager.unregister(menuOverlayToken);
+        menuOverlayToken = null;
         vpnRowStatus = null;
         vpnRowDot = null;
         if (toAnchor && menuAnchor != null) menuAnchor.requestFocus();
@@ -6360,8 +6394,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         popup.setElevation(0f);
         popup.setOnDismissListener(() -> {
             if (openPopup == popup) openPopup = null;
+            OverlayManager.unregister(popupOverlayToken);
+            popupOverlayToken = null;
         });
         openPopup = popup;
+        popupOverlayToken = OverlayManager.register(() -> {
+            if (popup.isShowing()) popup.dismiss();
+        });
         return popup;
     }
 
@@ -6472,7 +6511,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         keep.setOnClickListener(choose);
         show.setOnClickListener(choose);
         dialog.setOnCancelListener(d -> choose.onClick(keep));
-        dialog.setOnDismissListener(d -> {
+        trackOverlay(dialog, d -> {
             if (cardPrompt == dialog) cardPrompt = null;
         });
         // Left and Right move between the two buttons; Up and Down stay put; the ends don't wrap.

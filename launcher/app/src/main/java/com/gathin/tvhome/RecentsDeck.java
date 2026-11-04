@@ -60,6 +60,7 @@ final class RecentsDeck {
     private boolean clearing;
     private boolean emptyScheduled;
     private boolean emptyShown;
+    private Object overlayToken;
     private final Runnable emptyTransition = this::runEmptyTransition;
     private final List<View> cards = new ArrayList<>();
     private final Runnable ramTick = new Runnable() {
@@ -274,6 +275,7 @@ final class RecentsDeck {
         layer.setAlpha(0f);
         layer.animate().alpha(1f).setDuration(reducedMotion ? 0 : 180).start();
         open = true;
+        overlayToken = OverlayManager.register(this::close);
         handler.post(ramTick);
 
         if (!cards.isEmpty()) {
@@ -287,6 +289,8 @@ final class RecentsDeck {
     void close() {
         if (!open) return;
         open = false;
+        OverlayManager.unregister(overlayToken);
+        overlayToken = null;
         handler.removeCallbacks(ramTick);
         handler.removeCallbacks(hideFreed);
         handler.removeCallbacks(emptyTransition);
