@@ -3218,18 +3218,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void showSoundEffectsDialog() {
-        final String[] soundOptions = new String[]{
-                "🎮 PlayStation 5 (Default Chime)",
-                "🕹️ Nintendo Switch (Click & Snap Pop)",
-                "🟩 Xbox Series X/S (Warm Harmonic Chime)",
-                "🔇 Mute Sound (Off)"
-        };
-
         final String[] soundKeys = new String[]{
                 SoundEffects.THEME_PS5,
                 SoundEffects.THEME_SWITCH,
                 SoundEffects.THEME_XBOX,
                 SoundEffects.THEME_OFF
+        };
+        String[] titles = {"PlayStation 5", "Nintendo Switch", "Xbox Series X/S", "Mute sound"};
+        String[] subtitles = {
+                "Default chime",
+                "Click and snap pop",
+                "Warm harmonic chime",
+                "Sound effects off"
         };
 
         String currentTheme = SoundEffects.getActiveTheme(this);
@@ -3241,26 +3241,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         }
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.Theme_TvHome_GlassDialog);
-        builder.setTitle("🔊 " + AppLanguage.strSoundEffects(this));
-        builder.setSingleChoiceItems(soundOptions, selectedIndex, (dialog, which) -> {
-            dialog.dismiss();
-            String chosenKey = soundKeys[which];
-            SoundEffects.setTheme(MainActivity.this, chosenKey);
-            String displayName = SoundEffects.getThemeDisplayName(chosenKey);
+        List<GlassDialogs.Row> rows = new ArrayList<>();
+        for (int i = 0; i < soundKeys.length; i++) {
+            rows.add(new GlassDialogs.Row(titles[i], subtitles[i], i == selectedIndex));
+        }
 
-            if (SoundEffects.THEME_OFF.equalsIgnoreCase(chosenKey)) {
-                Toast.makeText(MainActivity.this, i18n("🔇 Sound Effects Off", "🔇 Efek Suara Dimatikan", "🔇 Kesan Bunyi Dimatikan"), Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(MainActivity.this, i18n("🔊 Sound Effects: ", "🔊 Efek Suara: ", "🔊 Kesan Bunyi: ") + displayName, Toast.LENGTH_SHORT).show();
-                // Play sample of the selected theme
-                handler.postDelayed(() -> SoundEffects.playSelect(), 120);
-            }
-        });
-        builder.setNegativeButton(AppLanguage.strClose(this), (dialog, which) -> dialog.dismiss());
-        AlertDialog dialog = builder.create();
-        dialog.show();
-        styleGlassDialog(dialog);
+        GlassDialogs.showList(this, R.drawable.ic_sound, AppLanguage.strSoundEffects(this),
+                "Choose the navigation and selection sound", rows, selectedIndex,
+                AppLanguage.strClose(this), null,
+                index -> {
+                    String chosenKey = soundKeys[index];
+                    SoundEffects.setTheme(MainActivity.this, chosenKey);
+                    String displayName = SoundEffects.getThemeDisplayName(chosenKey);
+                    if (SoundEffects.THEME_OFF.equalsIgnoreCase(chosenKey)) {
+                        Toast.makeText(MainActivity.this, "Sound effects off", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(MainActivity.this, "Sound effects: " + displayName, Toast.LENGTH_SHORT).show();
+                        handler.postDelayed(() -> SoundEffects.playSelect(), 120);
+                    }
+                });
     }
 
     private void showLanguageDialog() {
