@@ -156,7 +156,6 @@ in the passwords; without that file the build falls back to the debug key, which
   Wikimedia Commons with the licence noted. Photographers and authors, in the order the collection lists them:
   - Badshahi Mosque under the Milky Way — Aitizaz Naqvi ([photo](https://www.pexels.com/photo/5487986/))
   - Alamgiri Gate, Lahore Fort — Salman Rafique ([photo](https://www.pexels.com/photo/11774127/))
-  - Naulakha Pavilion, Lahore Fort — Null Factor ([photo](https://www.pexels.com/photo/13023314/))
   - Lahore at night — Wasif Mehmood ([photo](https://www.pexels.com/photo/16021536/))
   - Faisal Mosque at dusk — Bilal ([photo](https://www.pexels.com/photo/16693762/))
   - Rawal Lake at sunset — Ashraf Hussain ([photo](https://www.pexels.com/photo/38459967/))

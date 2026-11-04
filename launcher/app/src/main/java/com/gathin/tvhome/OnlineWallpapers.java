@@ -203,8 +203,6 @@ final class OnlineWallpapers {
                     "Badshahi Mosque Under the Milky Way", "The lit Mughal mosque beneath the Milky Way, with Minar-e-Pakistan on the horizon", "Pakistan_Lahore", "Lahore, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/11774127/pexels-photo-11774127.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
                     "Alamgiri Gate", "The gateway into Lahore Fort above its lawns, with the white pavilion to the right", "Pakistan_Lahore", "Lahore, Pakistan"),
-            new WallpaperItem("https://images.pexels.com/photos/13023314/pexels-photo-13023314.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
-                    "Naulakha Pavilion", "The marble pavilion inside Lahore Fort, seen across the fort gardens", "Pakistan_Lahore", "Lahore, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/16021536/pexels-photo-16021536.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
                     "Lahore at Night", "Light trails along the canal and the lit Arfa Software Technology Park tower", "Pakistan_Lahore", "Lahore, Pakistan"),
             // Islamabad
