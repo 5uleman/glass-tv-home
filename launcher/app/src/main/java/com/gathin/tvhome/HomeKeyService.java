@@ -433,7 +433,9 @@ public class HomeKeyService extends AccessibilityService {
             // Home at once: delaying it to see whether a second one follows would slow every press.
             // An open overlay wins: this press closes it and is not counted as the first of a pair.
             if (keyCode == KeyEvent.KEYCODE_HOME) {
-                boolean overlay = MainActivity.dismissOverlaysIfAny();
+                // Only the launcher's own overlays count; a Home press from another app must still
+                // bring the home screen forward instead of being consumed.
+                boolean overlay = MainActivity.isForeground() && MainActivity.dismissOverlaysIfAny();
                 boolean doublePress = !overlay && recentsPress.isDoublePress(SystemClock.uptimeMillis());
                 int action = HomeKeyDecision.decide(overlay, doublePress);
                 if (action == HomeKeyDecision.DISMISS_OVERLAY) {
