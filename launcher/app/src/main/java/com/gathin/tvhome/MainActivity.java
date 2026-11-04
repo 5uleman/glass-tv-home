@@ -4239,6 +4239,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         String curLang = AppLanguage.getLanguage(this);
         List<WallpaperOption> options = new ArrayList<>();
 
+        // First: Lahore & Pakistan. Only its position changes; the current selection still comes
+        // from active_category, and every other collection keeps its order.
+        options.add(new WallpaperOption("Pakistan", "🇵🇰 Lahore & Pakistan",
+                "25 photos: Lahore, Islamabad, Karachi, the northern valleys, landmarks and historic sites"));
+
         // Category 1: Malaysia
         String tMal = AppLanguage.LANG_EN.equals(curLang) ? "🇲🇾 Attractions in Malaysia" : (AppLanguage.LANG_ID.equals(curLang) ? "🇲🇾 Tempat Wisata Malaysia" : "🇲🇾 Tempat Menarik di Malaysia");
         String sMal = AppLanguage.LANG_EN.equals(curLang) ? "16 Iconic Photo Collection (Pexels)" : "16 Koleksi 4K Ikonik (Pexels Ultra HD)";
@@ -4268,10 +4273,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         String tMin = AppLanguage.LANG_EN.equals(curLang) ? "🔲 Dark Minimalist (OLED)" : (AppLanguage.LANG_ID.equals(curLang) ? "🔲 Minimalis Gelap (OLED)" : "🔲 Minimalis Gelap (OLED)");
         String sMin = AppLanguage.LANG_EN.equals(curLang) ? "16 Unsplash Dark Wallpapers • Perfect for OLED" : (AppLanguage.LANG_ID.equals(curLang) ? "16 Koleksi Unsplash Dark Wallpaper • Khusus Layar OLED" : "16 Koleksi Unsplash Dark Wallpaper • Khas Skrin OLED");
         options.add(new WallpaperOption("Minimalist", tMin, sMin));
-
-        // Category 7: Lahore & Pakistan
-        options.add(new WallpaperOption("Pakistan", "🇵🇰 Lahore & Pakistan",
-                "25 photos: Lahore, Islamabad, Karachi, the northern valleys, landmarks and historic sites"));
 
         // Special: no wallpaper at all - a plain solid black home screen
         String tDark = AppLanguage.LANG_EN.equals(curLang) ? "🌑 No wallpaper (dark screen)" : (AppLanguage.LANG_ID.equals(curLang) ? "🌑 Tanpa wallpaper (layar gelap)" : "🌑 Tiada wallpaper (skrin gelap)");
