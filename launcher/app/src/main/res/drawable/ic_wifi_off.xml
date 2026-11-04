@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Offline network: the Wi-Fi arcs with an exclamation mark, in a soft red. Drawn here rather than
+     taken from a stock icon set; the 22dp box matches ic_wifi so the pill does not change size. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp" android:height="22dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFE53935"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M2,8.6C4.8,5.4 8.3,3.8 12,3.8C15.7,3.8 19.2,5.4 22,8.6" />
+
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFE53935"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M5.6,12.4C7.3,10.5 9.6,9.5 12,9.5C14.4,9.5 16.7,10.5 18.4,12.4" />
+
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFE53935"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:pathData="M12,15.4L12,18.2" />
+
+    <path
+        android:fillColor="#FFE53935"
+        android:pathData="M12,20.2m-1.2,0a1.2,1.2 0 1,0 2.4,0a1.2,1.2 0 1,0 -2.4,0" />
+</vector>

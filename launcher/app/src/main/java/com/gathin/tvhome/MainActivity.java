@@ -2833,6 +2833,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
             if (!online) {
                 text = getString(R.string.offline);
+                icon = R.drawable.ic_wifi_off;
                 vpn = false;
             } else if (ethernet) {
                 text = getString(R.string.ethernet);
@@ -2877,6 +2878,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             label = sb;
         }
         btnWifi.setText(label);
+        // The style tints compound drawables white; the offline icon keeps its own soft red.
+        btnWifi.setCompoundDrawableTintList(null);
         btnWifi.setCompoundDrawablesRelativeWithIntrinsicBounds(icon, 0, 0, 0);
     }
 
@@ -2894,10 +2897,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         boolean isConnected = false;
         try {
             ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-            Network activeNet = cm != null ? cm.getActiveNetwork() : null;
-            if (activeNet != null) {
-                NetworkCapabilities caps = cm.getNetworkCapabilities(activeNet);
-                if (caps != null && (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))) {
+            // All networks, not the active one: with a VPN up the active network is the VPN.
+            for (Network net : cm != null ? cm.getAllNetworks() : new Network[0]) {
+                NetworkCapabilities caps = cm.getNetworkCapabilities(net);
+                if (caps == null || caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) continue;
+                if (!caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) continue;
+                if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                        || caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
                     isConnected = true;
                 }
             }
@@ -2920,9 +2926,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
 
         int width = (int) (240 * density);
+        int wifiIcon = isConnected ? R.drawable.ic_wifi : R.drawable.ic_wifi_off;
 
         // Row 1: Current Wi-Fi status & SSID
-        addInputRow(rows, close, R.drawable.ic_wifi, ssid, isConnected ? TvInputManager.INPUT_STATE_CONNECTED : TvInputManager.INPUT_STATE_DISCONNECTED, () -> {
+        addInputRow(rows, close, wifiIcon, ssid, isConnected ? TvInputManager.INPUT_STATE_CONNECTED : TvInputManager.INPUT_STATE_DISCONNECTED, () -> {
             SoundEffects.playSelect();
             open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
         });
@@ -6346,7 +6353,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void addInputRow(LinearLayout rows, Runnable close, int iconRes, String title, int state, Runnable action) {
         View row = getLayoutInflater().inflate(R.layout.item_input, rows, false);
-        ((ImageView) row.findViewById(R.id.icon)).setImageResource(iconRes);
+        ImageView rowIcon = row.findViewById(R.id.icon);
+        rowIcon.setImageResource(iconRes);
+        // The row tint is white; only the offline icon carries its own colour.
+        if (iconRes == R.drawable.ic_wifi_off) rowIcon.setImageTintList(null);
         ((TextView) row.findViewById(R.id.title)).setText(title);
         TextView status = row.findViewById(R.id.status);
         View dot = row.findViewById(R.id.dot);
