@@ -3717,44 +3717,28 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void showCleanTvCacheDialog() {
         SoundEffects.playSelect();
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.Theme_TvHome_GlassDialog);
-        builder.setTitle(AppLanguage.strCleanCacheTitle(this));
-
         long freeBytes = CacheCleaner.getFreeStorageBytes();
         long totalBytes = CacheCleaner.getTotalStorageBytes();
         int usedPct = CacheCleaner.usedPercent();
         String freeStr = android.text.format.Formatter.formatFileSize(this, freeBytes);
         String totalStr = android.text.format.Formatter.formatFileSize(this, totalBytes);
-
         String msg = AppLanguage.strCleanCacheMsg(this, freeStr, totalStr, 100 - usedPct, usedPct);
-        builder.setMessage(msg);
 
-        builder.setPositiveButton(AppLanguage.strCleanCacheStart(this), (dialog, which) -> {
-            dialog.dismiss();
-            Toast.makeText(MainActivity.this, AppLanguage.strCleanCacheToast(MainActivity.this), Toast.LENGTH_SHORT).show();
-
-            CacheCleaner.cleanNow(MainActivity.this, (bytesFreed, percentBefore, percentAfter, systemTrimmed) -> {
-                SoundEffects.playSelect();
-                String freedStr = android.text.format.Formatter.formatFileSize(MainActivity.this, bytesFreed);
-                String resultMsg = AppLanguage.strCleanCacheDoneMsg(MainActivity.this, freedStr, bytesFreed > 0);
-
-                AlertDialog resDialog = new AlertDialog.Builder(MainActivity.this, R.style.Theme_TvHome_GlassDialog)
-                        .setTitle(AppLanguage.strCleanCacheDoneTitle(MainActivity.this))
-                        .setMessage(resultMsg + AppLanguage.strCleanCacheUsageLine(MainActivity.this, percentBefore, percentAfter))
-                        .setPositiveButton(AppLanguage.strDone(MainActivity.this), (d, w) -> d.dismiss())
-                        .create();
-                resDialog.show();
-                styleGlassDialog(resDialog);
-                Button btnOk = resDialog.getButton(DialogInterface.BUTTON_POSITIVE);
-                if (btnOk != null) btnOk.requestFocus();
-            });
-        });
-        builder.setNegativeButton(AppLanguage.strCancel(this), (dialog, which) -> dialog.dismiss());
-        AlertDialog dialog = builder.create();
-        dialog.show();
-        styleGlassDialog(dialog);
-        Button btnPos = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-        if (btnPos != null) btnPos.requestFocus();
+        GlassDialogs.show(this, R.drawable.ic_clean, AppLanguage.strCleanCacheTitle(this), msg,
+                AppLanguage.strCleanCacheStart(this), () -> {
+                    Toast.makeText(MainActivity.this,
+                            AppLanguage.strCleanCacheToast(MainActivity.this), Toast.LENGTH_SHORT).show();
+                    CacheCleaner.cleanNow(MainActivity.this, (bytesFreed, percentBefore, percentAfter, systemTrimmed) -> {
+                        SoundEffects.playSelect();
+                        String freedStr = android.text.format.Formatter.formatFileSize(MainActivity.this, bytesFreed);
+                        String resultMsg = AppLanguage.strCleanCacheDoneMsg(MainActivity.this, freedStr, bytesFreed > 0);
+                        GlassDialogs.show(MainActivity.this, R.drawable.ic_clean,
+                                AppLanguage.strCleanCacheDoneTitle(MainActivity.this),
+                                resultMsg + AppLanguage.strCleanCacheUsageLine(MainActivity.this, percentBefore, percentAfter),
+                                AppLanguage.strDone(MainActivity.this), null, null, null);
+                    });
+                },
+                AppLanguage.strCancel(this), null);
     }
 
     private String getAppVersionName() {
@@ -4490,9 +4474,37 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         scroll.addView(list);
         layout.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
+        final LinearLayout footer = GlassDialogs.footer(this);
+        final View closeButton = GlassDialogs.button(this, density, AppLanguage.strClose(this), false,
+                () -> {
+                    if (dialogHolder[0] != null) dialogHolder[0].dismiss();
+                });
+        footer.addView(closeButton);
+        LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        footerParams.topMargin = (int) (10 * density);
+        layout.addView(footer, footerParams);
+
+        final View lastRow = list.getChildCount() > 0 ? list.getChildAt(list.getChildCount() - 1) : null;
+        if (lastRow != null) {
+            lastRow.setOnKeyListener((v, keyCode, event) -> {
+                if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                    closeButton.requestFocus();
+                    return true;
+                }
+                return false;
+            });
+            closeButton.setOnKeyListener((v, keyCode, event) -> {
+                if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                    lastRow.requestFocus();
+                    return true;
+                }
+                return false;
+            });
+        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.Theme_TvHome_GlassDialog);
         builder.setView(layout);
-        builder.setNegativeButton(AppLanguage.strClose(this), (d, w) -> d.dismiss());
         AlertDialog dialog = builder.create();
         dialogHolder[0] = dialog;
         dialog.show();
@@ -4704,12 +4716,38 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         scroll.addView(list);
         layout.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
+        final LinearLayout footer = GlassDialogs.footer(this);
+        final View backButton = GlassDialogs.button(this, density, AppLanguage.strBack(this), false,
+                () -> {
+                    if (dialogHolder[0] != null) dialogHolder[0].dismiss();
+                    showWallpaperDialog();
+                });
+        footer.addView(backButton);
+        LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        footerParams.topMargin = (int) (10 * density);
+        layout.addView(footer, footerParams);
+
+        final View lastRow = list.getChildCount() > 0 ? list.getChildAt(list.getChildCount() - 1) : null;
+        if (lastRow != null) {
+            lastRow.setOnKeyListener((v, keyCode, event) -> {
+                if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                    backButton.requestFocus();
+                    return true;
+                }
+                return false;
+            });
+            backButton.setOnKeyListener((v, keyCode, event) -> {
+                if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                    lastRow.requestFocus();
+                    return true;
+                }
+                return false;
+            });
+        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.Theme_TvHome_GlassDialog);
         builder.setView(layout);
-        builder.setNegativeButton(AppLanguage.strBack(this), (d, w) -> {
-            d.dismiss();
-            showWallpaperDialog();
-        });
         AlertDialog dialog = builder.create();
         dialogHolder[0] = dialog;
         dialog.show();

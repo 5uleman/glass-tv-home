@@ -47,6 +47,7 @@
 
     <style name="GlassDialogTitle" parent="android:Widget.Material.TextView">
         <item name="android:fontFamily">@font/outfit</item>
+        <item name="android:fontVariationSettings">\'wght\' 700</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">20sp</item>
         <item name="android:textColor">#FFFFFFFF</item>
@@ -58,6 +59,7 @@
 
     <style name="GlassDialogMessage" parent="android:Widget.Material.TextView">
         <item name="android:fontFamily">@font/outfit</item>
+        <item name="android:fontVariationSettings">\'wght\' 600</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">15sp</item>
         <item name="android:textColor">#F0FFFFFF</item>
@@ -75,9 +77,13 @@
 
     <style name="GlassDialogButton" parent="android:Widget.Material.Button.Borderless">
         <item name="android:fontFamily">@font/outfit</item>
+        <item name="android:fontVariationSettings">\'wght\' 600</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">15sp</item>
         <item name="android:textColor">#FFFFFFFF</item>
+        <item name="android:background">@drawable/glass_button_bg</item>
+        <item name="android:paddingStart">18dp</item>
+        <item name="android:paddingEnd">18dp</item>
         <item name="android:shadowColor">#99000000</item>
         <item name="android:shadowDx">0</item>
         <item name="android:shadowDy">1</item>
@@ -96,6 +102,7 @@
         <item name="android:textColor">@drawable/pill_text</item>
         <item name="android:textSize">15sp</item>
         <item name="android:fontFamily">@font/outfit</item>
+        <item name="android:fontVariationSettings">\'wght\' 600</item>
         <item name="android:letterSpacing">0.01</item>
         <item name="android:drawablePadding">7dp</item>
         <item name="android:drawableTint">@drawable/pill_text</item>

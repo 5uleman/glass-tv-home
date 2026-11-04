@@ -405,9 +405,9 @@ final class AppLanguage {
     // --- Clean Cache Dialog ---
     public static String strCleanCacheTitle(Context ctx) {
         switch (getLanguage(ctx)) {
-            case LANG_EN: return "🧹 Clean TV Cache";
-            case LANG_ID: return "🧹 Bersihkan Cache TV";
-            case LANG_MS: default: return "🧹 Bersihkan Cache TV";
+            case LANG_EN: return "Clean TV Cache";
+            case LANG_ID: return "Bersihkan Cache TV";
+            case LANG_MS: default: return "Bersihkan Cache TV";
         }
     }
 
@@ -415,28 +415,28 @@ final class AppLanguage {
         switch (getLanguage(ctx)) {
             case LANG_EN:
                 return "Clear app cache files, temporary download fragments, and refresh TV memory.\n\n"
-                        + "📊 TV Storage Status:\n"
-                        + "• Free Space: " + freeStr + " of " + totalStr + " (" + freePct + "% free)\n"
-                        + "• Usage: " + usedPct + "%";
+                        + "TV Storage Status:\n"
+                        + "Free Space: " + freeStr + " of " + totalStr + " (" + freePct + "% free)\n"
+                        + "Usage: " + usedPct + "%";
             case LANG_ID:
                 return "Bersihkan file cache aplikasi, file unduhan sementara, dan segarkan memori TV.\n\n"
-                        + "📊 Status Penyimpanan TV:\n"
-                        + "• Ruang Bebas: " + freeStr + " dari " + totalStr + " (" + freePct + "% bebas)\n"
-                        + "• Penggunaan: " + usedPct + "%";
+                        + "Status Penyimpanan TV:\n"
+                        + "Ruang Bebas: " + freeStr + " dari " + totalStr + " (" + freePct + "% bebas)\n"
+                        + "Penggunaan: " + usedPct + "%";
             case LANG_MS:
             default:
                 return "Kosongkan fail cache aplikasi, serpihan muat turun sementara, dan segarkan memori TV.\n\n"
-                        + "📊 Status Storan TV:\n"
-                        + "• Ruang Bebas: " + freeStr + " daripada " + totalStr + " (" + freePct + "% bebas)\n"
-                        + "• Penggunaan: " + usedPct + "%";
+                        + "Status Storan TV:\n"
+                        + "Ruang Bebas: " + freeStr + " daripada " + totalStr + " (" + freePct + "% bebas)\n"
+                        + "Penggunaan: " + usedPct + "%";
         }
     }
 
     public static String strCleanCacheStart(Context ctx) {
         switch (getLanguage(ctx)) {
-            case LANG_EN: return "🧹 Start Cleaning";
-            case LANG_ID: return "🧹 Mulai Bersihkan";
-            case LANG_MS: default: return "🧹 Mula Bersihkan";
+            case LANG_EN: return "Start Cleaning";
+            case LANG_ID: return "Mulai Bersihkan";
+            case LANG_MS: default: return "Mula Bersihkan";
         }
     }
 
@@ -450,9 +450,9 @@ final class AppLanguage {
 
     public static String strCleanCacheDoneTitle(Context ctx) {
         switch (getLanguage(ctx)) {
-            case LANG_EN: return "✨ Cleaning Complete";
-            case LANG_ID: return "✨ Pembersihan Selesai";
-            case LANG_MS: default: return "✨ Pembersihan Selesai";
+            case LANG_EN: return "Cleaning Complete";
+            case LANG_ID: return "Pembersihan Selesai";
+            case LANG_MS: default: return "Pembersihan Selesai";
         }
     }
 
@@ -460,25 +460,25 @@ final class AppLanguage {
         switch (getLanguage(ctx)) {
             case LANG_EN:
                 return hasFreed
-                        ? "✅ Successfully cleaned " + freedStr + " of cache files!\nTV storage is now lighter and smoother."
-                        : "✅ TV cache is already completely clean.\nTV storage and memory are at optimal levels.";
+                        ? "Successfully cleaned " + freedStr + " of cache files.\nTV storage is now lighter and smoother."
+                        : "TV cache is already completely clean.\nTV storage and memory are at optimal levels.";
             case LANG_ID:
                 return hasFreed
-                        ? "✅ Berhasil membersihkan " + freedStr + " file cache!\nPenyimpanan TV kini lebih lega dan lancar."
-                        : "✅ Cache TV sudah bersih sepenuhnya.\nPenyimpanan dan memori TV berada pada tingkat optimal.";
+                        ? "Berhasil membersihkan " + freedStr + " file cache.\nPenyimpanan TV kini lebih lega dan lancar."
+                        : "Cache TV sudah bersih sepenuhnya.\nPenyimpanan dan memori TV berada pada tingkat optimal.";
             case LANG_MS:
             default:
                 return hasFreed
-                        ? "✅ Berjaya membersihkan " + freedStr + " fail cache!\nStoran TV kini lebih ringan dan lancar."
-                        : "✅ Cache TV telah dibersihkan sepenuhnya.\nStoran dan memori TV berada pada tahap optimum.";
+                        ? "Berjaya membersihkan " + freedStr + " fail cache.\nStoran TV kini lebih ringan dan lancar."
+                        : "Cache TV telah dibersihkan sepenuhnya.\nStoran dan memori TV berada pada tahap optimum.";
         }
     }
 
     public static String strCleanCacheUsageLine(Context ctx, int before, int after) {
         switch (getLanguage(ctx)) {
-            case LANG_EN: return "\n\n📊 Storage Usage: " + before + "% → " + after + "%";
-            case LANG_ID: return "\n\n📊 Penggunaan Penyimpanan: " + before + "% → " + after + "%";
-            case LANG_MS: default: return "\n\n📊 Penggunaan Storan: " + before + "% → " + after + "%";
+            case LANG_EN: return "\n\nStorage Usage: " + before + "% to " + after + "%";
+            case LANG_ID: return "\n\nPenggunaan Penyimpanan: " + before + "% ke " + after + "%";
+            case LANG_MS: default: return "\n\nPenggunaan Storan: " + before + "% ke " + after + "%";
         }
     }
 
