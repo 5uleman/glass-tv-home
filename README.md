@@ -8,24 +8,22 @@ This is a modified version of Gathin's glass-tv-home, made by Suleman for Englis
 removed for a cleaner experience.
 
 A light home screen for Android TV and Google TV in frosted glass, with a new set of places behind your apps
-every week. This edition is the English-only, prayer-free build I use on my own TV.
+every week. This edition is the English-UI, prayer-free build I use on my own TV, with Lahore as the default
+city.
 
 ## Download
 
-The current build is **3.3.0** (`versionCode 18`), 628 KB, package id **`com.suleman.glasstv`**.
+The current build is **3.7.0** (`versionCode 24`), 645 KB, package id **`com.suleman.glasstv`**.
 Download it from the [Releases page](https://github.com/5uleman/glass-tv-home/releases/latest) —
 release binaries are attached there, not committed to this repository.
 
-SHA-256 `54d52dc00785940f1eaca91c4b7c39177f88061426368c2cccf9c4087d5884fc`, tagged
-`v3.3.0-clean-english`.
-
-Later versions are work in progress on the `wip-3.5.0` branch and are not released yet.
+SHA-256: to be filled after the TV test.
 
 > The APKs still under `release/` (`glass-tv-home.apk`, `glass-tv-installer.apk`) are upstream's original
 > builds, kept for reference. Do not install them as this edition — use only the Releases page.
 
 ```bash
-adb install -r glasstv-3.3.0-signed.apk
+adb install -r glasstv-3.7.0-signed.apk
 ```
 
 The APK is signed with this fork's own key, so it will not install over the original author's build (different
@@ -44,24 +42,37 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
 - **One Turn Off / Restart row** in the gear menu opens the system power dialog, where the TV itself offers
   Power off or Restart.
 - **A Screensaver row** in the gear menu starts the TV's own screensaver. Any key dismisses it.
-- **A VPN indicator.** While any VPN is connected, the network pill shows a small green "● VPN". The network
+- **A VPN chip.** While any VPN is connected, the network pill shows a small green "VPN" chip. The network
   menu has a VPN row that opens the Proton VPN app if it is installed, and otherwise says it is missing. It is
   only a shortcut: there is no on/off switch, because Android does not let a launcher control another VPN app.
+- **The Lahore & Pakistan wallpaper collection.** 25 photos from Pexels and Unsplash, with one CC BY photo
+  from Wikimedia Commons: Lahore, Islamabad, Karachi, the northern valleys and landmarks. Credits are below.
+- **A glass wallpaper dialog.** The category list is frosted glass with a white focus ring, and a dark smoke
+  layer keeps the white text readable over bright pictures.
+- **A recent-apps deck.** Double-press Home, or choose the gear menu's **Recent apps** row. Cards scroll
+  horizontally like a cover flow; **Up** closes the focused app, **OK** opens it, **Down** moves to Clear all,
+  and **Back** closes the deck. A live RAM meter updates about once a second. **Clear all only ends background
+  processes**, so the memory freed may be small; it never force-stops an app. The launcher, system and
+  persistent apps, the keyboard, accessibility services and a connected VPN are left alone, and the deck says
+  when a VPN was kept.
 - **The self-updater is off.** This build never reads a release feed or shows an update prompt; new versions are
   built and installed by hand.
 - **Four-column grid** and a hero title that uses the full width, so a long place name is not cut with an
   ellipsis.
 - **Media polling is off**, so nothing polls the current track while the launcher is idle.
 
-Everything else is upstream's work: the glass dock and menus, weekly places, the StandBy clock, the recent-apps
-deck and RAM gauge, cache cleaning every 15 days, wallpaper themes and the phone QR upload.
+Everything else is upstream's work: the glass dock and menus, weekly places, the StandBy clock, cache cleaning
+every 15 days, wallpaper themes and the phone QR upload.
 
 ## Setup on the TV
 
-Install the APK, then three things have to be done by hand once per TV:
+Install the APK, then three things have to be done by hand (and the accessibility service again after every
+install or update):
 
-1. **Turn on the accessibility service**: Settings → Accessibility → Glass TV → On. The recent-apps deck, the
-   force-stop it does and the power dialog need it. Press Home afterwards and check it is bound:
+1. **Turn on the "Home button" accessibility service**: Settings → Accessibility → Glass TV → "Home button" → On.
+   **This has to be done again after every install or update.** Double-pressing Home to open the recent-apps
+   deck and the Turn Off / Restart row need it. The recent-apps deck opened from the gear menu's **Recent apps**
+   row does not. Press Home afterwards and check it is bound:
    `adb shell dumpsys accessibility | grep -i bound`. If it is not bound, firmware that blocks service
    auto-start is the usual reason, and the power row will only show a hint pointing at that switch.
 
@@ -78,8 +89,8 @@ Install the APK, then three things have to be done by hand once per TV:
    `adb shell dumpsys accessibility | grep -i 'bound services'` — it must list `Service[label=Home button…]`.
 
    If the repair cannot run (no grant, or the service was never enabled), do it by hand: Settings →
-   Accessibility → Glass TV → On, then check the binding again. Over adb it takes three commands, because
-   setting the master switch alone does not rebind:
+   Accessibility → Glass TV → Home button → On, then check the binding again. Over adb it takes three commands,
+   because setting the master switch alone does not rebind:
    ```bash
    adb shell settings put secure accessibility_enabled 1
    adb shell settings put secure enabled_accessibility_services ""
@@ -88,7 +99,7 @@ Install the APK, then three things have to be done by hand once per TV:
 
    **An install or update clears this again on this TV.** Replacing the APK over the old one left
    `enabled_accessibility_services` empty and the switch at `0`, and the launcher does not opt you back in, so
-   turn Glass TV back on in Settings after every install or update.
+   turn the "Home button" service back on in Settings after every install or update.
 2. **Grant one permission for the cache cleaning**:
    ```bash
    adb shell pm grant com.suleman.glasstv android.permission.WRITE_SECURE_SETTINGS
@@ -107,7 +118,7 @@ Debloating is optional and separate from this launcher. The playbook, tested lis
 
 ## Screenshots
 
-Taken from this build on a TCL Android TV (Android 11, 1080p).
+Taken from this edition on a TCL Android TV (Android 11, 1080p).
 
 | | |
 |---|---|
