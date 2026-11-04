@@ -4790,19 +4790,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void styleGlassDialog(AlertDialog dialog) {
         if (dialog == null) return;
         try {
-            Typeface outfit = getResources().getFont(R.font.outfit);
             TextView titleView = dialog.findViewById(android.R.id.title);
             if (titleView != null) {
-                titleView.setTypeface(outfit, Typeface.BOLD);
-                titleView.setFontVariationSettings("'wght' 700");
+                Fonts.apply(titleView, Fonts.BOLD);
                 titleView.setTextSize(20f);
                 titleView.setTextColor(0xFFFFFFFF);
                 titleView.setShadowLayer(4 * density, 0, 1 * density, 0xDD000000);
             }
             TextView msgView = dialog.findViewById(android.R.id.message);
             if (msgView != null) {
-                msgView.setTypeface(outfit, Typeface.BOLD);
-                msgView.setFontVariationSettings("'wght' 600");
+                Fonts.apply(msgView, Fonts.SEMIBOLD);
                 msgView.setTextSize(15f);
                 msgView.setTextColor(0xF0FFFFFF);
                 msgView.setLineSpacing(0, 1.35f);
@@ -4810,22 +4807,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
             Button btnPos = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
             if (btnPos != null) {
-                btnPos.setTypeface(outfit, Typeface.BOLD);
-                btnPos.setFontVariationSettings("'wght' 700");
+                Fonts.apply(btnPos, Fonts.BOLD);
                 btnPos.setTextSize(15f);
                 btnPos.setTextColor(0xFFFFFFFF);
             }
             Button btnNeg = dialog.getButton(DialogInterface.BUTTON_NEGATIVE);
             if (btnNeg != null) {
-                btnNeg.setTypeface(outfit, Typeface.BOLD);
-                btnNeg.setFontVariationSettings("'wght' 650");
+                Fonts.apply(btnNeg, Fonts.SEMIBOLD);
                 btnNeg.setTextSize(15f);
                 btnNeg.setTextColor(0xCCFFFFFF);
             }
             Button btnNeu = dialog.getButton(DialogInterface.BUTTON_NEUTRAL);
             if (btnNeu != null) {
-                btnNeu.setTypeface(outfit, Typeface.BOLD);
-                btnNeu.setFontVariationSettings("'wght' 650");
+                Fonts.apply(btnNeu, Fonts.SEMIBOLD);
                 btnNeu.setTextSize(15f);
                 btnNeu.setTextColor(0xCCFFFFFF);
             }
@@ -4836,8 +4830,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     public void onChildViewAdded(View parent, View child) {
                         if (child instanceof TextView) {
                             TextView tv = (TextView) child;
-                            tv.setTypeface(outfit, Typeface.BOLD);
-                            tv.setFontVariationSettings("'wght' 650");
+                            Fonts.apply(tv, Fonts.SEMIBOLD);
                             tv.setTextSize(15.5f);
                             tv.setTextColor(0xFFFFFFFF);
                             tv.setShadowLayer(3 * density, 0, 1 * density, 0xAA000000);

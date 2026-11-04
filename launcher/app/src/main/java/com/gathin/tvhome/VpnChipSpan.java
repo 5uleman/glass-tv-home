@@ -22,15 +22,17 @@ final class VpnChipSpan extends ReplacementSpan {
         this.paddingH = paddingH;
         this.verticalInset = verticalInset;
         this.fillColor = fillColor;
-        paint.setTypeface(typeface != null ? Typeface.create(typeface, Typeface.BOLD) : Typeface.DEFAULT_BOLD);
+        paint.setTypeface(typeface != null ? typeface : Typeface.DEFAULT_BOLD);
         paint.setTextSize(textSize);
+        paint.setFontVariationSettings("'wght' 700");
     }
 
     /** Width the chip needs for this text at this size, both side paddings included. */
     static float widthFor(String text, float textSize, float paddingH, Typeface typeface) {
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setTypeface(typeface != null ? Typeface.create(typeface, Typeface.BOLD) : Typeface.DEFAULT_BOLD);
+        p.setTypeface(typeface != null ? typeface : Typeface.DEFAULT_BOLD);
         p.setTextSize(textSize);
+        p.setFontVariationSettings("'wght' 700");
         return p.measureText(text) + 2 * paddingH;
     }
 

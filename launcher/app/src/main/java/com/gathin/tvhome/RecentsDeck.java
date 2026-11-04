@@ -6,7 +6,6 @@ import android.content.res.ColorStateList;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.RectF;
-import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
@@ -124,7 +123,7 @@ final class RecentsDeck {
         column.addView(header, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        TextView title = text(activity.getString(R.string.recents_title), 26, true);
+        TextView title = text(activity.getString(R.string.recents_title), 26, Fonts.BOLD);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         titleParams.topMargin = (int) (6 * density);
@@ -140,7 +139,7 @@ final class RecentsDeck {
         header.addView(ramPill, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        ramText = text("", 14, true);
+        ramText = text("", 14, Fonts.SEMIBOLD);
         ramPill.addView(ramText);
 
         ramBar = new ProgressBar(activity, null, android.R.attr.progressBarStyleHorizontal);
@@ -184,7 +183,7 @@ final class RecentsDeck {
                 cards.add(card);
             }
 
-            hintText = text(activity.getString(R.string.recents_hint), 13, false);
+            hintText = text(activity.getString(R.string.recents_hint), 13, Fonts.SEMIBOLD);
             hintText.setAlpha(0.75f);
             hintText.setGravity(Gravity.CENTER);
             hintText.setMaxLines(2);
@@ -219,7 +218,7 @@ final class RecentsDeck {
                     (int) (20 * density), (int) (20 * density));
             dustParams.rightMargin = (int) (9 * density);
             clearPill.addView(dust, dustParams);
-            clearPill.addView(text(activity.getString(R.string.recents_clear_all), 16, true));
+            clearPill.addView(text(activity.getString(R.string.recents_clear_all), 16, Fonts.SEMIBOLD));
 
             LinearLayout.LayoutParams pillParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -307,7 +306,7 @@ final class RecentsDeck {
         content.addView(icon, new LinearLayout.LayoutParams(
                 (int) (92 * density), (int) (92 * density)));
 
-        final TextView label = text(item.label, 17, true);
+        final TextView label = text(item.label, 16, Fonts.SEMIBOLD);
         label.setSingleLine(true);
         label.setEllipsize(TextUtils.TruncateAt.END);
         label.setGravity(Gravity.CENTER);
@@ -468,7 +467,7 @@ final class RecentsDeck {
     }
 
     private void addEmptyText() {
-        emptyText = text(activity.getString(R.string.recents_empty), 16, false);
+        emptyText = text(activity.getString(R.string.recents_empty), 16, Fonts.MEDIUM);
         emptyText.setGravity(Gravity.CENTER);
         emptyText.setAlpha(0.85f);
         column.addView(emptyText, new LinearLayout.LayoutParams(
@@ -510,13 +509,12 @@ final class RecentsDeck {
         return activity.getResources().getDisplayMetrics().widthPixels;
     }
 
-    private TextView text(String value, float sizeSp, boolean bold) {
+    private TextView text(String value, float sizeSp, int weight) {
         TextView view = new TextView(activity);
         view.setText(value);
         view.setTextSize(sizeSp);
         view.setTextColor(Color.WHITE);
-        view.setTypeface(activity.getResources().getFont(R.font.outfit),
-                bold ? Typeface.BOLD : Typeface.NORMAL);
+        Fonts.apply(view, weight);
         view.setShadowLayer(4 * density, 0, 1 * density, 0xDD000000);
         return view;
     }
