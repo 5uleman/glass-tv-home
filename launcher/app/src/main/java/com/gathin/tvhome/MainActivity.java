@@ -3126,13 +3126,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             showCleanTvCacheDialog();
         });
 
-        // Row 5: Recent apps — the deck without needing the accessibility service.
-        addInputRow(rows, close, R.drawable.ic_recents, getString(R.string.recents_open), -1, () -> {
-            SoundEffects.playSelect();
-            closeMenu(false);
-            showRecentsDeck();
-        });
-
         // Row 4: Wallpaper — hidden by the menu cleanup (wallpaper control lives in the Candy Box menu).
         /*
         addInputRow(rows, close, R.drawable.ic_wallpaper, AppLanguage.strWallpaper(this) + " (" + getWallpaperIntervalSummary() + ")", -1, () -> {
