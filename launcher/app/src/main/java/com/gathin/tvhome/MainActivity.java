@@ -1011,15 +1011,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 try {
                     android.graphics.ImageDecoder.Source source =
                             android.graphics.ImageDecoder.createSource(file);
-                    return android.graphics.ImageDecoder.decodeBitmap(source, (decoder, info, src) -> {
-                        int[] size = WallpaperSizing.coverSize(info.getSize().getWidth(),
-                                info.getSize().getHeight(), targetW, targetH);
-                        decoder.setTargetSize(size[0], size[1]);
-                        // Software: the backdrop blurs it into a software Canvas and the view keeps
-                        // it after the crossfade, so it must not be a hardware bitmap.
-                        decoder.setAllocator(android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE);
-                        decoder.setMemorySizePolicy(android.graphics.ImageDecoder.MEMORY_POLICY_LOW_RAM);
-                    });
+                    android.graphics.Bitmap decoded = android.graphics.ImageDecoder.decodeBitmap(source,
+                            (decoder, info, src) -> {
+                                int[] size = WallpaperSizing.coverSize(info.getSize().getWidth(),
+                                        info.getSize().getHeight(), targetW, targetH);
+                                decoder.setTargetSize(size[0], size[1]);
+                                // Software: the backdrop blurs it into a software Canvas and the view keeps
+                                // it after the crossfade, so it must not be a hardware bitmap.
+                                decoder.setAllocator(android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE);
+                                decoder.setMemorySizePolicy(android.graphics.ImageDecoder.MEMORY_POLICY_LOW_RAM);
+                            });
+                    return markOpaqueIfJpeg(file, decoded);
                 } catch (Exception | OutOfMemoryError ignored) {
                     // A file ImageDecoder rejects falls back to BitmapFactory below.
                 }
@@ -1040,15 +1042,31 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (decoded == null) return null;
             int[] want = WallpaperSizing.coverSize(decoded.getWidth(), decoded.getHeight(),
                     targetW, targetH);
-            if (decoded.getWidth() == want[0] && decoded.getHeight() == want[1]) return decoded;
+            if (decoded.getWidth() == want[0] && decoded.getHeight() == want[1]) {
+                return markOpaqueIfJpeg(file, decoded);
+            }
             android.graphics.Bitmap scaled = android.graphics.Bitmap.createScaledBitmap(
                     decoded, want[0], want[1], true);
             if (scaled != decoded) decoded.recycle();
-            return scaled;
+            return markOpaqueIfJpeg(file, scaled);
         } catch (Exception | OutOfMemoryError e) {
             // A bad or huge picture must never take the home screen down; the plain colour stays.
             return null;
         }
+    }
+
+    /**
+     * JPEGs carry no alpha. Saying so keeps {@link #setWallpaper} on its opaque path, which drops the
+     * black window and background passes; an ARGB_8888 bitmap otherwise reports that it has alpha.
+     */
+    private static android.graphics.Bitmap markOpaqueIfJpeg(File file, android.graphics.Bitmap bmp) {
+        if (bmp == null) return null;
+        try (java.io.FileInputStream in = new java.io.FileInputStream(file)) {
+            if (in.read() == 0xFF && in.read() == 0xD8) bmp.setHasAlpha(false);
+        } catch (Exception ignored) {
+            // Leave the bitmap as decoded.
+        }
+        return bmp;
     }
 
     /** Puts a picture behind everything, cross-fading from the previous one when asked. */
