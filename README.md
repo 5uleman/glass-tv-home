@@ -46,8 +46,9 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
 - **A VPN chip.** While any VPN is connected, the network pill shows a small green "VPN" chip. The network
   menu has a VPN row that opens the Proton VPN app if it is installed, and otherwise says it is missing. It is
   only a shortcut: there is no on/off switch, because Android does not let a launcher control another VPN app.
-- **The Lahore & Pakistan wallpaper collection.** 25 photos from Pexels and Unsplash, with one CC BY photo
-  from Wikimedia Commons: Lahore, Islamabad, Karachi, the northern valleys and landmarks. Credits are below.
+- **Two Pakistan wallpaper collections.** *Pakistan Monuments* has 21 photos of Lahore, Islamabad,
+  Karachi, the forts and the mosques; *Pakistan Nature* has 10 photos of the Hunza valley, Attabad
+  Lake, Nanga Parbat, Swat, the Karakoram, Rawal Lake and Clifton Beach. Credits are below.
 - **A glass wallpaper dialog.** The category list is frosted glass with a white focus ring, and a dark smoke
   layer keeps the white text readable over bright pictures.
 - **A recent-apps deck.** Double-press Home. Cards scroll horizontally in 16:9, using each app's TV
@@ -163,32 +164,40 @@ in the passwords; without that file the build falls back to the debug key, which
 - Pictures of places and their captions are Bing's daily images (Microsoft). The launcher fetches them on your
   own TV; any promo or screenshot pictures in this repository show three of them.
 - "Cyberpunk Neon Night" in the city collection — Cash Macanaya ([photo](https://unsplash.com/photos/a-city-at-night-with-neon-signs-and-buildings-kUpA8qN28GE)).
-- The Lahore & Pakistan wallpaper collection uses photos from Pexels and Unsplash, free under their licences,
-  and one from Wikimedia Commons with the licence noted. Photographers and authors, in the order the collection lists them:
-  - Badshahi Mosque under the Milky Way — Aitizaz Naqvi ([photo](https://www.pexels.com/photo/5487986/))
-  - Alamgiri Gate, Lahore Fort — Salman Rafique ([photo](https://www.pexels.com/photo/11774127/))
-  - Lahore at night — Wasif Mehmood ([photo](https://www.pexels.com/photo/16021536/))
-  - Faisal Mosque at dusk — Bilal ([photo](https://www.pexels.com/photo/16693762/))
-  - Faisal Mosque in golden mist — Ali Hamza Tullah ([photo](https://unsplash.com/photos/MpfeZ1bvViw))
-  - Rawal Lake at sunset — Ashraf Hussain ([photo](https://www.pexels.com/photo/38459967/))
-  - Islamabad from above — Ahmed Ismail ([photo](https://www.pexels.com/photo/38773558/))
-  - Karachi at night — Tahamie Farooqui ([photo](https://www.pexels.com/photo/34096455/))
-  - Clifton Beach — Muneeb Khan ([photo](https://www.pexels.com/photo/28244078/))
-  - Karachi skyline — Tahamie Farooqui ([photo](https://www.pexels.com/photo/33045005/))
-  - Hunza valley in autumn — Wasif Mehmood ([photo](https://www.pexels.com/photo/19442083/))
-  - Hunza valley at sunset — Wasif Mehmood ([photo](https://www.pexels.com/photo/15916726/))
-  - Golden peaks of Hunza — Arif Esapzai ([photo](https://www.pexels.com/photo/35302563/))
-  - Passu Cones — Raj Kumar Lohana ([photo](https://www.pexels.com/photo/8835247/))
-  - Attabad Lake — Hamayoon Riaz ([photo](https://www.pexels.com/photo/13462643/))
-  - Nanga Parbat at sunrise — Maaz Kalia ([photo](https://www.pexels.com/photo/29401243/))
-  - Swat Valley — Tahir Shaw ([photo](https://www.pexels.com/photo/186985/))
-  - Karakoram peaks — Pierre Matile ([photo](https://www.pexels.com/photo/36870354/))
-  - Derawar Fort — Syed Hasan Mehdi ([photo](https://www.pexels.com/photo/815880/))
-  - Makli Necropolis — Ayesha Memon ([photo](https://www.pexels.com/photo/34535290/))
-  - Lahore Fort at sunset — Mian Rizwan ([photo](https://www.pexels.com/photo/14926132/))
-  - Minar-e-Pakistan in daylight — Aatik Ali Makani ([photo](https://www.pexels.com/photo/13239874/))
-  - Eiffel Tower replica, Bahria Town Lahore — M Saqib Sarwar, CC BY 2.0
-    ([file](https://commons.wikimedia.org/wiki/File:Eiffel_Tower_replica_in_Bahria_Town.jpg))
-  - Pakistan Monument at night — Hamza Ali ([photo](https://www.pexels.com/photo/14394126/))
-  - Abbasi Mosque at Derawar — Waqas Ahmad Wicky ([photo](https://www.pexels.com/photo/4253018/))
+- The Pakistan wallpaper collections use photos from Pexels and Unsplash, free under their licences, and
+  CC BY or CC BY-SA files from Wikimedia Commons with the licence named on each line. Photographers and
+  authors, in the order each collection lists them:
+  - **Pakistan Monuments** (21 photos)
+    - Badshahi Mosque under the Milky Way — Aitizaz Naqvi (Pexels licence, [photo](https://www.pexels.com/photo/5487986/))
+    - Alamgiri Gate, Lahore Fort — Salman Rafique (Pexels licence, [photo](https://www.pexels.com/photo/11774127/))
+    - Lahore at night — Wasif Mehmood (Pexels licence, [photo](https://www.pexels.com/photo/16021536/))
+    - Faisal Mosque at dusk — Bilal (Pexels licence, [photo](https://www.pexels.com/photo/16693762/))
+    - Faisal Mosque in golden mist — Ali Hamza Tullah (Unsplash licence, [photo](https://unsplash.com/photos/MpfeZ1bvViw))
+    - Islamabad from above — Ahmed Ismail (Pexels licence, [photo](https://www.pexels.com/photo/38773558/))
+    - Karachi at night — Tahamie Farooqui (Pexels licence, [photo](https://www.pexels.com/photo/34096455/))
+    - Karachi skyline — Tahamie Farooqui (Pexels licence, [photo](https://www.pexels.com/photo/33045005/))
+    - Derawar Fort — Syed Hasan Mehdi (Pexels licence, [photo](https://www.pexels.com/photo/815880/))
+    - Makli Necropolis — Ayesha Memon (Pexels licence, [photo](https://www.pexels.com/photo/34535290/))
+    - Lahore Fort at sunset — Mian Rizwan (Pexels licence, [photo](https://www.pexels.com/photo/14926132/))
+    - Minar-e-Pakistan in daylight — Aatik Ali Makani (Pexels licence, [photo](https://www.pexels.com/photo/13239874/))
+    - Eiffel Tower replica, Bahria Town Lahore — M Saqib Sarwar (CC BY 2.0, [file](https://commons.wikimedia.org/wiki/File:Eiffel_Tower_replica_in_Bahria_Town.jpg))
+    - Pakistan Monument at night — Hamza Ali (Pexels licence, [photo](https://www.pexels.com/photo/14394126/))
+    - Abbasi Mosque, Ahmedpur East — Ammar Hameed (Pexels licence, [photo](https://www.pexels.com/photo/31377718/))
+    - Badshahi Mosque at sunset — salman kazmi (Pexels licence, [photo](https://www.pexels.com/photo/12912453/))
+    - Tooba Masjid — Virwani1 (CC BY-SA 4.0, [file](https://commons.wikimedia.org/wiki/File:Tooba_Masjid.jpg))
+    - Hazuri Bagh Baradari — ClicksByMohammadOmer (CC BY-SA 3.0, [file](https://commons.wikimedia.org/wiki/File:The_Scenic_Hazuri_Bagh_Baradari.jpg))
+    - Faisal Mosque at blue hour — Abdul Ahad (Pexels licence, [photo](https://www.pexels.com/photo/38383016/))
+    - Mohatta Palace — Ibrahim Janjua (CC BY-SA 4.0, [file](https://commons.wikimedia.org/wiki/File:Mohatta_Palace_2016.jpg))
+    - Lahore Railway Station — Filmy Kashif (Pexels licence, [photo](https://www.pexels.com/photo/35734282/))
+  - **Pakistan Nature** (10 photos)
+    - Rawal Lake at sunset — Ashraf Hussain (Pexels licence, [photo](https://www.pexels.com/photo/38459967/))
+    - Clifton Beach — Muneeb Khan (Pexels licence, [photo](https://www.pexels.com/photo/28244078/))
+    - Hunza valley in autumn — Wasif Mehmood (Pexels licence, [photo](https://www.pexels.com/photo/19442083/))
+    - Hunza valley at sunset — Wasif Mehmood (Pexels licence, [photo](https://www.pexels.com/photo/15916726/))
+    - Golden peaks of Hunza — Arif Esapzai (Pexels licence, [photo](https://www.pexels.com/photo/35302563/))
+    - Passu Cones — Raj Kumar Lohana (Pexels licence, [photo](https://www.pexels.com/photo/8835247/))
+    - Attabad Lake — Hamayoon Riaz (Pexels licence, [photo](https://www.pexels.com/photo/13462643/))
+    - Nanga Parbat at sunrise — Maaz Kalia (Pexels licence, [photo](https://www.pexels.com/photo/29401243/))
+    - Swat Valley — Tahir Shaw (Pexels licence, [photo](https://www.pexels.com/photo/186985/))
+    - Karakoram peaks — Pierre Matile (Pexels licence, [photo](https://www.pexels.com/photo/36870354/))
 - Gotham, used in upstream's promo pictures only, is a Hoefler&Co. typeface and is not part of this repository.
