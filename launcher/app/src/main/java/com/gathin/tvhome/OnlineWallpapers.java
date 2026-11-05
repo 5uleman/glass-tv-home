@@ -25,10 +25,9 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Dynamic HD (1920x1080) wallpaper manager.
- * Fetches high-resolution (3840x2160) atmospheric and moody desktop wallpapers
- * directly from an online feed or a curated Unsplash catalog.
- * Caches wallpapers locally for instant loading and offline resilience.
+ * Wallpaper manager for the launcher's 1920x1080 screen. Catalog pictures are fetched at
+ * 2560x1440 from Pexels and Unsplash and decoded down to the screen size; a web-server feed
+ * may supply any size. Caches wallpapers locally for instant loading and offline resilience.
  */
 final class OnlineWallpapers {
     private static final String TAG = "TvHome.Online";
@@ -552,7 +551,7 @@ final class OnlineWallpapers {
                         tempTxt.renameTo(finalTxt);
                         anyDownloaded = true;
                         downloadedCount++;
-                        Log.i(TAG, "Saved 4K wallpaper: " + item.title + " (" + targetFile.length() + " bytes)");
+                        Log.i(TAG, "Saved wallpaper: " + item.title + " (" + targetFile.length() + " bytes)");
                     }
                 }
             } catch (Exception e) {
