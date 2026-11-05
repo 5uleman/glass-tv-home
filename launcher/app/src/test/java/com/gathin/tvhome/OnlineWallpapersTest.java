@@ -35,10 +35,52 @@ public class OnlineWallpapersTest {
         Set<String> monuments = OnlineWallpapers.currentNames("Pakistan Monuments");
         Set<String> nature = OnlineWallpapers.currentNames("Pakistan Nature");
         Set<String> legacy = OnlineWallpapers.currentNames("Pakistan");
-        assertEquals(21, monuments.size());
+        assertEquals(24, monuments.size());
         assertEquals(10, nature.size());
-        assertEquals(31, legacy.size());
+        assertEquals(34, legacy.size());
         for (String name : nature) assertFalse(monuments.contains(name));
+    }
+
+    @Test
+    public void removedPhotosAreNoLongerReferenced() {
+        String goldenMist = "https://images.unsplash.com/photo-1706511920650-b690cd6619e8?w=2560&h=1440&fit=crop&crop=entropy&q=85";
+        String faisalDusk = "https://images.pexels.com/photos/16693762/pexels-photo-16693762.jpeg?w=2560&h=1440&fit=crop";
+        String eiffel = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Eiffel_Tower_replica_in_Bahria_Town.jpg/1920px-Eiffel_Tower_replica_in_Bahria_Town.jpg";
+        String oldAbbasi = "https://images.pexels.com/photos/4253018/pexels-photo-4253018.jpeg?w=2560&h=1440&fit=crop";
+        Set<String> monuments = OnlineWallpapers.currentNames("Pakistan Monuments");
+        assertFalse(monuments.contains("online_" + Math.abs(goldenMist.hashCode())));
+        assertFalse(monuments.contains("online_" + Math.abs(faisalDusk.hashCode())));
+        assertFalse(monuments.contains("online_" + Math.abs(eiffel.hashCode())));
+        assertFalse(monuments.contains("online_" + Math.abs(oldAbbasi.hashCode())));
+    }
+
+    @Test
+    public void removedPhotoIsPrunedFromTheCache() throws Exception {
+        File dir = File.createTempFile("online_prune", "");
+        dir.delete();
+        dir.mkdirs();
+        String keepUrl = "https://images.pexels.com/photos/5487986/pexels-photo-5487986.jpeg?w=2560&h=1440&fit=crop";
+        String dropUrl = "https://images.unsplash.com/photo-1706511920650-b690cd6619e8?w=2560&h=1440&fit=crop&crop=entropy&q=85";
+        File keep = new File(dir, "online_" + Math.abs(keepUrl.hashCode()) + ".jpg");
+        keep.createNewFile();
+        File drop = new File(dir, "online_" + Math.abs(dropUrl.hashCode()) + ".jpg");
+        drop.createNewFile();
+        File dropTxt = new File(dir, "online_" + Math.abs(dropUrl.hashCode()) + ".txt");
+        try (FileOutputStream os = new FileOutputStream(dropTxt)) {
+            os.write("Old\nOld\nPakistan_Monuments\n".getBytes(StandardCharsets.UTF_8));
+        }
+
+        try {
+            OnlineWallpapers.cleanOutdatedCategoryWallpapers(dir, "Pakistan Monuments");
+        } catch (RuntimeException ignored) {
+            // android.util.Log is not mocked in plain JVM tests; the delete happens first.
+        }
+
+        assertTrue(keep.exists());
+        assertFalse(drop.exists());
+        assertFalse(dropTxt.exists());
+        keep.delete();
+        dir.delete();
     }
 
     @Test

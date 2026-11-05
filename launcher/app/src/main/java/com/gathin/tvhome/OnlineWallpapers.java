@@ -207,10 +207,6 @@ final class OnlineWallpapers {
                     "Alamgiri Gate", "The gateway into Lahore Fort above its lawns, with the white pavilion to the right", "Pakistan_Monuments", "Lahore, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/16021536/pexels-photo-16021536.jpeg?w=2560&h=1440&fit=crop",
                     "Lahore at Night", "Light trails along the canal and the lit Arfa Software Technology Park tower", "Pakistan_Monuments", "Lahore, Pakistan"),
-            new WallpaperItem("https://images.pexels.com/photos/16693762/pexels-photo-16693762.jpeg?w=2560&h=1440&fit=crop",
-                    "Faisal Mosque at Dusk", "The white tents and minarets of Faisal Mosque below the Margalla Hills at twilight", "Pakistan_Monuments", "Islamabad, Pakistan"),
-            new WallpaperItem("https://images.unsplash.com/photo-1706511920650-b690cd6619e8?w=2560&h=1440&fit=crop&crop=entropy&q=85",
-                    "Faisal Mosque in Golden Mist", "The white mosque and its four minarets rising through gold morning haze", "Pakistan_Monuments", "Islamabad, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/38773558/pexels-photo-38773558.jpeg?w=2560&h=1440&fit=crop",
                     "Islamabad from Above", "Green avenues running toward the Margalla Hills, with Faisal Mosque in the distance", "Pakistan_Monuments", "Islamabad, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/34096455/pexels-photo-34096455.jpeg?w=2560&h=1440&fit=crop",
@@ -225,8 +221,6 @@ final class OnlineWallpapers {
                     "Lahore Fort at Sunset", "The fort's walls and domes under a warm sky, with the flag on the rampart", "Pakistan_Monuments", "Lahore, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/13239874/pexels-photo-13239874.jpeg?w=2560&h=1440&fit=crop",
                     "Minar-e-Pakistan in Daylight", "The minaret rising above its lawns and trees under a clear sky", "Pakistan_Monuments", "Lahore, Pakistan"),
-            new WallpaperItem("https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Eiffel_Tower_replica_in_Bahria_Town.jpg/1920px-Eiffel_Tower_replica_in_Bahria_Town.jpg",
-                    "Eiffel Tower Replica at Dusk", "The replica tower and its lit grounds on the edge of Bahria Town at evening", "Pakistan_Monuments", "Bahria Town, Lahore"),
             new WallpaperItem("https://images.pexels.com/photos/14394126/pexels-photo-14394126.jpeg?w=2560&h=1440&fit=crop",
                     "Pakistan Monument at Night", "The lit petals of the monument around its central star", "Pakistan_Monuments", "Islamabad, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/31377718/pexels-photo-31377718.jpeg?w=2560&h=1440&fit=crop",
@@ -243,6 +237,18 @@ final class OnlineWallpapers {
                     "Mohatta Palace", "The pink stone palace and its domed towers above the lawn", "Pakistan_Monuments", "Karachi, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/35734282/pexels-photo-35734282.jpeg?w=2560&h=1440&fit=crop",
                     "Lahore Railway Station", "The station's twin clock towers and red-brick front above the forecourt", "Pakistan_Monuments", "Lahore, Pakistan"),
+            new WallpaperItem("https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Grand_Jamia_Masjid.jpg/1920px-Grand_Jamia_Masjid.jpg",
+                    "Grand Jamia Mosque at Night", "The lit dome, minarets and fountains of the mosque after dark", "Pakistan_Monuments", "Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/23961877/pexels-photo-23961877.jpeg?w=2560&h=1440&fit=crop",
+                    "Grand Jamia Mosque Arcade", "Brick arcade and dome of the Grand Jamia Mosque", "Pakistan_Monuments", "Lahore, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/14406067/pexels-photo-14406067.jpeg?w=2560&h=1440&fit=crop",
+                    "Badshahi Mosque Facade", "The mosque's red sandstone facade and domes in close view", "Pakistan_Monuments", "Lahore, Pakistan"),
+            new WallpaperItem("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Frere_Hall_Karachi_City.jpg/1920px-Frere_Hall_Karachi_City.jpg",
+                    "Frere Hall", "The Gothic facade and arcade under a deep blue sky", "Pakistan_Monuments", "Karachi, Pakistan"),
+            new WallpaperItem("https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Mazar-e-Quaid_Karachi.jpg/1920px-Mazar-e-Quaid_Karachi.jpg",
+                    "Mazar-e-Quaid Under Cloud", "The white mausoleum beneath a broken cloud sky", "Pakistan_Monuments", "Karachi, Pakistan"),
+            new WallpaperItem("https://images.unsplash.com/photo-1696691907658-be7db3beae7b?w=2560&h=1440&fit=crop&crop=entropy&q=75",
+                    "Clock Tower Building, Lahore", "The long roofline and clock towers of the building under a pale sky", "Pakistan_Monuments", "Lahore, Pakistan"),
             // Nature
             new WallpaperItem("https://images.pexels.com/photos/38459967/pexels-photo-38459967.jpeg?w=2560&h=1440&fit=crop",
                     "Rawal Lake at Sunset", "The sun setting behind the Margalla Hills, reflected across Rawal Lake", "Pakistan_Nature", "Islamabad, Pakistan"),
@@ -355,6 +361,9 @@ final class OnlineWallpapers {
 
     static void cleanOutdatedCategoryWallpapers(File d, String category) {
         if (d == null || !d.exists()) return;
+        // Drop pictures the catalog no longer lists even when no download follows, so a removed
+        // photo is pruned the first time a collection is opened. Feed pictures are kept.
+        pruneUnreferenced(d);
         Set<String> validHashes = currentNames(category);
         File[] files = d.listFiles((dir, name) -> name.endsWith(".jpg"));
         if (files == null) return;
