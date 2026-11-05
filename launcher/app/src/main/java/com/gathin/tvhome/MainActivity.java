@@ -998,21 +998,53 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /**
-     * A theme's full-screen picture behind everything. Decoded once, downsampled to the screen so a 4K
-     * JPEG costs a 1080p bitmap at most (about 8 MB), which is the price of a wallpaper on a 1 GB TV.
+     * The picture decoded at most to the screen's 1920x1080, never at the 2560x1440 file size:
+     * a bigger bitmap costs memory and buys nothing once the view scales it down. ARGB_8888 keeps
+     * dusk gradients free of the banding 5-6-5 shows. Decoded once, off the main thread.
      */
     private android.graphics.Bitmap decodeWallpaper(File file) {
         try {
             android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+            int targetW = Math.max(1, dm.widthPixels);
+            int targetH = Math.max(1, dm.heightPixels);
+            if (android.os.Build.VERSION.SDK_INT >= 28) {
+                try {
+                    android.graphics.ImageDecoder.Source source =
+                            android.graphics.ImageDecoder.createSource(file);
+                    return android.graphics.ImageDecoder.decodeBitmap(source, (decoder, info, src) -> {
+                        int[] size = WallpaperSizing.coverSize(info.getSize().getWidth(),
+                                info.getSize().getHeight(), targetW, targetH);
+                        decoder.setTargetSize(size[0], size[1]);
+                        // Software: the backdrop blurs it into a software Canvas and the view keeps
+                        // it after the crossfade, so it must not be a hardware bitmap.
+                        decoder.setAllocator(android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE);
+                        decoder.setMemorySizePolicy(android.graphics.ImageDecoder.MEMORY_POLICY_LOW_RAM);
+                    });
+                } catch (Exception | OutOfMemoryError ignored) {
+                    // A file ImageDecoder rejects falls back to BitmapFactory below.
+                }
+            }
+            // API 26-27, or a decoder hiccup: subsample, then scale the one step BitmapFactory's
+            // power-of-two sampling cannot reach.
             android.graphics.BitmapFactory.Options opts = new android.graphics.BitmapFactory.Options();
             opts.inJustDecodeBounds = true;
             android.graphics.BitmapFactory.decodeFile(file.getPath(), opts);
             int sample = 1;
-            while (opts.outWidth / (sample * 2) >= dm.widthPixels && opts.outHeight / (sample * 2) >= dm.heightPixels) sample *= 2;
+            while (opts.outWidth / (sample * 2) >= targetW && opts.outHeight / (sample * 2) >= targetH) {
+                sample *= 2;
+            }
             opts.inJustDecodeBounds = false;
             opts.inSampleSize = sample;
-            opts.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565;
-            return android.graphics.BitmapFactory.decodeFile(file.getPath(), opts);
+            opts.inPreferredConfig = android.graphics.Bitmap.Config.ARGB_8888;
+            android.graphics.Bitmap decoded = android.graphics.BitmapFactory.decodeFile(file.getPath(), opts);
+            if (decoded == null) return null;
+            int[] want = WallpaperSizing.coverSize(decoded.getWidth(), decoded.getHeight(),
+                    targetW, targetH);
+            if (decoded.getWidth() == want[0] && decoded.getHeight() == want[1]) return decoded;
+            android.graphics.Bitmap scaled = android.graphics.Bitmap.createScaledBitmap(
+                    decoded, want[0], want[1], true);
+            if (scaled != decoded) decoded.recycle();
+            return scaled;
         } catch (Exception | OutOfMemoryError e) {
             // A bad or huge picture must never take the home screen down; the plain colour stays.
             return null;
