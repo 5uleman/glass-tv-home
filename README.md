@@ -168,7 +168,7 @@ in the passwords; without that file the build falls back to the debug key, which
   CC BY or CC BY-SA files from Wikimedia Commons with the licence named on each line. Photographers and
   authors, in the order each collection lists them:
   - **Pakistan Monuments** (24 photos)
-    - Badshahi Mosque under the Milky Way — Aitizaz Naqvi (Pexels licence, [photo](https://www.pexels.com/photo/5487986/))
+    - Badshahi Mosque — Aitizaz Naqvi (Pexels licence, [photo](https://www.pexels.com/photo/5487986/))
     - Alamgiri Gate, Lahore Fort — Salman Rafique (Pexels licence, [photo](https://www.pexels.com/photo/11774127/))
     - Lahore at night — Wasif Mehmood (Pexels licence, [photo](https://www.pexels.com/photo/16021536/))
     - Islamabad from above — Ahmed Ismail (Pexels licence, [photo](https://www.pexels.com/photo/38773558/))
@@ -176,28 +176,29 @@ in the passwords; without that file the build falls back to the debug key, which
     - Karachi skyline — Tahamie Farooqui (Pexels licence, [photo](https://www.pexels.com/photo/33045005/))
     - Derawar Fort — Syed Hasan Mehdi (Pexels licence, [photo](https://www.pexels.com/photo/815880/))
     - Makli Necropolis — Ayesha Memon (Pexels licence, [photo](https://www.pexels.com/photo/34535290/))
-    - Lahore Fort at sunset — Mian Rizwan (Pexels licence, [photo](https://www.pexels.com/photo/14926132/))
-    - Minar-e-Pakistan in daylight — Aatik Ali Makani (Pexels licence, [photo](https://www.pexels.com/photo/13239874/))
-    - Pakistan Monument at night — Hamza Ali (Pexels licence, [photo](https://www.pexels.com/photo/14394126/))
+    - Lahore Fort — Mian Rizwan (Pexels licence, [photo](https://www.pexels.com/photo/14926132/))
+    - Minar-e-Pakistan — Aatik Ali Makani (Pexels licence, [photo](https://www.pexels.com/photo/13239874/))
+    - Pakistan Monument — Hamza Ali (Pexels licence, [photo](https://www.pexels.com/photo/14394126/))
     - Abbasi Mosque, Ahmedpur East — Ammar Hameed (Pexels licence, [photo](https://www.pexels.com/photo/31377718/))
-    - Badshahi Mosque at sunset — salman kazmi (Pexels licence, [photo](https://www.pexels.com/photo/12912453/))
+    - Badshahi Mosque — salman kazmi (Pexels licence, [photo](https://www.pexels.com/photo/12912453/))
     - Tooba Masjid — Virwani1 (CC BY-SA 4.0, [file](https://commons.wikimedia.org/wiki/File:Tooba_Masjid.jpg))
     - Hazuri Bagh Baradari — ClicksByMohammadOmer (CC BY-SA 3.0, [file](https://commons.wikimedia.org/wiki/File:The_Scenic_Hazuri_Bagh_Baradari.jpg))
-    - Faisal Mosque at blue hour — Abdul Ahad (Pexels licence, [photo](https://www.pexels.com/photo/38383016/))
+    - Faisal Mosque — Abdul Ahad (Pexels licence, [photo](https://www.pexels.com/photo/38383016/))
     - Mohatta Palace — Ibrahim Janjua (CC BY-SA 4.0, [file](https://commons.wikimedia.org/wiki/File:Mohatta_Palace_2016.jpg))
     - Lahore Railway Station — Filmy Kashif (Pexels licence, [photo](https://www.pexels.com/photo/35734282/))
-    - Grand Jamia Mosque at night — Ammarsharif17 (CC BY-SA 4.0, [file](https://commons.wikimedia.org/wiki/File:Grand_Jamia_Masjid.jpg));
-      the Commons page names the mosque but not the city, so the caption stays "Pakistan"
-    - Grand Jamia Mosque arcade — HR Capture (Pexels licence, [photo](https://www.pexels.com/photo/23961877/))
-    - Badshahi Mosque facade — M1DDL3 M7N (Pexels licence, [photo](https://www.pexels.com/photo/14406067/))
+    - Grand Jamia Mosque — Ammarsharif17 (CC BY-SA 4.0, [file](https://commons.wikimedia.org/wiki/File:Grand_Jamia_Masjid.jpg));
+      the photograph is in Bahria Town, Lahore
+    - Grand Jamia Mosque — HR Capture (Pexels licence, [photo](https://www.pexels.com/photo/23961877/));
+      the photograph is in Bahria Town, Lahore
+    - Badshahi Mosque — M1DDL3 M7N (Pexels licence, [photo](https://www.pexels.com/photo/14406067/))
     - Frere Hall — Ibrahim Janjua (CC BY-SA 4.0, [file](https://commons.wikimedia.org/wiki/File:Frere_Hall_Karachi_City.jpg))
-    - Mazar-e-Quaid under cloud — Furqanlw (CC BY-SA 4.0, [file](https://commons.wikimedia.org/wiki/File:Mazar-e-Quaid_Karachi.jpg))
-    - Clock Tower Building, Lahore — Shairyar Khan (Unsplash licence, [photo](https://unsplash.com/photos/a-large-building-with-a-clock-tower-on-top-of-it-l_lGkl0M6r8))
+    - Mazar-e-Quaid — Furqanlw (CC BY-SA 4.0, [file](https://commons.wikimedia.org/wiki/File:Mazar-e-Quaid_Karachi.jpg))
+    - Old Tollinton Market — Shairyar Khan (Unsplash licence, [photo](https://unsplash.com/photos/a-large-building-with-a-clock-tower-on-top-of-it-l_lGkl0M6r8))
   - **Pakistan Nature** (10 photos)
-    - Rawal Lake at sunset — Ashraf Hussain (Pexels licence, [photo](https://www.pexels.com/photo/38459967/))
+    - Rawal Lake — Ashraf Hussain (Pexels licence, [photo](https://www.pexels.com/photo/38459967/))
     - Clifton Beach — Muneeb Khan (Pexels licence, [photo](https://www.pexels.com/photo/28244078/))
     - Hunza valley in autumn — Wasif Mehmood (Pexels licence, [photo](https://www.pexels.com/photo/19442083/))
-    - Hunza valley at sunset — Wasif Mehmood (Pexels licence, [photo](https://www.pexels.com/photo/15916726/))
+    - Hunza Valley — Wasif Mehmood (Pexels licence, [photo](https://www.pexels.com/photo/15916726/))
     - Golden peaks of Hunza — Arif Esapzai (Pexels licence, [photo](https://www.pexels.com/photo/35302563/))
     - Passu Cones — Raj Kumar Lohana (Pexels licence, [photo](https://www.pexels.com/photo/8835247/))
     - Attabad Lake — Hamayoon Riaz (Pexels licence, [photo](https://www.pexels.com/photo/13462643/))

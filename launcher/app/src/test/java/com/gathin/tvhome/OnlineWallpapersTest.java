@@ -95,6 +95,52 @@ public class OnlineWallpapersTest {
     }
 
     @Test
+    public void anUpgradeShowsTheCurrentCatalogTitleNotTheCachedOne() throws Exception {
+        String faisal = "https://images.pexels.com/photos/38383016/pexels-photo-38383016.jpeg?w=2560&h=1440&fit=crop";
+        String base = "online_" + Math.abs(faisal.hashCode());
+        File dir = File.createTempFile("online_names", "");
+        dir.delete();
+        dir.mkdirs();
+
+        File jpg = new File(dir, base + ".jpg");
+        jpg.createNewFile();
+        File txt = new File(dir, base + ".txt");
+        try (FileOutputStream os = new FileOutputStream(txt)) {
+            os.write("Faisal Mosque at Blue Hour\nThe old description\nPakistan_Monuments\nIslamabad, Pakistan\n"
+                    .getBytes(StandardCharsets.UTF_8));
+        }
+
+        String[] about = OnlineWallpapers.describe(jpg);
+        assertNotNull(about);
+        assertEquals("a stale .txt must not keep the old title", "Faisal Mosque", about[0]);
+        assertEquals("Pakistan_Monuments", about[2]);
+        assertEquals("Islamabad, Pakistan", about[3]);
+
+        jpg.delete();
+        txt.delete();
+        dir.delete();
+    }
+
+    @Test
+    public void bothGrandJamiaPhotosShareTheNewNameAndBahriaTownDescription() {
+        String night = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Grand_Jamia_Masjid.jpg/1920px-Grand_Jamia_Masjid.jpg";
+        String arcade = "https://images.pexels.com/photos/23961877/pexels-photo-23961877.jpeg?w=2560&h=1440&fit=crop";
+
+        OnlineWallpapers.WallpaperItem a = OnlineWallpapers.catalogItem(
+                "online_" + Math.abs(night.hashCode()));
+        OnlineWallpapers.WallpaperItem b = OnlineWallpapers.catalogItem(
+                "online_" + Math.abs(arcade.hashCode()));
+        assertNotNull(a);
+        assertNotNull(b);
+        assertEquals("Grand Jamia Mosque", a.title);
+        assertEquals("Grand Jamia Mosque", b.title);
+        assertEquals("Lahore, Pakistan", a.place);
+        assertEquals("Lahore, Pakistan", b.place);
+        assertTrue(a.description.contains("Bahria Town, Lahore"));
+        assertTrue(b.description.contains("Bahria Town, Lahore"));
+    }
+
+    @Test
     public void describeReadsCompanionTextFile() throws Exception {
         File dir = File.createTempFile("online_test", "");
         dir.delete();
