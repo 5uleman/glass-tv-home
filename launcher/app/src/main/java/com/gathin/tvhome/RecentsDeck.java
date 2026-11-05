@@ -9,6 +9,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -60,6 +61,10 @@ final class RecentsDeck {
     private boolean clearing;
     private boolean emptyScheduled;
     private boolean emptyShown;
+    /** Set once a Clear all has closed this opening of the deck, so it cannot fire twice. */
+    private boolean homeAfterClearFired;
+    /** Uptime of the last Clear all that went Home; survives reopenings for the debounce. */
+    private long lastHomeAfterClearUptime;
     private Object overlayToken;
     private final Runnable emptyTransition = this::runEmptyTransition;
     private final List<View> cards = new ArrayList<>();
@@ -101,6 +106,7 @@ final class RecentsDeck {
         clearing = false;
         emptyScheduled = false;
         emptyShown = false;
+        homeAfterClearFired = false;
         cards.clear();
         lastFocused = null;
         List<RecentAppItem> items = RecentsDeckItems.load(activity);
@@ -496,6 +502,14 @@ final class RecentsDeck {
             showEmptyAfterClear();
             showInline(message);
             updateRam();
+            long now = SystemClock.uptimeMillis();
+            if (RecentsHomePolicy.shouldGoHome(RecentsHomePolicy.ENABLED, open,
+                    MainActivity.isForeground(), homeAfterClearFired, apps, now,
+                    lastHomeAfterClearUptime)) {
+                homeAfterClearFired = true;
+                lastHomeAfterClearUptime = now;
+                close();
+            }
         });
     }
 
