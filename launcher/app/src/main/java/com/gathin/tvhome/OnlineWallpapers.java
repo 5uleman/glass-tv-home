@@ -420,7 +420,13 @@ final class OnlineWallpapers {
             String base = dot > 0 ? name.substring(0, dot) : name;
             String cat = catalogCategory(base);
             String[] desc = cat == null ? describe(f) : null;
-            if (cat == null && desc != null && desc.length >= 3) cat = desc[2];
+            if (cat == null && desc != null && desc.length >= 3) {
+                // A Pakistan file the catalog no longer lists is an old URL (a replaced photo):
+                // hide it even before the next sync prunes it, so legacy "Pakistan" users do not
+                // see the old and the new picture side by side.
+                if (desc[2].toLowerCase(Locale.ROOT).startsWith("pakistan_")) continue;
+                cat = desc[2];
+            }
             if (cat != null && matchesCategory(cat, category)) {
                 filtered.add(f);
             }
