@@ -195,64 +195,75 @@ final class OnlineWallpapers {
             new WallpaperItem("https://images.unsplash.com/photo-1491557345352-5929e343eb89?w=2560&h=1440&fit=crop&crop=entropy&q=85",
                     "Obsidian Mountain Peak", "Sharp rocky mountain peaks piercing dramatic black storm clouds", "Minimalist_OLED"),
 
-            // Pakistan (Pexels, 1920x1080, dusk or night where possible so the white UI text reads).
+            // Pakistan: two collections. Monuments holds landmarks, mosques, forts, historic
+            // buildings and city skylines; Nature holds the northern valleys, lakes and the coast.
             // The fourth value is the place line under the title; the third stays the category.
-            // Lahore
+            // Commons files are served at 1920 px from originals of at least 3840 px, the only
+            // thumbnail width its CDN still returns for these photos.
+            // Monuments
             new WallpaperItem("https://images.pexels.com/photos/5487986/pexels-photo-5487986.jpeg?w=2560&h=1440&fit=crop",
-                    "Badshahi Mosque Under the Milky Way", "The lit Mughal mosque beneath the Milky Way, with Minar-e-Pakistan on the horizon", "Pakistan_Lahore", "Lahore, Pakistan"),
+                    "Badshahi Mosque Under the Milky Way", "The lit Mughal mosque beneath the Milky Way, with Minar-e-Pakistan on the horizon", "Pakistan_Monuments", "Lahore, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/11774127/pexels-photo-11774127.jpeg?w=2560&h=1440&fit=crop",
-                    "Alamgiri Gate", "The gateway into Lahore Fort above its lawns, with the white pavilion to the right", "Pakistan_Lahore", "Lahore, Pakistan"),
+                    "Alamgiri Gate", "The gateway into Lahore Fort above its lawns, with the white pavilion to the right", "Pakistan_Monuments", "Lahore, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/16021536/pexels-photo-16021536.jpeg?w=2560&h=1440&fit=crop",
-                    "Lahore at Night", "Light trails along the canal and the lit Arfa Software Technology Park tower", "Pakistan_Lahore", "Lahore, Pakistan"),
-            // Islamabad
+                    "Lahore at Night", "Light trails along the canal and the lit Arfa Software Technology Park tower", "Pakistan_Monuments", "Lahore, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/16693762/pexels-photo-16693762.jpeg?w=2560&h=1440&fit=crop",
-                    "Faisal Mosque at Dusk", "The white tents and minarets of Faisal Mosque below the Margalla Hills at twilight", "Pakistan_Islamabad", "Islamabad, Pakistan"),
+                    "Faisal Mosque at Dusk", "The white tents and minarets of Faisal Mosque below the Margalla Hills at twilight", "Pakistan_Monuments", "Islamabad, Pakistan"),
             new WallpaperItem("https://images.unsplash.com/photo-1706511920650-b690cd6619e8?w=2560&h=1440&fit=crop&crop=entropy&q=85",
-                    "Faisal Mosque in Golden Mist", "The white mosque and its four minarets rising through gold morning haze", "Pakistan_Islamabad", "Islamabad, Pakistan"),
-            new WallpaperItem("https://images.pexels.com/photos/38459967/pexels-photo-38459967.jpeg?w=2560&h=1440&fit=crop",
-                    "Rawal Lake at Sunset", "The sun setting behind the Margalla Hills, reflected across Rawal Lake", "Pakistan_Islamabad", "Islamabad, Pakistan"),
+                    "Faisal Mosque in Golden Mist", "The white mosque and its four minarets rising through gold morning haze", "Pakistan_Monuments", "Islamabad, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/38773558/pexels-photo-38773558.jpeg?w=2560&h=1440&fit=crop",
-                    "Islamabad from Above", "Green avenues running toward the Margalla Hills, with Faisal Mosque in the distance", "Pakistan_Islamabad", "Islamabad, Pakistan"),
-            // Karachi
+                    "Islamabad from Above", "Green avenues running toward the Margalla Hills, with Faisal Mosque in the distance", "Pakistan_Monuments", "Islamabad, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/34096455/pexels-photo-34096455.jpeg?w=2560&h=1440&fit=crop",
-                    "Karachi at Night", "Dense city lights spreading to the horizon after dark", "Pakistan_Karachi", "Karachi, Pakistan"),
-            new WallpaperItem("https://images.pexels.com/photos/28244078/pexels-photo-28244078.jpeg?w=2560&h=1440&fit=crop",
-                    "Clifton Beach", "A horse and its handler on the wet sand at dusk, in black and white", "Pakistan_Karachi", "Karachi, Pakistan"),
+                    "Karachi at Night", "Dense city lights spreading to the horizon after dark", "Pakistan_Monuments", "Karachi, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/33045005/pexels-photo-33045005.jpeg?w=2560&h=1440&fit=crop",
-                    "Karachi Skyline", "High-rise apartment blocks and tree-lined streets seen from above", "Pakistan_Karachi", "Karachi, Pakistan"),
-            // The north
-            new WallpaperItem("https://images.pexels.com/photos/19442083/pexels-photo-19442083.jpeg?w=2560&h=1440&fit=crop",
-                    "Hunza Valley in Autumn", "Snow peaks above the Hunza valley and its autumn poplar groves", "Pakistan_Hunza", "Hunza, Pakistan"),
-            new WallpaperItem("https://images.pexels.com/photos/15916726/pexels-photo-15916726.jpeg?w=2560&h=1440&fit=crop",
-                    "Hunza Valley at Sunset", "Clouds and low light over the Hunza valley, with Rakaposhi's snows beyond", "Pakistan_Hunza", "Hunza, Pakistan"),
-            new WallpaperItem("https://images.pexels.com/photos/35302563/pexels-photo-35302563.jpeg?w=2560&h=1440&fit=crop",
-                    "Golden Peaks of Hunza", "A snow ridge catching the last sunlight above the valley floor", "Pakistan_Hunza", "Hunza, Pakistan"),
-            new WallpaperItem("https://images.pexels.com/photos/8835247/pexels-photo-8835247.jpeg?w=2560&h=1440&fit=crop",
-                    "Passu Cones", "The jagged Passu Cones rising above the dry Hunza valley", "Pakistan_Hunza", "Hunza, Pakistan"),
-            new WallpaperItem("https://images.pexels.com/photos/13462643/pexels-photo-13462643.jpeg?w=2560&h=1440&fit=crop",
-                    "Attabad Lake", "Turquoise water and moored boats between the Karakoram slopes", "Pakistan_Hunza", "Hunza, Pakistan"),
-            new WallpaperItem("https://images.pexels.com/photos/29401243/pexels-photo-29401243.jpeg?w=2560&h=1440&fit=crop",
-                    "Nanga Parbat at Sunrise", "Dawn light on the snow slopes of Nanga Parbat", "Pakistan_Diamer", "Diamer, Pakistan"),
-            new WallpaperItem("https://images.pexels.com/photos/186985/pexels-photo-186985.jpeg?w=2560&h=1440&fit=crop",
-                    "Swat Valley", "Fields and forested hills along the Swat river under a storm-dark sky", "Pakistan_Swat", "Swat, Pakistan"),
-            new WallpaperItem("https://images.pexels.com/photos/36870354/pexels-photo-36870354.jpeg?w=2560&h=1440&fit=crop",
-                    "Karakoram Peaks", "Rock spires and snow along a Karakoram ridge", "Pakistan_Karakoram", "Gilgit-Baltistan, Pakistan"),
-            // Historic sites
+                    "Karachi Skyline", "High-rise apartment blocks and tree-lined streets seen from above", "Pakistan_Monuments", "Karachi, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/815880/pexels-photo-815880.jpeg?w=2560&h=1440&fit=crop",
-                    "Derawar Fort", "The fort's round towers rising from the Cholistan desert at sunset", "Pakistan_Bahawalpur", "Bahawalpur, Pakistan"),
+                    "Derawar Fort", "The fort's round towers rising from the Cholistan desert at sunset", "Pakistan_Monuments", "Bahawalpur, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/34535290/pexels-photo-34535290.jpeg?w=2560&h=1440&fit=crop",
-                    "Makli Necropolis", "Carved stone columns along a corridor of tombs at Makli", "Pakistan_Thatta", "Thatta, Pakistan"),
-            // Landmarks
+                    "Makli Necropolis", "Carved stone columns along a corridor of tombs at Makli", "Pakistan_Monuments", "Thatta, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/14926132/pexels-photo-14926132.jpeg?w=2560&h=1440&fit=crop",
-                    "Lahore Fort at Sunset", "The fort's walls and domes under a warm sky, with the flag on the rampart", "Pakistan_Lahore", "Lahore, Pakistan"),
+                    "Lahore Fort at Sunset", "The fort's walls and domes under a warm sky, with the flag on the rampart", "Pakistan_Monuments", "Lahore, Pakistan"),
             new WallpaperItem("https://images.pexels.com/photos/13239874/pexels-photo-13239874.jpeg?w=2560&h=1440&fit=crop",
-                    "Minar-e-Pakistan in Daylight", "The minaret rising above its lawns and trees under a clear sky", "Pakistan_Lahore", "Lahore, Pakistan"),
+                    "Minar-e-Pakistan in Daylight", "The minaret rising above its lawns and trees under a clear sky", "Pakistan_Monuments", "Lahore, Pakistan"),
             new WallpaperItem("https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Eiffel_Tower_replica_in_Bahria_Town.jpg/1920px-Eiffel_Tower_replica_in_Bahria_Town.jpg",
-                    "Eiffel Tower Replica at Dusk", "The replica tower and its lit grounds on the edge of Bahria Town at evening", "Pakistan_Lahore", "Bahria Town, Lahore"),
+                    "Eiffel Tower Replica at Dusk", "The replica tower and its lit grounds on the edge of Bahria Town at evening", "Pakistan_Monuments", "Bahria Town, Lahore"),
             new WallpaperItem("https://images.pexels.com/photos/14394126/pexels-photo-14394126.jpeg?w=2560&h=1440&fit=crop",
-                    "Pakistan Monument at Night", "The lit petals of the monument around its central star", "Pakistan_Islamabad", "Islamabad, Pakistan"),
-            new WallpaperItem("https://images.pexels.com/photos/4253018/pexels-photo-4253018.jpeg?w=2560&h=1440&fit=crop",
-                    "Abbasi Mosque at Derawar", "The mosque's white domes seen through the ruined walls of Derawar Fort", "Pakistan_Bahawalpur", "Bahawalpur, Pakistan")
+                    "Pakistan Monument at Night", "The lit petals of the monument around its central star", "Pakistan_Monuments", "Islamabad, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/31377718/pexels-photo-31377718.jpeg?w=2560&h=1440&fit=crop",
+                    "Abbasi Mosque, Ahmedpur East", "The white domes and four minarets of the mosque above its courtyard", "Pakistan_Monuments", "Ahmedpur East, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/12912453/pexels-photo-12912453.jpeg?w=2560&h=1440&fit=crop",
+                    "Badshahi Mosque at Sunset", "The red sandstone mosque and its domes under a pink evening sky", "Pakistan_Monuments", "Lahore, Pakistan"),
+            new WallpaperItem("https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Tooba_Masjid.jpg/1920px-Tooba_Masjid.jpg",
+                    "Tooba Masjid", "The white dome and minarets reflected in the pool at blue hour", "Pakistan_Monuments", "Karachi, Pakistan"),
+            new WallpaperItem("https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/The_Scenic_Hazuri_Bagh_Baradari.jpg/1920px-The_Scenic_Hazuri_Bagh_Baradari.jpg",
+                    "Hazuri Bagh Baradari", "The white baradari at the end of its garden walk, between flower beds", "Pakistan_Monuments", "Lahore, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/38383016/pexels-photo-38383016.jpeg?w=2560&h=1440&fit=crop",
+                    "Faisal Mosque at Blue Hour", "The lit mosque and its minarets reflected on wet marble", "Pakistan_Monuments", "Islamabad, Pakistan"),
+            new WallpaperItem("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Mohatta_Palace_2016.jpg/1920px-Mohatta_Palace_2016.jpg",
+                    "Mohatta Palace", "The pink stone palace and its domed towers above the lawn", "Pakistan_Monuments", "Karachi, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/35734282/pexels-photo-35734282.jpeg?w=2560&h=1440&fit=crop",
+                    "Lahore Railway Station", "The station's twin clock towers and red-brick front above the forecourt", "Pakistan_Monuments", "Lahore, Pakistan"),
+            // Nature
+            new WallpaperItem("https://images.pexels.com/photos/38459967/pexels-photo-38459967.jpeg?w=2560&h=1440&fit=crop",
+                    "Rawal Lake at Sunset", "The sun setting behind the Margalla Hills, reflected across Rawal Lake", "Pakistan_Nature", "Islamabad, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/28244078/pexels-photo-28244078.jpeg?w=2560&h=1440&fit=crop",
+                    "Clifton Beach", "A horse and its handler on the wet sand at dusk, in black and white", "Pakistan_Nature", "Karachi, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/19442083/pexels-photo-19442083.jpeg?w=2560&h=1440&fit=crop",
+                    "Hunza Valley in Autumn", "Snow peaks above the Hunza valley and its autumn poplar groves", "Pakistan_Nature", "Hunza, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/15916726/pexels-photo-15916726.jpeg?w=2560&h=1440&fit=crop",
+                    "Hunza Valley at Sunset", "Clouds and low light over the Hunza valley, with Rakaposhi's snows beyond", "Pakistan_Nature", "Hunza, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/35302563/pexels-photo-35302563.jpeg?w=2560&h=1440&fit=crop",
+                    "Golden Peaks of Hunza", "A snow ridge catching the last sunlight above the valley floor", "Pakistan_Nature", "Hunza, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/8835247/pexels-photo-8835247.jpeg?w=2560&h=1440&fit=crop",
+                    "Passu Cones", "The jagged Passu Cones rising above the dry Hunza valley", "Pakistan_Nature", "Hunza, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/13462643/pexels-photo-13462643.jpeg?w=2560&h=1440&fit=crop",
+                    "Attabad Lake", "Turquoise water and moored boats between the Karakoram slopes", "Pakistan_Nature", "Hunza, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/29401243/pexels-photo-29401243.jpeg?w=2560&h=1440&fit=crop",
+                    "Nanga Parbat at Sunrise", "Dawn light on the snow slopes of Nanga Parbat", "Pakistan_Nature", "Diamer, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/186985/pexels-photo-186985.jpeg?w=2560&h=1440&fit=crop",
+                    "Swat Valley", "Fields and forested hills along the Swat river under a storm-dark sky", "Pakistan_Nature", "Swat, Pakistan"),
+            new WallpaperItem("https://images.pexels.com/photos/36870354/pexels-photo-36870354.jpeg?w=2560&h=1440&fit=crop",
+                    "Karakoram Peaks", "Rock spires and snow along a Karakoram ridge", "Pakistan_Nature", "Gilgit-Baltistan, Pakistan")
     };
 
     private OnlineWallpapers() {
@@ -286,6 +297,11 @@ final class OnlineWallpapers {
         if (itemCat == null) return false;
         String ic = itemCat.toLowerCase(Locale.ROOT);
         String sc = selectedCat.toLowerCase(Locale.ROOT);
+        // The old "Pakistan" key stays valid for anyone who still has it selected: it means
+        // every Pakistan photo. The two new keys split it by content.
+        if (sc.equals("pakistan")) return ic.startsWith("pakistan_");
+        if (sc.startsWith("pakistan") && sc.contains("monument")) return ic.equals("pakistan_monuments");
+        if (sc.startsWith("pakistan") && sc.contains("nature")) return ic.equals("pakistan_nature");
         if (sc.startsWith("malaysia_")) {
             String state = sc.substring("malaysia_".length());
             return ic.contains(state);
@@ -323,6 +339,18 @@ final class OnlineWallpapers {
             }
         }
         return names;
+    }
+
+    /**
+     * The catalog's current category for a cached file, looked up by the URL hash in its name.
+     * Old caches keep the category they were written with; this reads the split categories
+     * without downloading the same picture again. Null when the catalog no longer lists it.
+     */
+    static String catalogCategory(String cacheBaseName) {
+        for (WallpaperItem item : CURATED_CATALOG) {
+            if (hashFilename(item.url).equals(cacheBaseName)) return item.category;
+        }
+        return null;
     }
 
     static void cleanOutdatedCategoryWallpapers(File d, String category) {
@@ -387,11 +415,14 @@ final class OnlineWallpapers {
         if (category == null || category.equalsIgnoreCase("All")) return all;
         List<File> filtered = new ArrayList<>();
         for (File f : all) {
-            String[] desc = describe(f);
-            if (desc != null && desc.length >= 3) {
-                if (matchesCategory(desc[2], category)) {
-                    filtered.add(f);
-                }
+            String name = f.getName();
+            int dot = name.lastIndexOf('.');
+            String base = dot > 0 ? name.substring(0, dot) : name;
+            String cat = catalogCategory(base);
+            String[] desc = cat == null ? describe(f) : null;
+            if (cat == null && desc != null && desc.length >= 3) cat = desc[2];
+            if (cat != null && matchesCategory(cat, category)) {
+                filtered.add(f);
             }
         }
         return filtered;

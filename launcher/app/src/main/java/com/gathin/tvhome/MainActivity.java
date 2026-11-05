@@ -4295,10 +4295,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         List<Runnable> actions = new ArrayList<>();
         int focus = 0;
 
-        // Collections: Lahore first. The active one still comes from active_category.
+        // Collections: Pakistan first. The active one still comes from active_category; the
+        // old "Pakistan" key from before the split stays valid and points at both new rows.
         String[][] collections = {
-                {"Pakistan", "Lahore & Pakistan",
-                        "25 photos: Lahore, Islamabad, Karachi, the northern valleys, landmarks and historic sites"},
+                {"Pakistan Monuments", "Pakistan Monuments",
+                        "Landmarks, mosques, forts and city skylines across Pakistan"},
+                {"Pakistan Nature", "Pakistan Nature",
+                        "Mountains, lakes and valleys of the north, and the Karachi coast"},
                 {"Malaysia", "Attractions in Malaysia", "16 iconic photos (Pexels)"},
                 {"Natural", "Nature & Landscapes", "Mountains, forests and aurora"},
                 {"Skyscraper", "Skyscrapers & Cities", "Modern metropolis and architecture"},
@@ -4308,7 +4311,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         };
         for (String[] c : collections) {
             boolean active = c[0].equalsIgnoreCase(currentKey)
-                    || (c[0].equals("Malaysia") && currentKey.startsWith("Malaysia"));
+                    || (c[0].equals("Malaysia") && currentKey.startsWith("Malaysia"))
+                    || (c[0].equals("Pakistan Monuments") && "Pakistan".equalsIgnoreCase(currentKey));;
             if (active) focus = rows.size();
             final String key = c[0];
             rows.add(new GlassDialogs.Row(c[1], c[2], active));
