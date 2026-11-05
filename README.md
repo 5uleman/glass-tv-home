@@ -46,7 +46,7 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
 - **A VPN chip.** While any VPN is connected, the network pill shows a small green "VPN" chip. The network
   menu has a VPN row that opens the Proton VPN app if it is installed, and otherwise says it is missing. It is
   only a shortcut: there is no on/off switch, because Android does not let a launcher control another VPN app.
-- **Two Pakistan wallpaper collections.** *Pakistan Monuments* has 21 photos of Lahore, Islamabad,
+- **Two Pakistan wallpaper collections.** *Pakistan Monuments* has 24 photos of Lahore, Islamabad,
   Karachi, the forts and the mosques; *Pakistan Nature* has 10 photos of the Hunza valley, Attabad
   Lake, Nanga Parbat, Swat, the Karakoram, Rawal Lake and Clifton Beach. Credits are below.
 - **A glass wallpaper dialog.** The category list is frosted glass with a white focus ring, and a dark smoke
@@ -167,12 +167,10 @@ in the passwords; without that file the build falls back to the debug key, which
 - The Pakistan wallpaper collections use photos from Pexels and Unsplash, free under their licences, and
   CC BY or CC BY-SA files from Wikimedia Commons with the licence named on each line. Photographers and
   authors, in the order each collection lists them:
-  - **Pakistan Monuments** (21 photos)
+  - **Pakistan Monuments** (24 photos)
     - Badshahi Mosque under the Milky Way — Aitizaz Naqvi (Pexels licence, [photo](https://www.pexels.com/photo/5487986/))
     - Alamgiri Gate, Lahore Fort — Salman Rafique (Pexels licence, [photo](https://www.pexels.com/photo/11774127/))
     - Lahore at night — Wasif Mehmood (Pexels licence, [photo](https://www.pexels.com/photo/16021536/))
-    - Faisal Mosque at dusk — Bilal (Pexels licence, [photo](https://www.pexels.com/photo/16693762/))
-    - Faisal Mosque in golden mist — Ali Hamza Tullah (Unsplash licence, [photo](https://unsplash.com/photos/MpfeZ1bvViw))
     - Islamabad from above — Ahmed Ismail (Pexels licence, [photo](https://www.pexels.com/photo/38773558/))
     - Karachi at night — Tahamie Farooqui (Pexels licence, [photo](https://www.pexels.com/photo/34096455/))
     - Karachi skyline — Tahamie Farooqui (Pexels licence, [photo](https://www.pexels.com/photo/33045005/))
@@ -180,7 +178,6 @@ in the passwords; without that file the build falls back to the debug key, which
     - Makli Necropolis — Ayesha Memon (Pexels licence, [photo](https://www.pexels.com/photo/34535290/))
     - Lahore Fort at sunset — Mian Rizwan (Pexels licence, [photo](https://www.pexels.com/photo/14926132/))
     - Minar-e-Pakistan in daylight — Aatik Ali Makani (Pexels licence, [photo](https://www.pexels.com/photo/13239874/))
-    - Eiffel Tower replica, Bahria Town Lahore — M Saqib Sarwar (CC BY 2.0, [file](https://commons.wikimedia.org/wiki/File:Eiffel_Tower_replica_in_Bahria_Town.jpg))
     - Pakistan Monument at night — Hamza Ali (Pexels licence, [photo](https://www.pexels.com/photo/14394126/))
     - Abbasi Mosque, Ahmedpur East — Ammar Hameed (Pexels licence, [photo](https://www.pexels.com/photo/31377718/))
     - Badshahi Mosque at sunset — salman kazmi (Pexels licence, [photo](https://www.pexels.com/photo/12912453/))
@@ -189,6 +186,13 @@ in the passwords; without that file the build falls back to the debug key, which
     - Faisal Mosque at blue hour — Abdul Ahad (Pexels licence, [photo](https://www.pexels.com/photo/38383016/))
     - Mohatta Palace — Ibrahim Janjua (CC BY-SA 4.0, [file](https://commons.wikimedia.org/wiki/File:Mohatta_Palace_2016.jpg))
     - Lahore Railway Station — Filmy Kashif (Pexels licence, [photo](https://www.pexels.com/photo/35734282/))
+    - Grand Jamia Mosque at night — Ammarsharif17 (CC BY-SA 4.0, [file](https://commons.wikimedia.org/wiki/File:Grand_Jamia_Masjid.jpg));
+      the Commons page names the mosque but not the city, so the caption stays "Pakistan"
+    - Grand Jamia Mosque arcade — HR Capture (Pexels licence, [photo](https://www.pexels.com/photo/23961877/))
+    - Badshahi Mosque facade — M1DDL3 M7N (Pexels licence, [photo](https://www.pexels.com/photo/14406067/))
+    - Frere Hall — Ibrahim Janjua (CC BY-SA 4.0, [file](https://commons.wikimedia.org/wiki/File:Frere_Hall_Karachi_City.jpg))
+    - Mazar-e-Quaid under cloud — Furqanlw (CC BY-SA 4.0, [file](https://commons.wikimedia.org/wiki/File:Mazar-e-Quaid_Karachi.jpg))
+    - Clock Tower Building, Lahore — Shairyar Khan (Unsplash licence, [photo](https://unsplash.com/photos/a-large-building-with-a-clock-tower-on-top-of-it-l_lGkl0M6r8))
   - **Pakistan Nature** (10 photos)
     - Rawal Lake at sunset — Ashraf Hussain (Pexels licence, [photo](https://www.pexels.com/photo/38459967/))
     - Clifton Beach — Muneeb Khan (Pexels licence, [photo](https://www.pexels.com/photo/28244078/))
