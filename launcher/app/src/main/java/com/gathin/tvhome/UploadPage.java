@@ -50,6 +50,15 @@ h2{font-size:16px;margin:0}
 .min0{min-width:0}
 .fname{font-weight:500;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fmeta{margin:2px 0 0}
+.queue{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.qrow{display:flex;align-items:center;gap:10px;padding:4px 0}
+.qmeta{min-width:0;flex:1}
+.qline{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.qname{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qstate{color:#9AA0AA;font-size:12px;white-space:nowrap}
+.qrow.ok .qstate{color:#34D399}
+.qrow.bad .qstate{color:#F87171}
+.qpg{height:3px;margin-top:6px}
 #panel{margin-top:12px}
 .pg{height:4px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
 .pg i{display:block;height:100%;width:0;background:#3B82F6;transition:width .2s linear}
@@ -99,11 +108,14 @@ h2{font-size:16px;margin:0}
 <p class="lead">Pick a photo from your phone and it appears on your TV instantly.</p>
 <section class="card">
 <button class="drop" id="pick" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16.5V4m0 0L8 8m4-4 4 4M4.5 19.5h15"/></svg><b>Choose a photo</b><span>or tap to browse your gallery</span><small>Landscape photos at 1920 × 1080 or larger look best.</small></button>
-<input id="file" type="file" accept="image/*" hidden>
+<input id="file" type="file" accept="image/*" multiple hidden>
 <div id="chosen" hidden>
+<div id="single">
 <div class="preview"><img id="preview" alt="Your photo, cropped to 16:9"></div>
 <p class="crop">The TV shows this crop.</p>
+</div>
 <div class="meta"><div class="min0"><p class="fname" id="fname"></p><p class="fmeta" id="fmeta"></p></div><button class="mini" id="change" type="button">Change photo</button></div>
+<div class="queue" id="queue" hidden></div>
 </div>
 <button class="btn" id="send" type="button" disabled>Send to TV</button>
 <div id="panel" hidden>
@@ -134,60 +146,144 @@ h2{font-size:16px;margin:0}
 <script>
 (function(){
 var $=function(i){return document.getElementById(i)},C=function(t){return document.createElement(t)};
-var file=null,url=null,xhr=null,lastFocus=null,pending=null,fresh=null,known={},listOk=false;
-var NOPE="Couldn't reach your TV",WIFI='Check your Wi-Fi, or open the QR code on the TV again.';
+var files=[],xhr=null,lastFocus=null,pending=null,fresh=null,known={},listOk=false,sending=false,cancelled=false,sentCount=0,lastSent=null;
+var NOPE="Couldn't reach your TV",WIFI='Check your Wi-Fi, or open the QR code on the TV again.',SENT='Sent to your TV',NOW="It's on your screen now.",CAN='Sending cancelled',NOT='The photo was not sent to the TV.',REJ="The TV couldn't take that photo",REJ2='The upload was rejected.';
 function fmt(b){return b>=1048576?(b/1048576).toFixed(1)+' MB':b>=1024?Math.round(b/1024)+' KB':b+' B'}
 function conn(ok){$('pill').classList.toggle('bad',!ok);$('pillText').textContent=ok?'Connected':"Can't reach TV"}
 function status(k,t,d,act){
  var s=$('status'),b=$('sact');s.className='status '+k;$('stitle').textContent=t;$('sdetail').textContent=d;
  b.textContent=act==='retry'?'Try again':act==='again'?'Send another':'Dismiss';
- b.onclick=act==='retry'?send:act==='again'?reset:hideStatus;s.hidden=false;
+ b.onclick=act==='retry'?function(){run(files)}:act==='again'?clearAll:hideStatus;s.hidden=false;
 }
 function hideStatus(){$('status').hidden=true}
 function bar(p){$('bar').style.width=p+'%';$('bar').setAttribute('aria-valuenow',''+p)}
-function busy(on){$('send').disabled=on||!file;$('send').textContent=on?'Sending to TV…':'Send to TV';$('change').disabled=on;$('panel').hidden=!on;if(on){bar(0);$('ptext').textContent='Sending…'}}
-function fail(){conn(false);status('bad',NOPE,WIFI,'')}
-function post(u){return fetch(u,{method:'POST'}).then(function(r){if(!r.ok)throw 0;return r.json()})}
 function copy(o){var r={};for(var k in o)r[k]=1;return r}
-function finishSent(name){bar(100);$('send').hidden=true;status('ok','Sent to your TV',"It's on your screen now.",'again');load(name)}
-function lost(before){
- if(!listOk){fail();return}
- fetch('/api/list',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(items){
-  var found=null;for(var i=0;i<items.length;i++){if(!before[items[i].name]){found=items[i].name;break}}
-  if(!found){fail();return}
-  known[found]=1;conn(true);finishSent(found);
- }).catch(fail);
+function fail(a){conn(false);status('bad',NOPE,WIFI,a||'')}
+function post(u){return fetch(u,{method:'POST'}).then(function(r){if(!r.ok)throw 0;return r.json()})}
+function mark(it,cls,txt){it.st.textContent=txt;it.el.className='qrow'+(cls?' '+cls:'')}
+function pct(it,p){it.pb.style.width=p+'%'}
+function clearAll(){
+ files.forEach(function(it){URL.revokeObjectURL(it.url)});files=[];
+ $('file').value='';$('queue').textContent='';$('queue').hidden=true;$('single').hidden=false;
+ $('chosen').hidden=true;$('pick').hidden=false;$('send').hidden=false;$('send').disabled=true;$('send').textContent='Send to TV';
+ $('panel').hidden=true;$('change').disabled=false;hideStatus();fresh=null;
 }
-function reset(){if(url)URL.revokeObjectURL(url);url=null;file=null;$('file').value='';$('chosen').hidden=true;$('pick').hidden=false;$('send').hidden=false;$('send').disabled=true;$('send').textContent='Send to TV';$('panel').hidden=true;hideStatus();fresh=null}
-function choose(f){
- if(!f)return;if(url)URL.revokeObjectURL(url);file=f;url=URL.createObjectURL(f);
- $('preview').src=url;$('fname').textContent=f.name;$('fmeta').textContent=fmt(f.size)+' · reading size…';
- var probe=new Image();probe.onload=function(){if(file===f)$('fmeta').textContent=fmt(f.size)+' · '+probe.naturalWidth+' × '+probe.naturalHeight};
- probe.onerror=function(){if(file===f)$('fmeta').textContent=fmt(f.size)};
- probe.src=url;
- $('pick').hidden=true;$('chosen').hidden=false;$('send').hidden=false;$('send').disabled=false;$('send').textContent='Send to TV';hideStatus();
+function qrow(it){
+ var r=C('div');r.className='qrow';
+ var m=C('div');m.className='qmeta';
+ var line=C('div');line.className='qline';
+ var n=C('span');n.className='qname';n.textContent=it.file.name;
+ var s=C('span');s.className='qstate';s.textContent='Waiting';line.appendChild(n);line.appendChild(s);
+ var pg=C('div');pg.className='pg qpg';
+ var b=C('i');pg.appendChild(b);
+ m.appendChild(line);m.appendChild(pg);r.appendChild(m);
+ var t=C('button');t.type='button';t.className='mini';t.textContent='Try again';t.hidden=true;
+ t.onclick=function(){run([it])};r.appendChild(t);
+ it.el=r;it.st=s;it.pb=b;it.rt=t;
+ return r;
 }
-function send(){
- if(!file||xhr)return;var f=file;hideStatus();busy(true);
- var before=copy(known);
- var x=new XMLHttpRequest();xhr=x;
- x.open('POST','/upload?name='+encodeURIComponent(f.name),true);
- x.setRequestHeader('Content-Type',f.type||'image/jpeg');
- x.upload.onprogress=function(e){if(e.lengthComputable){var p=Math.max(1,Math.round(e.loaded/e.total*100));bar(p);$('ptext').textContent='Sending… '+p+'%'}};
+function choose(list){
+ var all=list?Array.prototype.slice.call(list):[];if(!all.length)return;
+ $('file').value='';
+ var over=all.length>10,arr=all.slice(0,10);
+ clearAll();
+ arr.forEach(function(f){files.push({file:f,url:URL.createObjectURL(f),state:'waiting'})});
+ $('pick').hidden=true;$('chosen').hidden=false;
+ var total=0;arr.forEach(function(f){total+=f.size});
+ if(files.length===1){
+  var f=files[0].file;
+  $('preview').src=files[0].url;$('fname').textContent=f.name;$('fmeta').textContent=fmt(f.size);
+  var probe=new Image();probe.onload=function(){if(files[0]&&files[0].file===f)$('fmeta').textContent=fmt(f.size)+' · '+probe.naturalWidth+' × '+probe.naturalHeight};
+  probe.src=files[0].url;
+  $('change').textContent='Change photo';
+ }else{
+  $('single').hidden=true;
+  $('fname').textContent=files.length+' photos selected';
+  $('fmeta').textContent=fmt(total)+' total'+(over?' · first 10 only':'');
+  $('change').textContent='Change photos';
+ }
+ files.forEach(function(it){$('queue').appendChild(qrow(it))});
+ $('queue').hidden=files.length===1;
+ $('send').hidden=false;$('send').disabled=false;$('send').textContent=files.length===1?'Send to TV':'Send '+files.length+' photos';
+ hideStatus();
+}
+function run(items){
+ if(sending||!items.length)return;
+ var whole=items===files;
+ sending=true;cancelled=false;sentCount=0;lastSent=null;hideStatus();
+ $('change').disabled=true;$('send').hidden=!whole;$('send').disabled=true;
+ $('panel').hidden=false;bar(0);$('ptext').textContent='Sending…';
+ items.forEach(function(it){it.state='waiting';it.rt.hidden=true;it.el.className='qrow';it.st.textContent='Waiting';pct(it,0)});
+ pump(items,0,whole);
+}
+function pump(items,i,whole){
+ if(cancelled){finish(items,whole,'cancelled');return}
+ if(i>=items.length){finish(items,whole);return}
+ var it=items[i];
+ $('ptext').textContent='Sending '+(i+1)+' of '+items.length+'…';
+ if(whole)$('send').textContent='Sending '+(i+1)+' of '+items.length+'…';
+ upload(it,function(){
+  if(it.state==='sent')sentCount++;
+  bar(Math.round(((i+1)/items.length)*100));
+  pump(items,i+1,whole);
+ });
+}
+function upload(it,done){
+ it.network=false;it.err=null;it.state='sending';mark(it,'','Sending…');pct(it,0);
+ var before=copy(known),x=new XMLHttpRequest();xhr=x;
+ x.open('POST','/upload?name='+encodeURIComponent(it.file.name),true);
+ x.setRequestHeader('Content-Type',it.file.type||'image/jpeg');
+ x.upload.onprogress=function(e){if(e.lengthComputable){var p=Math.max(1,Math.round(e.loaded/e.total*100));pct(it,p);mark(it,'','Sending… '+p+'%');if(files.length===1){bar(p);$('ptext').textContent='Sending… '+p+'%'}}};
  x.onload=function(){
-  xhr=null;busy(false);conn(true);
+  xhr=null;conn(true);
   if(x.status>=200&&x.status<300){
    var name=null;try{name=JSON.parse(x.responseText).file}catch(e){}
    if(name)known[name]=1;
-   finishSent(name);
+   it.state='sent';pct(it,100);mark(it,'ok','Sent');lastSent=name||lastSent;
   }else{
-   var why=(x.responseText||'').trim().slice(0,160);
-   status('bad',"The TV couldn't take that photo",why||('Rejected with HTTP '+x.status+'.'),'retry');
+   it.err=(x.responseText||'').trim().slice(0,160)||('HTTP '+x.status+'.');
+   it.state='failed';mark(it,'bad','Failed');
   }
+  done();
  };
- x.onerror=function(){xhr=null;busy(false);conn(false);lost(before)};
- x.onabort=function(){xhr=null;busy(false);status('bad','Sending cancelled','The photo was not sent to the TV.','retry')};
- x.send(f);
+ x.onerror=function(){xhr=null;conn(false);recover(it,before,done)};
+ x.onabort=function(){xhr=null;it.state='stopped';mark(it,'','Not sent');done()};
+ x.send(it.file);
+}
+function recover(it,before,done){
+ var bad=function(){it.network=true;it.state='failed';mark(it,'bad','Failed');done()};
+ if(!listOk){bad();return}
+ fetch('/api/list',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(items){
+  var found=null;for(var i=0;i<items.length;i++){if(!before[items[i].name]){found=items[i].name;break}}
+  if(!found)throw 0;
+  known[found]=1;it.state='sent';pct(it,100);mark(it,'ok','Sent');lastSent=found;conn(true);done();
+ }).catch(bad);
+}
+function finish(items,whole,kind){
+ sending=false;xhr=null;$('change').disabled=false;$('panel').hidden=true;$('send').hidden=true;
+ if(kind==='cancelled')items.forEach(function(it){if(it.state==='waiting'){it.state='stopped';mark(it,'','Not sent')}});
+ var n=items.length,bad=0;
+ items.forEach(function(it){if(it.state!=='sent')bad++});
+ if(whole)files.forEach(function(it){it.rt.hidden=it.state==='sent'});
+ if(!whole){
+  var it=items[0];
+  if(it.state==='sent')status('ok',SENT,NOW,'again');
+  else{
+   it.rt.hidden=false;
+   if(it.state==='stopped')status('bad',CAN,NOT,'');
+   else if(it.network)fail('');
+   else status('bad',REJ,it.err||REJ2,'');
+  }
+ }else if(kind==='cancelled'){
+  status('bad',CAN,n===1?NOT:sentCount+' of '+n+' photos were sent.',n===1?'retry':'');
+ }else if(!bad){
+  status('ok',SENT,n===1?NOW:n+' photos sent. The last one is on your TV.','again');
+ }else if(n===1){
+  if(items[0].network)fail('retry');else status('bad',REJ,items[0].err||REJ2,'retry');
+ }else{
+  status('bad','Some photos did not send',sentCount+' of '+n+' photos were sent. Use Try again on a failed row.','');
+ }
+ load(lastSent);
 }
 function row(it,f){
  var r=C('div');r.className='row'+(it.active?' active':'')+(f===it.name?' fresh':'');
@@ -235,9 +331,9 @@ function del(){
 }
 $('pick').onclick=function(){$('file').click()};
 $('change').onclick=function(){$('file').click()};
-$('file').onchange=function(e){choose(e.target.files[0])};
-$('send').onclick=send;
-$('cancel').onclick=function(){if(xhr)xhr.abort()};
+$('file').onchange=function(e){choose(e.target.files)};
+$('send').onclick=function(){run(files)};
+$('cancel').onclick=function(){if(!sending)return;cancelled=true;if(xhr)xhr.abort()};
 $('rotate').onclick=function(){
  post('/api/slideshow').then(function(){conn(true);load(null);status('ok','Rotating all photos','The TV cycles through every photo again.','')}).catch(fail);
 };
@@ -245,7 +341,7 @@ $('sheetbg').onclick=close;
 $('nocancel').onclick=close;
 $('dodelete').onclick=del;
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('sheet').hidden)close()});
-window.addEventListener('pagehide',function(){if(url)URL.revokeObjectURL(url)});
+window.addEventListener('pagehide',function(){files.forEach(function(it){URL.revokeObjectURL(it.url)})});
 load(null);
 })();
 </script>
