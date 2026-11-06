@@ -64,7 +64,7 @@
     <integer name="rows_below_dock">0</integer>
 
     <!-- Tiles per row in the grid; the dock always has this many slots. Tiles are 180dp wide at 4 columns and
-         shrink to fit if a theme sets more (about 144dp at 5, 117dp at 6 on a 1080p TV). -->
+         shrink to fit at 5 (about 142dp on a 1080p TV). The wallpaper settings offer only 4 and 5. -->
     <integer name="columns">4</integer>
 
     <!-- "Default home" tile that opens Android's home-screen picker, for TVs whose settings have one

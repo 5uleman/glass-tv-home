@@ -18,7 +18,7 @@ The current build is **4.0.0** (`versionCode 26`), 681,821 bytes (666 KB), packa
 [Releases page](https://github.com/5uleman/glass-tv-home/releases/latest) — release binaries are
 attached there, not committed to this repository.
 
-SHA-256 (`glasstv-4.0.0-signed.apk`): `0e96a5542fc7fb62adf8ffde3aeb124639f9e74ec21c0cd332913adfadff0c4e`
+SHA-256 (`glasstv-4.0.0-signed.apk`): `a2ecec051c79663acb39c02a3040f9744d4b3dcf52dcecb58e1845373366ddaf`
 
 > The APKs still under `release/` (`glass-tv-home.apk`, `glass-tv-installer.apk`) are upstream's original
 > builds, kept for reference. Do not install them as this edition — use only the Releases page.
