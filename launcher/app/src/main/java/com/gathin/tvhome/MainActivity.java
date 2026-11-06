@@ -484,7 +484,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         mainContent = findViewById(R.id.mainContent);
         glass = findViewById(R.id.glass);
         ambient = findViewById(R.id.ambient);
-        glowEnabled = isAppColorGlowEnabled();
+        glowEnabled = currentModeGlowEnabled();
         Backdrop.setWorker(wallDecoder, handler);
         heroShelf = findViewById(R.id.heroShelf);
         heroName = findViewById(R.id.heroName);
@@ -1269,6 +1269,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         wallHistory.clear();
         getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit().putString("active_category", "DARK").apply();
         handler.removeCallbacks(wallTick);
+        // The dark screen has its own glow choice; entering it must not inherit the picture's.
+        applyGlowEnabled(currentModeGlowEnabled());
         if (wallView != null) {
             wallView.setVisibility(View.GONE);
             wallView.setImageDrawable(null);
@@ -1289,6 +1291,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         int bg = config != null ? config.backgroundColor : 0xFF000000;
         root.setBackgroundColor(bg);
         getWindow().getDecorView().setBackgroundColor(bg);
+        // Back on a picture: the picture mode's own glow choice applies again.
+        applyGlowEnabled(currentModeGlowEnabled());
     }
 
     /**
@@ -2621,22 +2625,31 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
-    /** Whether the wallpaper is tinted in the focused app's colour; wallpaper_prefs, default on. */
-    private boolean isAppColorGlowEnabled() {
+    /**
+     * The glow this mode is set to, from its own key (wallpaper or dark screen), default on. The
+     * dark screen's key is separate, so the picture's choice never carries over and an older install
+     * with app_color_glow off still lights the dark screen.
+     */
+    private boolean currentModeGlowEnabled() {
         return getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
-                .getBoolean("app_color_glow", true);
+                .getBoolean(GlowSettings.keyFor(isNoWallpaper()), GlowSettings.DEFAULT);
     }
 
     /**
-     * Applies the wallpaper settings' App Color Glow switch. Off removes the room's glow and the
-     * glass's, cancels any blend and stops all glow work; on lights the room again for the app that
-     * has focus, without a restart. The shape bitmap is kept, so turning it back on costs no rebuild.
+     * Applies the wallpaper settings' App Color Glow switch to the mode on screen. Off removes the
+     * room's glow and the glass's, cancels any blend and stops all glow work; on lights the room
+     * again for the app that has focus, without a restart. The shape bitmap is kept, so turning it
+     * back on costs no rebuild.
      */
     private void setAppColorGlow(boolean enabled) {
+        getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
+                .putBoolean(GlowSettings.keyFor(isNoWallpaper()), enabled).apply();
+        applyGlowEnabled(enabled);
+    }
+
+    private void applyGlowEnabled(boolean enabled) {
         if (glowEnabled == enabled) return;
         glowEnabled = enabled;
-        getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
-                .putBoolean("app_color_glow", enabled).apply();
         if (!enabled) {
             if (glowBlend != null) {
                 glowBlend.cancel();
@@ -5087,8 +5100,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
 
         rows.add(new GlassDialogs.Row("App Color Glow: " + (glowEnabled ? "ON" : "OFF"),
-                glowEnabled ? "The wallpaper glows in the focused app's colour"
-                        : "Plain wallpaper, with no app-colour glow", false));
+                glowEnabled
+                        ? (isNoWallpaper() ? "The dark screen glows in the focused app's colour"
+                                : "The wallpaper glows in the focused app's colour")
+                        : "Nothing is drawn; this mode keeps its own setting", false));
         actions.add(() -> {
             boolean on = !glowEnabled;
             setAppColorGlow(on);
