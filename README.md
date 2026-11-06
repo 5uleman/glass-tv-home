@@ -13,18 +13,18 @@ city.
 
 ## Download
 
-The current build is **3.7.1** (`versionCode 25`), 678,553 bytes (663 KB), package id
+The current build is **3.7.1** (`versionCode 25`), 680,265 bytes (664 KB), package id
 **`com.suleman.glasstv`**. Download it from the
 [Releases page](https://github.com/5uleman/glass-tv-home/releases/latest) — release binaries are
 attached there, not committed to this repository.
 
-SHA-256 (`glasstv-3.7.1-polish2-signed.apk`): `a106c2425261df29a5f32ea3c87a27d2632735abca6254407960fdb9b5188f7a`
+SHA-256 (`glasstv-3.7.1-polish3-signed.apk`): `54d25a5bd63cc601d72d6f950bb02bf46ff48554447ecbaa503e4366cd27e725`
 
 > The APKs still under `release/` (`glass-tv-home.apk`, `glass-tv-installer.apk`) are upstream's original
 > builds, kept for reference. Do not install them as this edition — use only the Releases page.
 
 ```bash
-adb install -r glasstv-3.7.1-polish2-signed.apk
+adb install -r glasstv-3.7.1-polish3-signed.apk
 ```
 
 The APK is signed with this fork's own key, so it will not install over the original author's build (different
@@ -44,8 +44,14 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   Power off or Restart.
 - **A Screensaver row** in the gear menu starts the TV's own screensaver. Any key dismisses it.
 - **A VPN chip.** While any VPN is connected, the network pill shows a small green "VPN" chip. The network
-  menu has a VPN row that opens the Proton VPN app if it is installed, and otherwise says it is missing. It is
-  only a shortcut: there is no on/off switch, because Android does not let a launcher control another VPN app.
+  menu has a VPN row that opens any installed app that provides a VPN service, found through the
+  `android.net.VpnService` action with the `BIND_VPN_SERVICE` permission rather than a package list; the
+  launcher never prompts for anything. With one candidate it opens straight away, with none it says "No VPN
+  app installed", and with several it opens one and says so. The order is: most recently used, then the most
+  foreground time in the last 30 days — both only when usage access was already granted, and only read, never
+  requested; then the app this row opened last, then the newest install. Known VPN brands only break an exact
+  tie, and candidates that cannot be launched from the TV are dropped. It is only a shortcut: there is no
+  on/off switch, because Android does not let a launcher control another VPN app.
 - **Two Pakistan wallpaper collections.** *Pakistan Monuments* has 24 photos of Lahore, Islamabad,
   Karachi, the forts and the mosques; *Pakistan Nature* has 10 photos of the Hunza valley, Attabad
   Lake, Nanga Parbat, Swat, the Karakoram, Rawal Lake and Clifton Beach. Credits are below.
