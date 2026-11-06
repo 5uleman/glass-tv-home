@@ -2,7 +2,10 @@ package com.gathin.tvhome;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.AppOpsManager;
 import android.app.Dialog;
+import android.app.usage.UsageStats;
+import android.app.usage.UsageStatsManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -12,6 +15,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.content.pm.ServiceInfo;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -83,9 +88,11 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -3560,23 +3567,110 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         showMenu(panel, rows, anchor, width, false);
     }
 
-    private static final String PROTON_VPN_PACKAGE = "ch.protonvpn.android";
-
-    /** Opens Proton VPN: its leanback entry point first, the normal launcher intent after that. */
+    /**
+     * Opens a VPN app: any app that publishes an {@code android.net.VpnService}, not one brand.
+     * Its leanback entry point is preferred, then its normal launch intent; apps with neither are
+     * ignored. {@link VpnApps} ranks what is left (recent use, 30-day foreground time, the app this
+     * row opened last, the newest install), so the button follows whatever VPN is on the TV.
+     */
     private void openVpnApp() {
-        Intent leanback = new Intent(Intent.ACTION_MAIN)
-                .addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
-                .setPackage(PROTON_VPN_PACKAGE);
-        if (leanback.resolveActivity(getPackageManager()) != null) {
-            open(leanback);
+        PackageManager pm = getPackageManager();
+        List<ResolveInfo> services = pm.queryIntentServices(
+                new Intent("android.net.VpnService"), 0);
+        if (services.isEmpty()) {
+            Toast.makeText(this, R.string.vpn_app_missing, Toast.LENGTH_SHORT).show();
             return;
         }
-        Intent normal = getPackageManager().getLaunchIntentForPackage(PROTON_VPN_PACKAGE);
-        if (normal != null) {
-            open(normal);
+        boolean usageAvailable = hasUsageAccess();
+        Map<String, long[]> usage = usageAvailable ? usageLast30Days() : new HashMap<>();
+
+        List<VpnApps.Candidate> found = new ArrayList<>();
+        Map<String, Intent> launchIntents = new HashMap<>();
+        Set<String> seen = new HashSet<>();
+        for (ResolveInfo ri : services) {
+            ServiceInfo si = ri.serviceInfo;
+            if (si == null || si.packageName == null) continue;
+            String pkg = si.packageName;
+            if (getPackageName().equals(pkg)) continue;
+            if (!android.Manifest.permission.BIND_VPN_SERVICE.equals(si.permission)) continue;
+            if (!seen.add(pkg)) continue;
+            Intent leanback = pm.getLeanbackLaunchIntentForPackage(pkg);
+            Intent normal = pm.getLaunchIntentForPackage(pkg);
+            Intent launch = leanback != null ? leanback : normal;
+            if (launch != null) launchIntents.put(pkg, launch);
+            String label = si.applicationInfo != null
+                    ? String.valueOf(si.applicationInfo.loadLabel(pm)) : pkg;
+            long install = -1;
+            try {
+                install = pm.getPackageInfo(pkg, 0).firstInstallTime;
+            } catch (Exception ignored) {
+            }
+            long[] use = usage.get(pkg);
+            found.add(new VpnApps.Candidate(pkg, label, launch != null, install,
+                    use != null ? use[0] : -1, use != null ? use[1] : -1));
+        }
+
+        String lastOpened = getSharedPreferences("vpn_prefs", MODE_PRIVATE)
+                .getString("last_opened_package", null);
+        List<VpnApps.Candidate> ranked = VpnApps.rank(found, getPackageName(),
+                lastOpened, usageAvailable);
+        if (ranked.isEmpty()) {
+            Toast.makeText(this, R.string.vpn_cannot_open, Toast.LENGTH_SHORT).show();
             return;
         }
-        Toast.makeText(this, R.string.vpn_app_missing, Toast.LENGTH_SHORT).show();
+        VpnApps.Candidate chosen = ranked.get(0);
+        Intent launch = launchIntents.get(chosen.packageName);
+        if (launch == null) {
+            Toast.makeText(this, R.string.vpn_cannot_open, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        open(launch);
+        getSharedPreferences("vpn_prefs", MODE_PRIVATE).edit()
+                .putString("last_opened_package", chosen.packageName).apply();
+        if (ranked.size() > 1) {
+            Toast.makeText(this, getString(R.string.vpn_multiple_apps, chosen.label),
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** Read-only check; the VPN row never prompts for usage access. */
+    private boolean hasUsageAccess() {
+        try {
+            AppOpsManager ops = (AppOpsManager) getSystemService(APP_OPS_SERVICE);
+            return ops != null && ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    android.os.Process.myUid(), getPackageName()) == AppOpsManager.MODE_ALLOWED;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Last use and 30-day foreground time per package: the access the recents deck already uses. */
+    private Map<String, long[]> usageLast30Days() {
+        Map<String, long[]> out = new HashMap<>();
+        try {
+            UsageStatsManager usm = (UsageStatsManager) getSystemService(USAGE_STATS_SERVICE);
+            if (usm == null) return out;
+            long now = System.currentTimeMillis();
+            List<UsageStats> stats = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,
+                    now - 30L * 24 * 60 * 60 * 1000, now);
+            if (stats == null) return out;
+            for (UsageStats s : stats) {
+                String pkg = s.getPackageName();
+                if (pkg == null) continue;
+                long[] agg = out.get(pkg);
+                if (agg == null) {
+                    agg = new long[]{Long.MIN_VALUE, 0};
+                    out.put(pkg, agg);
+                }
+                agg[0] = Math.max(agg[0], s.getLastTimeUsed());
+                agg[1] += Math.max(0, s.getTotalTimeInForeground());
+            }
+            for (long[] agg : out.values()) {
+                if (agg[0] == Long.MIN_VALUE) agg[0] = -1;
+            }
+        } catch (Exception ignored) {
+        }
+        return out;
     }
 
     /** Shows an Apple TV-style frosted glass Candy Box dropdown menu containing all launcher customizations & tools. */

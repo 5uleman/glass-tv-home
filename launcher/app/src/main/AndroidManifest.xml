@@ -43,6 +43,10 @@
         </intent>
         <!-- China-market MIUI TV firmware: the Settings and Wi-Fi pills fall back to Xiaomi's settings app. -->
         <package android:name="com.xiaomi.mitv.settings" />
+        <!-- The network menu's VPN row finds any app that publishes an android.net.VpnService. -->
+        <intent>
+            <action android:name="android.net.VpnService" />
+        </intent>
     </queries>
 
     <application
