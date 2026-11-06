@@ -1,9 +1,9 @@
 package com.gathin.tvhome;
 
 /**
- * What the hero shelf says. The dark "no wallpaper" screen has always named the focused dock app
- * instead of the picture; with the "Image Title & Info" setting off, every wallpaper mode does the
- * same, through the same shelf.
+ * What the hero shelf says. The rule is the same for every wallpaper source: the picture's own
+ * title when "Image Title & Info" is on and the picture really has one; otherwise the focused dock
+ * app's name, in the same shelf the dark "no wallpaper" screen has always used.
  */
 final class HeroInfo {
 
@@ -11,16 +11,24 @@ final class HeroInfo {
         /** The picture's place name, country and description. */
         PICTURE,
         /** The focused app's name, with no category or description. */
-        APP,
-        /** Nothing: a user's own upload keeps the screen clean while the setting is on. */
-        NONE
+        APP
     }
 
     private HeroInfo() {}
 
-    static Source source(boolean noWallpaper, boolean descEnabled, boolean custom) {
-        if (noWallpaper) return Source.APP;   // the dark screen always names the app
-        if (!descEnabled) return Source.APP;  // off replaces the picture's text with the app's name
-        return custom ? Source.NONE : Source.PICTURE;
+    /** A title counts only when it has visible characters; whitespace is not a title. */
+    static boolean hasTitle(String title) {
+        return title != null && !title.trim().isEmpty();
+    }
+
+    static Source source(boolean noWallpaper, boolean descEnabled, String title) {
+        if (noWallpaper) return Source.APP;      // the dark screen always names the app
+        if (!descEnabled) return Source.APP;     // off always names the app
+        return hasTitle(title) ? Source.PICTURE : Source.APP;
+    }
+
+    /** The big line: the picture's title, or the focused app's name. */
+    static String label(Source source, String title, String appName) {
+        return source == Source.PICTURE ? title : appName;
     }
 }

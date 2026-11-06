@@ -2191,32 +2191,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         }
 
-        // A user's own picture shows no title; with the setting off, every mode names the app.
+        // The rule is the same for every source: the picture's title when the setting is on and the
+        // picture has one, otherwise the focused app's name in the shelf the dark screen uses.
         HeroInfo.Source heroSource = HeroInfo.source(
-                isNoWallpaper(), isWallpaperDescEnabled(), isCustomWallpaper());
-        if (heroSource == HeroInfo.Source.NONE) {
-            if (heroShelf != null) {
-                heroShelf.animate().cancel();
-                heroShelf.setAlpha(0f);
-                heroShelf.setVisibility(View.GONE);
-            }
-            showAmbient(color);
-            heroShown = true;
-            return;
-        }
-
+                isNoWallpaper(), isWallpaperDescEnabled(), placeName);
         if (heroShelf != null) {
             heroShelf.setVisibility(View.VISIBLE);
         }
 
-        // The place the picture is of, when there is one; the app's own name is the fallback for
-        // the user's own wallpapers, which carry no title. On the dark "no wallpaper" screen and
-        // with "Image Title & Info" off, the block shows the focused app's name instead, large,
-        // with no category or description.
-        final boolean appName = heroSource == HeroInfo.Source.APP;
-        final String label = (appName || placeName == null) ? adapter.labelAt(position) : placeName;
-        final String desc = (!appName && placeName != null) ? placeText : "";
-        final String where = (!appName && placeName != null) ? placeCountry : "";
+        final boolean picture = heroSource == HeroInfo.Source.PICTURE;
+        final String label = HeroInfo.label(heroSource, placeName, adapter.labelAt(position));
+        final String desc = picture ? placeText : "";
+        final String where = picture ? placeCountry : "";
         float y = heroBottom - heroShelf.getHeight();
         boolean changed = !label.contentEquals(heroName.getText());
 
@@ -2384,17 +2370,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void setPlace(File picture) {
         boolean custom = picture != null && picture.getAbsolutePath().contains("custom_wallpapers");
         if (custom || !isWallpaperDescEnabled()) {
+            // No title for this state: clear the picture's words and leave the shelf alone. showHero
+            // and applyAppNameHero keep the focused app's name there.
             placeName = null;
             placeText = "";
             placeCountry = "";
-            // With the setting off the shelf names the focused app, so it is left as it is; only an
-            // upload with the setting on has no text at all, and fades the shelf away.
-            if (custom && isWallpaperDescEnabled() && heroShelf != null) {
-                heroShelf.animate().cancel();
-                heroShelf.animate().alpha(0f).setDuration(reducedMotion ? 100 : 250).withEndAction(() -> {
-                    if (heroShelf != null) heroShelf.setVisibility(View.GONE);
-                }).start();
-            }
             return;
         }
         if (heroShelf != null && isWallpaperDescEnabled()) {
@@ -2420,7 +2400,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (title != null) {
             title = title.replaceAll("(?i)\\bunsplash\\s*•?\\s*", "").trim();
         }
-        if (title == null ? placeName == null : title.equals(placeName)) return;
+        if (!HeroInfo.hasTitle(title)) {
+            // No title, or only whitespace: this picture names the focused app. Reached after a
+            // change of picture, so the app's name is already the right fallback without focus.
+            placeName = null;
+            placeText = "";
+            placeCountry = "";
+            applyAppNameHero();
+            return;
+        }
+        if (title.equals(placeName)) return;
         placeName = title;
         placeText = overview;
         placeCountry = country;
@@ -5076,7 +5065,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
 
         rows.add(new GlassDialogs.Row("Image Title & Info: " + (isDescOn ? "ON" : "OFF"),
-                isDescOn ? "Show the title and description on Home"
+                isDescOn ? "Show a picture's title when it has one"
                         : "Show the focused app's name instead", false));
         actions.add(() -> {
             boolean newMode = !isDescOn;
@@ -5096,8 +5085,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                             if (curIdx >= 0 && curIdx < wallpapers.size()) setPlace(wallpapers.get(curIdx));
                         }
                     } else {
-                        heroShelf.setAlpha(0f);
-                        heroShelf.setVisibility(View.GONE);
+                        applyAppNameHero();
                     }
                 }
                 Toast.makeText(this, "Wallpaper description turned on", Toast.LENGTH_SHORT).show();
@@ -5410,11 +5398,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         if ("Custom".equalsIgnoreCase(category)) {
             placesMode = false;
-            if (heroShelf != null) {
-                heroShelf.animate().cancel();
-                heroShelf.setAlpha(0f);
-                heroShelf.setVisibility(View.GONE);
-            }
+            applyAppNameHero();
             File customDir = new File(getFilesDir(), "custom_wallpapers");
             File[] files = customDir.listFiles((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".jpeg"));
             if (files != null && files.length > 0) {
@@ -5427,14 +5411,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         } else {
             placesMode = false;
-            if (heroShelf != null) {
-                if (isWallpaperDescEnabled()) {
-                    heroShelf.setVisibility(View.VISIBLE);
-                } else {
-                    heroShelf.setVisibility(View.GONE);
-                    heroShelf.setAlpha(0f);
-                }
-            }
+            if (!isWallpaperDescEnabled()) applyAppNameHero();
         }
 
         List<File> matching = OnlineWallpapers.listByCategory(this, category);
@@ -5812,11 +5789,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     .apply();
 
             placesMode = false;
-            if (heroShelf != null) {
-                heroShelf.animate().cancel();
-                heroShelf.setAlpha(0f);
-                heroShelf.setVisibility(View.GONE);
-            }
+            // The new picture has no title; the shelf names the focused app.
+            applyAppNameHero();
             File customDir = new File(getFilesDir(), "custom_wallpapers");
             File[] files = customDir.listFiles((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".jpeg"));
             if (files != null && files.length > 0) {
@@ -5865,11 +5839,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     .apply();
 
             placesMode = false;
-            if (heroShelf != null) {
-                heroShelf.animate().cancel();
-                heroShelf.setAlpha(0f);
-                heroShelf.setVisibility(View.GONE);
-            }
+            // A pinned photo has no title either; the shelf names the focused app.
+            applyAppNameHero();
             wallpapers = Collections.singletonList(file);
             getSharedPreferences("wallpaper", MODE_PRIVATE).edit().putInt("index", -1).apply();
             showNextWallpaper(true);
@@ -5887,12 +5858,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     .apply();
 
             placesMode = false;
-            if (heroShelf != null) {
-                heroShelf.animate().cancel();
-                heroShelf.setAlpha(0f);
-                heroShelf.setVisibility(View.GONE);
-            }
-
+            applyAppNameHero();
             File customDir = new File(getFilesDir(), "custom_wallpapers");
             File[] files = customDir.listFiles((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".jpeg"));
             if (files != null && files.length > 0) {

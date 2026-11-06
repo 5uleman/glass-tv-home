@@ -78,10 +78,10 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   so turning the glow off over a picture never dims the dark screen, and each mode remembers its
   own choice when you switch between them.
 - **Image Title & Info.** With it on (the default), the bottom shelf names the picture, its country
-  and a short description. Turned off, the same shelf shows the focused dock app's name instead —
-  exactly the block the dark screen uses — in every wallpaper mode, including uploaded photos and a
-  pinned single photo, with no category or description. The **No wallpaper** dark screen is unchanged
-  and always names the app.
+  and a short description — but only when the picture has a title. A picture without one (photos sent
+  from a phone, uploads, a pinned single photo) shows the focused dock app's name instead, in the same
+  block the dark screen uses. Turned off, every mode shows the app's name. The **No wallpaper** dark
+  screen is unchanged and always names the app.
 - **Rain and fog overlays.** **Dynamic Weather** (default On, same stored key) draws drizzle, rain,
   showers and thunderstorms as distinct effects (drizzle is the light one, storms add lightning) and
   adds drifting fog. Fog comes from WMO codes 45/48
