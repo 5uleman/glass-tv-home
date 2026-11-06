@@ -332,13 +332,15 @@ final class GlassDialogs {
         row.setPadding((int) (16 * density), (int) (9 * density),
                 (int) (16 * density), (int) (9 * density));
 
+        int glare = GlareColor.current();
         GradientDrawable focused = new GradientDrawable();
         focused.setColor(0x2EFFFFFF);
-        focused.setStroke((int) (2 * density), 0xFFFFFFFF);
+        focused.setStroke((int) (2 * density), glare);
         focused.setCornerRadius(12 * density);
         GradientDrawable normal = new GradientDrawable();
-        normal.setColor(data.selected ? 0x2A4A90E2 : 0x1AFFFFFF);
-        if (data.selected) normal.setStroke((int) (1.5f * density), 0xFF38BDF8);
+        normal.setColor(data.selected ? 0x2A1E3659 : 0x1AFFFFFF);
+        normal.setStroke((int) (1.5f * density),
+                GlareColor.withAlpha(glare, data.selected ? 0x80 : 0x3D));
         normal.setCornerRadius(12 * density);
         StateListDrawable background = new StateListDrawable();
         background.addState(new int[]{android.R.attr.state_focused}, focused);

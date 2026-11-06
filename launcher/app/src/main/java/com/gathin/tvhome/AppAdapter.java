@@ -315,6 +315,12 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         h.name.setText(e.name);
         h.name.setVisibility(position < dockSize ? View.INVISIBLE : View.VISIBLE);   // the dock has no labels
         boolean focused = h.card.isFocused();   // a rebind after reload() can hit the focused tile
+        if (focused && h.card.getWidth() > 0) {
+            h.focusRing.setCornerRadiusDp(cornerRadius(h.card.getWidth(),
+                    h.card.getResources().getDisplayMetrics().density)
+                    / h.card.getResources().getDisplayMetrics().density);
+        }
+        h.focusRing.setVisibility(focused ? View.VISIBLE : View.GONE);
         h.name.setAlpha(focused ? 1f : 0f);
         h.card.setScaleX(focused ? FOCUS_SCALE : 1f);
         h.card.setScaleY(focused ? FOCUS_SCALE : 1f);
@@ -503,6 +509,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         final ImageView icon;
         final TextView label;
         final TextView name;
+        final GlassFocusRingView focusRing;
         final boolean reducedMotion;
 
         Holder(View v, TileListener listener, boolean reducedMotion) {
@@ -512,6 +519,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
             icon = v.findViewById(R.id.icon);
             label = v.findViewById(R.id.label);
             name = v.findViewById(R.id.name);
+            focusRing = v.findViewById(R.id.focusRing);
             this.reducedMotion = reducedMotion;
 
             final float density = v.getResources().getDisplayMetrics().density;
@@ -534,6 +542,10 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
             });
 
             card.setOnFocusChangeListener((view, focused) -> {
+                if (focused && view.getWidth() > 0) {
+                    focusRing.setCornerRadiusDp(cornerRadius(view.getWidth(), density) / density);
+                }
+                focusRing.setVisibility(focused ? View.VISIBLE : View.GONE);
                 float s = focused ? FOCUS_SCALE : 1.0f;
                 view.animate().cancel();
                 name.animate().cancel();

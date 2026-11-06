@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Focused: the fix3 light translucent fill with the fix5 white glare border. Unfocused keeps the
+     fix5 glass. The AQI wording carries the state colour; the border stays neutral white. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_focused="true">
         <shape android:shape="rectangle">
             <solid android:color="#4DFFFFFF" />
-            <stroke
-                android:width="2dp"
-                android:color="#FFFFFFFF" />
-            <corners android:radius="14dp" />
+            <stroke android:width="2dp" android:color="#FFFFFFFF" />
+            <corners android:radius="18dp" />
         </shape>
     </item>
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#14FFFFFF" />
-            <stroke
-                android:width="2dp"
-                android:color="#14FFFFFF" />
-            <corners android:radius="14dp" />
+            <gradient
+                android:type="linear"
+                android:angle="270"
+                android:startColor="#26FFFFFF"
+                android:endColor="#14101A29" />
+            <stroke android:width="1dp" android:color="#3DFFFFFF" />
+            <corners android:radius="18dp" />
         </shape>
     </item>
 </selector>

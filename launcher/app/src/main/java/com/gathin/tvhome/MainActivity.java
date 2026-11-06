@@ -174,6 +174,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** Tiles per row and dock slots (res/values/config.xml, columns). Set in onCreate. */
     static int COLUMNS = 4;
     private static final long MINUTE_MS = 60_000L;
+    /** Stored keys stay as they are; only the labels shown for them change. */
+    private static final String CAT_MONUMENTS = "Pakistan Monuments";
+    private static final String CAT_NATURE = "Pakistan Nature";
+    private static final String LABEL_MONUMENTS = "Attractions in Pakistan";
+    private static final String LABEL_NATURE = "Nature in Pakistan";
     private String liveTvPkg;
     private String liveTvAction;
     private String inputAction;
@@ -311,6 +316,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private long wallShownAt;
     private android.widget.ImageView wallView;
     private android.graphics.Bitmap wallBitmap;
+    /** File identity of the picture on screen, for the cached glare accent. */
+    private String wallGlareKey;
     /** True while a decode or cross-fade is in flight: an edge confirm waits rather than stacking bitmaps. */
     private boolean wallBusy;
     private long wallShowSerial;
@@ -543,7 +550,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         if (!isNoWallpaper()) {
             if (!wallpapers.isEmpty()) showNextWallpaper(false);
-            else if (cfg.wallpaper != null && !placesMode) setWallpaper(decodeWallpaper(cfg.wallpaper), false);
+            else if (cfg.wallpaper != null && !placesMode) {
+                setWallpaper(decodeWallpaper(cfg.wallpaper), false, null, glareKey(cfg.wallpaper));
+            }
         }
         pruneUploadCache();
         // The shelf grows and shrinks with the name and the description, so it hangs from its
@@ -1186,14 +1195,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         return bmp;
     }
 
-    /** Puts a picture behind everything, cross-fading from the previous one when asked. */
-    private void setWallpaper(android.graphics.Bitmap bmp, boolean fade) {
-        setWallpaper(bmp, fade, null);
-    }
-
-    /** With {@code blur} made in advance, the glass changes in step with the picture. */
-    private void setWallpaper(android.graphics.Bitmap bmp, boolean fade, android.graphics.Bitmap blur) {
+    /**
+     * Puts a picture behind everything, cross-fading from the previous one when asked. With
+     * {@code blur} made in advance, the glass changes in step with the picture; {@code glareKey}
+     * is the file identity for the cached glare accent.
+     */
+    private void setWallpaper(android.graphics.Bitmap bmp, boolean fade, android.graphics.Bitmap blur,
+                              String glareKey) {
         if (bmp == null) return;
+        applyGlareFor(bmp, glareKey);
         if (wallView == null) {
             wallView = new android.widget.ImageView(this);
             wallView.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
@@ -1234,6 +1244,51 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             root.setBackground(null);
             getWindow().setBackgroundDrawable(null);
         }
+    }
+
+    /** File identity: a changed or replaced file is a different glare entry. */
+    private static String glareKey(File file) {
+        return file.getAbsolutePath() + '@' + file.lastModified() + '#' + file.length();
+    }
+
+    /**
+     * Picks the glare accent for a picture that just finished loading: the wallpaper's soft tint in
+     * Auto, the classic blue in Classic. The sample runs once per file and is cached.
+     */
+    private void applyGlareFor(android.graphics.Bitmap bmp, String key) {
+        if (key != null) wallGlareKey = key;
+        boolean auto = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+                .getBoolean(GlareColor.AUTO_KEY, true);
+        GlareColor.setActive(auto ? GlareColor.accentFor(bmp, wallGlareKey) : GlareColor.CLASSIC);
+        refreshGlare();
+    }
+
+    /** Re-reads the active glare on the glass already on screen. One pass, only when the tint changes. */
+    private void refreshGlare() {
+        if (grid != null) {
+            grid.invalidate();
+            View focused = getCurrentFocus();
+            if (focused != null) {
+                View ring = focused.findViewById(R.id.focusRing);
+                if (ring != null) ring.invalidate();
+            }
+        }
+        for (int id : new int[]{R.id.btnInputs, R.id.btnWifi, R.id.btnAssistant,
+                R.id.btnCandyBox, R.id.btnSettings}) {
+            View pill = findViewById(id);
+            if (pill != null) pill.invalidate();
+        }
+    }
+
+    /** Applies the Auto/Classic choice to the picture on screen, from the cached sample. */
+    private void applyGlareNow(boolean auto) {
+        android.graphics.Bitmap bmp = wallBitmap;
+        int accent = GlareColor.CLASSIC;
+        if (auto && bmp != null && !bmp.isRecycled() && !isNoWallpaper()) {
+            accent = GlareColor.accentFor(bmp, wallGlareKey);
+        }
+        GlareColor.setActive(accent);
+        refreshGlare();
     }
 
     /** Hands the picture now on screen to the glass, which blurs it once, off the main thread. */
@@ -1298,6 +1353,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         root.setBackgroundColor(0xFF000000);
         getWindow().getDecorView().setBackgroundColor(0xFF000000);
         Backdrop.presentSolid(0xFF000000);
+        GlareColor.setActive(GlareColor.CLASSIC);   // no picture, no wallpaper tint
+        refreshGlare();
     }
 
     /**
@@ -1414,7 +1471,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     return;
                 }
                 boolean crossFading = fade && wallBitmap != null && !reducedMotion;
-                setWallpaper(bmp, fade, blur);
+                setWallpaper(bmp, fade, blur, glareKey(file));
                 setPlace(file);
                 if (remember) wallHistory.record(file);
                 if (crossFading) {
@@ -5018,9 +5075,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // Collections: Pakistan first. The active one still comes from active_category; the
         // old "Pakistan" key from before the split stays valid and points at both new rows.
         String[][] collections = {
-                {"Pakistan Monuments", "Pakistan Monuments",
+                {CAT_MONUMENTS, LABEL_MONUMENTS,
                         "Landmarks, mosques, forts and city skylines across Pakistan"},
-                {"Pakistan Nature", "Pakistan Nature",
+                {CAT_NATURE, LABEL_NATURE,
                         "Mountains, lakes and valleys of the north, and the Karachi coast"},
                 {"Malaysia", "Attractions in Malaysia", "16 iconic photos (Pexels)"},
                 {"Natural", "Nature & Landscapes", "Mountains, forests and aurora"},
@@ -5032,7 +5089,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         for (String[] c : collections) {
             boolean active = c[0].equalsIgnoreCase(currentKey)
                     || (c[0].equals("Malaysia") && currentKey.startsWith("Malaysia"))
-                    || (c[0].equals("Pakistan Monuments") && "Pakistan".equalsIgnoreCase(currentKey));;
+                    || (c[0].equals(CAT_MONUMENTS) && "Pakistan".equalsIgnoreCase(currentKey));;
             if (active) focus = rows.size();
             final String key = c[0];
             rows.add(new GlassDialogs.Row(c[1], c[2], active));
@@ -5121,6 +5178,22 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             setAppColorGlow(on);
             Toast.makeText(this, on ? "App colour glow turned on" : "App colour glow turned off",
                     Toast.LENGTH_SHORT).show();
+            showWallpaperDialog();
+        });
+
+        boolean isGlareAuto = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+                .getBoolean(GlareColor.AUTO_KEY, true);
+        rows.add(new GlassDialogs.Row(
+                "Glare Color: " + (isGlareAuto ? "Auto (from wallpaper)" : "Classic"),
+                isGlareAuto ? "Glass edges and the selected app take a soft tint from this wallpaper"
+                        : "Glass edges keep the classic blue tint", false));
+        actions.add(() -> {
+            boolean next = !isGlareAuto;
+            getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
+                    .putBoolean(GlareColor.AUTO_KEY, next).apply();
+            applyGlareNow(next);
+            Toast.makeText(this, next ? "Glare colour: Auto from the wallpaper"
+                    : "Glare colour: Classic blue", Toast.LENGTH_SHORT).show();
             showWallpaperDialog();
         });
 
@@ -5407,6 +5480,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             displayLabel = getString(R.string.category_malaysia);
         } else if ("Minimalist".equalsIgnoreCase(category)) {
             displayLabel = getString(R.string.category_minimalist);
+        } else if (CAT_MONUMENTS.equalsIgnoreCase(category)) {
+            displayLabel = LABEL_MONUMENTS;
+        } else if (CAT_NATURE.equalsIgnoreCase(category)) {
+            displayLabel = LABEL_NATURE;
         } else if ("Pakistan".equalsIgnoreCase(category)) {
             displayLabel = "Lahore & Pakistan";
         } else {
