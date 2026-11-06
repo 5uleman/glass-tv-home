@@ -317,7 +317,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** The dock's edge double-press, and the last pictures shown that Previous/Next walk. */
     private final EdgeWallpaperSwitch edgeSwitch = new EdgeWallpaperSwitch();
     private final WallpaperHistory<File> wallHistory = new WallpaperHistory<>();
-    /** The hint uses the launcher's glass toast; so do the VPN row's messages. */
+    /** The edge hint uses a compact capsule at the dock's side; the VPN row uses the glass toast. */
+    private TextView edgeHintView;
     private TextView toastView;
     /** Two explanations per direction; a fresh process or a screen-off/on refills both. */
     private final EdgeHintLimit edgeHintLimit = new EdgeHintLimit();
@@ -338,7 +339,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private static final long TOAST_HOLD_LONG_MS = 3500;
     private final Runnable edgeHintExpiry = () -> {
         edgeSwitch.cancel();
-        hideToast();
+        hideEdgeHint();
     };
     private final Runnable toastExpiry = this::hideToast;
     /** Dynamic atmospheric weather canvas particle overlay over the wallpaper */
@@ -1473,7 +1474,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void cancelEdgeArm() {
         if (!edgeSwitch.isArmed()) return;
         edgeSwitch.cancel();
-        hideToast();
+        hideEdgeHint();
     }
 
     private void handleEdgeAction(EdgeWallpaperSwitch.Action action) {
@@ -1483,29 +1484,121 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 showEdgeHint(action == EdgeWallpaperSwitch.Action.ARM_NEXT);
                 break;
             case CONFIRM_NEXT:
-                hideToast();
+                hideEdgeHint();
                 showNextWallpaperFromEdge();
                 break;
             case CONFIRM_PREVIOUS:
-                hideToast();
+                hideEdgeHint();
                 showPreviousWallpaper();
                 break;
             default:
-                hideToast();
+                hideEdgeHint();
                 break;
         }
     }
 
-    /** The hint: a glass toast centred over the dock, with no icon, outline or focus of its own. */
+    /**
+     * The hint: a compact glass capsule on the dock's side, naming what the next double-press does.
+     * It sits at the outer edge of the last tile for next and of the first for previous, in the band
+     * between the hero text and the dock tray, so it touches neither.
+     */
     private void showEdgeHint(boolean next) {
         boolean allowed = next ? edgeHintLimit.allowNext() : edgeHintLimit.allowPrevious();
-        if (allowed) {
-            showToast(next ? "Press \u2192 again for next" : "Press \u2190 again for previous",
-                    0, null);
-        }
-        // The arm's two-second window runs whether or not the toast is still allowed to appear.
+        if (allowed) showEdgeHintCapsule(next);
+        // The arm's two-second window runs whether or not the hint is still allowed to appear.
         handler.removeCallbacks(edgeHintExpiry);
         handler.postDelayed(edgeHintExpiry, EdgeWallpaperSwitch.WINDOW_MS);
+    }
+
+    private void showEdgeHintCapsule(boolean next) {
+        float dp = getResources().getDisplayMetrics().density;
+        if (edgeHintView == null) {
+            TextView hint = new TextView(this);
+            hint.setTextSize(12);
+            hint.setTextColor(0xFFFFFFFF);
+            hint.setGravity(Gravity.CENTER);
+            hint.setIncludeFontPadding(false);
+            hint.setLetterSpacing(0.02f);
+            hint.setPadding(Math.round(11 * dp), Math.round(5 * dp),
+                    Math.round(11 * dp), Math.round(5 * dp));
+            hint.setMinHeight(Math.round(27 * dp));
+            GradientDrawable bg = new GradientDrawable();
+            bg.setColor(0x73000000);   // the glass toast's 45% dark tint
+            bg.setCornerRadius(1000f);   // clamped to half the height: a capsule
+            bg.setStroke(Math.max(1, Math.round(dp)), 0x40FFFFFF);   // 1dp hairline
+            hint.setBackground(bg);
+            hint.setShadowLayer(3 * dp, 0f, dp, 0x99000000);
+            hint.setElevation(4 * dp);
+            hint.setCompoundDrawablePadding(Math.round(6 * dp));
+            hint.setFocusable(false);
+            hint.setClickable(false);
+            hint.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            Fonts.apply(hint, Fonts.SEMIBOLD);
+            root.addView(hint, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            edgeHintView = hint;
+        }
+        boolean leftArrow = next == isLayoutRtl();
+        edgeHintView.setText(next ? "Next wallpaper" : "Previous wallpaper");
+        Drawable arrow = getDrawable(leftArrow
+                ? R.drawable.ic_edge_arrow_left : R.drawable.ic_edge_arrow_right);
+        int arrowPx = Math.round(14 * dp);
+        arrow.setBounds(0, 0, arrowPx, arrowPx);
+        // Absolute sides: the chevron points out of the dock, whichever side the dock is on.
+        edgeHintView.setCompoundDrawables(leftArrow ? arrow : null, null,
+                leftArrow ? null : arrow, null);
+        edgeHintView.animate().cancel();
+        edgeHintView.setVisibility(View.VISIBLE);
+        edgeHintView.setAlpha(0f);
+        edgeHintView.setTranslationY(4 * dp);
+        edgeHintView.animate().alpha(1f).translationY(0f).setDuration(TOAST_FADE_MS).start();
+        placeEdgeHint(next);
+    }
+
+    /** Puts the capsule on the first/last tile's physical outer edge, clear of hero and tray. */
+    private void placeEdgeHint(boolean next) {
+        if (edgeHintView == null) return;
+        edgeHintView.post(() -> {
+            if (edgeHintView == null || grid == null || adapter == null) return;
+            if (edgeHintView.getWidth() == 0 || edgeHintView.getHeight() == 0) {
+                edgeHintView.post(() -> placeEdgeHint(next));
+                return;
+            }
+            int count = adapter.getItemCount();
+            int dockCount = Math.min(COLUMNS, count);
+            if (dockCount <= 0) return;
+            int target = next ? dockCount - 1 : 0;
+            RecyclerView.ViewHolder vh = grid.findViewHolderForAdapterPosition(target);
+            View tile = vh != null ? vh.itemView : null;
+            if (tile == null || tile.getWidth() == 0) return;
+            Rect r = new Rect(0, 0, tile.getWidth(), tile.getHeight());
+            root.offsetDescendantRectToMyCoords(tile, r);
+            float trayTop = r.top - DockDecoration.TRAY_PAD_DP * density;
+            boolean hasHero = heroShelf != null && heroShelf.getVisibility() == View.VISIBLE
+                    && heroShelf.getHeight() > 0;
+            float heroBottom = hasHero ? heroShelf.getY() + heroShelf.getHeight() : 0f;
+            float[] xy = EdgeHintCapsule.place(root.getWidth(), r.left, r.right, trayTop,
+                    heroBottom, hasHero, edgeHintView.getWidth(), edgeHintView.getHeight(),
+                    next, isLayoutRtl(), density);
+            edgeHintView.setX(xy[0]);
+            edgeHintView.setY(xy[1]);
+        });
+    }
+
+    private void hideEdgeHint() {
+        handler.removeCallbacks(edgeHintExpiry);
+        if (edgeHintView == null) return;
+        edgeHintView.animate().cancel();
+        if (edgeHintView.getVisibility() != View.VISIBLE) {
+            edgeHintView.setAlpha(0f);
+            return;
+        }
+        edgeHintView.animate().alpha(0f).setDuration(TOAST_FADE_MS)
+                .withEndAction(() -> {
+                    if (edgeHintView != null && edgeHintView.getAlpha() == 0f) {
+                        edgeHintView.setVisibility(View.GONE);
+                    }
+                }).start();
     }
 
     /**
@@ -2913,7 +3006,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                         android.os.SystemClock.uptimeMillis()));
             } else if (outward) {
                 edgeSwitch.onOtherInput();
-                hideToast();
+                hideEdgeHint();
             }
             // A key pointing out of the dock's end never moves focus, held or not: stop it here.
             if (outward) return true;
