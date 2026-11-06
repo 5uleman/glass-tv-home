@@ -22,7 +22,9 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RadialGradient;
 import android.graphics.Rect;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
@@ -225,11 +227,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private float glowMix = 1f;
     private android.animation.ValueAnimator glowBlend;
     private Bitmap ambientShape;
-    private int ambientShapeHeight;
-    /** The top-edge alpha the cached shape was drawn for (the cap follows the picture's brightness). */
-    private float ambientShapePeak;
-    /** Mean brightness of the picture's top band, where the glow lies: 0 black, 1 white. */
-    private float wallTopLuma;
     /** Where the shelf's bottom edge belongs; its top follows once the lines have been measured. */
     private float heroBottom;
     private View btnInputs;
@@ -1186,7 +1183,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         android.graphics.Bitmap old = wallBitmap;
         wallBitmap = bmp;
-        sampleWallTopLuma(bmp);
         if (fade && old != null && !reducedMotion) {
             android.graphics.drawable.TransitionDrawable t = new android.graphics.drawable.TransitionDrawable(new android.graphics.drawable.Drawable[]{
                     new android.graphics.drawable.BitmapDrawable(getResources(), old),
@@ -1219,40 +1215,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void blurBackdrop(android.graphics.Bitmap bmp) {
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
         Backdrop.update(bmp, dm.widthPixels, dm.heightPixels, placesMode ? 0xFF7A7A7A : 0, wallDecoder, handler);
-    }
-
-    /**
-     * The glow's contrast cap reads the picture, not the app: on a bright top band the white clock,
-     * date and weather pill would lose their edge under a full-strength tint. A small grid over the
-     * top band averages the brightness cheaply, on the main thread, once per picture.
-     */
-    private void sampleWallTopLuma(android.graphics.Bitmap bmp) {
-        if (bmp == null) return;
-        int cols = 16, rows = 7;
-        int band = Math.max(1, Math.round(bmp.getHeight() * GlowShape.HEIGHT_FRACTION));
-        double sum = 0;
-        for (int row = 0; row < rows; row++) {
-            int y = Math.min(bmp.getHeight() - 1, (int) ((row + 0.5) * band / rows));
-            for (int col = 0; col < cols; col++) {
-                int x = Math.min(bmp.getWidth() - 1, (int) ((col + 0.5) * bmp.getWidth() / cols));
-                int p = bmp.getPixel(x, y);
-                sum += 0.2126 * ((p >> 16) & 0xFF) + 0.7152 * ((p >> 8) & 0xFF) + 0.0722 * (p & 0xFF);
-            }
-        }
-        float luma = (float) (sum / (cols * rows) / 255.0);
-        if (placesMode) luma *= 0x7A / 255f;   // the on-screen Multiply filter darkens the picture
-        if (Math.abs(luma - wallTopLuma) < 0.01f) return;
-        wallTopLuma = luma;
-        if (ambientShown) setAmbient(ambientColor, !reducedMotion);
-    }
-
-    /** The brightness behind the top bar: black on the dark screen, else the picture's own. */
-    private float glowLuma() {
-        return (isNoWallpaper() || wallBitmap == null) ? 0f : wallTopLuma;
-    }
-
-    private float glowPeak() {
-        return GlowShape.peakFor(glowLuma());
     }
 
     private int getWallpaperIntervalMinutes() {
@@ -1309,8 +1271,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         root.setBackgroundColor(0xFF000000);
         getWindow().getDecorView().setBackgroundColor(0xFF000000);
         Backdrop.presentSolid(0xFF000000);
-        // A picture's brightness no longer caps the glow: on black it runs at full strength.
-        if (ambientShown) setAmbient(ambientColor, false);
     }
 
     /**
@@ -2519,31 +2479,26 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glowBlend.start();
     }
 
-    /**
-     * The glow's shape in white, drawn on first use and kept: a tint gives it each app's colour.
-     * A one-pixel-wide alpha ramp stretched across the screen is a smooth gradient, not a scaled
-     * picture, so it cannot show the grid the old 480x270 radial bitmap did.
-     */
+    /** The glow's shape in white, drawn on first use and kept: a tint gives it each app's colour. */
     private Bitmap ambientShape() {
-        int height = Math.max(1, getResources().getDisplayMetrics().heightPixels);
-        if (glowShapeCurrent(height)) return ambientShape;
-        ambientShapeHeight = height;
-        ambientShapePeak = glowPeak();
-        ambientShape = Bitmap.createBitmap(GlowShape.column(height, ambientShapePeak), 1, height,
-                Bitmap.Config.ARGB_8888);
-        return ambientShape;
-    }
-
-    private boolean glowShapeCurrent(int height) {
-        return ambientShape != null && ambientShapeHeight == height
-                && Float.compare(ambientShapePeak, glowPeak()) == 0;
+        if (ambientShape != null) return ambientShape;
+        int w = 480;
+        int h = 270;
+        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setShader(new RadialGradient(
+                w * 0.32f, h * 0.42f, w * 0.62f,
+                new int[]{0x5CFFFFFF, 0x26FFFFFF, 0x00FFFFFF},
+                new float[]{0f, 0.45f, 1f},
+                Shader.TileMode.CLAMP));
+        new Canvas(bmp).drawRect(0, 0, w, h, paint);
+        ambientShape = bmp;
+        return bmp;
     }
 
     /** With crossFade, the old glow fades into the new one (two small textures, one blend). */
     private void setAmbient(int color, boolean crossFade) {
-        color = GlowShape.visibleColor(color);
-        int height = Math.max(1, getResources().getDisplayMetrics().heightPixels);
-        if (color == ambientColor && ambient.getBackground() != null && glowShapeCurrent(height)) return;
+        if (color == ambientColor && ambient.getBackground() != null) return;
         android.graphics.drawable.Drawable old = ambient.getBackground();
         if (old instanceof android.graphics.drawable.TransitionDrawable) {
             android.graphics.drawable.TransitionDrawable t = (android.graphics.drawable.TransitionDrawable) old;
@@ -2598,7 +2553,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * back up again.
      */
     private void showAmbient(int color) {
-        color = GlowShape.visibleColor(color);
         if (!ambientShown) {
             setAmbient(color);
             ambient.animate().alpha(1f).setDuration(reducedMotion ? 160 : 600)

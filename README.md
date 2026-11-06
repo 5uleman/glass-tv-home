@@ -60,11 +60,11 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   it, the toast moves above the text instead of covering it. Each direction is explained three times in total;
   after that the double-press keeps working silently, and the counters refill when the TV screen goes off and
   on (and on a fresh launch). A second press within 2 s switches; any other key cancels.
-- **A stronger app-colour glow.** The top edge glows in the focused app's colour: 50% at the very top on a
-  dark picture, fading to nothing by 40% of the screen height, with the middle untouched. Very dark colours
-  are lifted a little so the glow still shows while keeping their hue. On a bright picture the glow is capped
-  at 30% so the white clock, date and weather pill keep their shadow-backed contrast, and focus changes
-  still cross-fade over 450 ms.
+- **An app-colour glow.** The wallpaper glows in the focused app's colour from the same soft radial
+  shape it has always used: a 480x270 white radial, brightest at 32% across and 42% down, fading to
+  nothing by 62% of the width, stretched over the screen and tinted per app. Very dark colours are shown
+  as they are. Focus changes cross-fade over 450 ms, and the glass above blends with the same colour
+  over the same time so it never jumps ahead of the room.
 - **Rain and fog overlays.** **Dynamic Weather** (default On, same stored key) draws drizzle, rain,
   showers and thunderstorms as distinct effects (drizzle is the light one, storms add lightning) and
   adds drifting fog. Fog comes from WMO codes 45/48
