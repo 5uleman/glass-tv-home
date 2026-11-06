@@ -57,8 +57,9 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
 - **Edge wallpaper switching.** At the last dock tile, double-press **Right** (at the first tile, **Left**)
   to change the wallpaper. A dark toast — "Press → again for next" or "Press ← again for previous" — fades
   in over 150 ms, centred horizontally 20 dp above the dock tray. If the hero title or description runs under
-  it, the toast moves above the text instead of covering it. A second press within 2 s switches; any other
-  key cancels.
+  it, the toast moves above the text instead of covering it. Each direction is explained three times in total;
+  after that the double-press keeps working silently, and the counters refill when the TV screen goes off and
+  on (and on a fresh launch). A second press within 2 s switches; any other key cancels.
 - **A stronger app-colour glow.** The top edge glows in the focused app's colour: 50% at the very top on a
   dark picture, fading to nothing by 40% of the screen height, with the middle untouched. Very dark colours
   are lifted a little so the glow still shows while keeping their hue. On a bright picture the glow is capped

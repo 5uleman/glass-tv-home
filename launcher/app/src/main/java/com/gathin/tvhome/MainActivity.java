@@ -319,6 +319,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private final EdgeWallpaperSwitch edgeSwitch = new EdgeWallpaperSwitch();
     private final WallpaperHistory<File> wallHistory = new WallpaperHistory<>();
     private View edgeHintView;
+    /** Three explanations per direction; a fresh process or a screen-off/on refills both. */
+    private final EdgeHintLimit edgeHintLimit = new EdgeHintLimit();
+    private boolean screenReceiverRegistered;
+    private final BroadcastReceiver screenStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent != null ? intent.getAction() : null;
+            if (Intent.ACTION_SCREEN_OFF.equals(action) || Intent.ACTION_SCREEN_ON.equals(action)) {
+                edgeHintLimit.reset();
+            }
+        }
+    };
     /** The hint fades in and out; it never scales or slides, so it reads as a toast, not a button. */
     private static final long TOAST_FADE_MS = 150;
     private final Runnable edgeHintExpiry = () -> {
@@ -1037,6 +1049,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 showRecentsDeck();
             }, 100);
         }
+
+        // The edge-hint allowance refills when the TV screen goes off and on; the receiver lives
+        // for the activity (not just the resumed state) so a screen-on is never missed.
+        IntentFilter screenFilter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+        screenFilter.addAction(Intent.ACTION_SCREEN_ON);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(screenStateReceiver, screenFilter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(screenStateReceiver, screenFilter);
+        }
+        screenReceiverRegistered = true;
     }
 
     /** Picks the catalog download and decode tier once, from the panel and the app heap. */
@@ -1505,6 +1528,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** The hint: a dark toast centred over the dock, with no outline, icon or focus of its own. */
     private void showEdgeHint(boolean next) {
+        // The arm's two-second window runs whether or not the toast is still allowed to appear.
+        handler.removeCallbacks(edgeHintExpiry);
+        handler.postDelayed(edgeHintExpiry, EdgeWallpaperSwitch.WINDOW_MS);
+        boolean allowed = next ? edgeHintLimit.allowNext() : edgeHintLimit.allowPrevious();
+        if (!allowed) return;
         if (edgeHintView == null) {
             float density = getResources().getDisplayMetrics().density;
             TextView toast = new TextView(this);
@@ -1531,13 +1559,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         ((TextView) edgeHintView).setText(next
                 ? "Press \u2192 again for next" : "Press \u2190 again for previous");
-        handler.removeCallbacks(edgeHintExpiry);
         edgeHintView.animate().cancel();
         edgeHintView.setVisibility(View.VISIBLE);
         edgeHintView.setAlpha(0f);
         edgeHintView.animate().alpha(1f).setDuration(TOAST_FADE_MS).start();
         placeEdgeHint();
-        handler.postDelayed(edgeHintExpiry, EdgeWallpaperSwitch.WINDOW_MS);
     }
 
     /**
@@ -1951,6 +1977,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (screenReceiverRegistered) {
+            unregisterReceiver(screenStateReceiver);
+            screenReceiverRegistered = false;
+        }
         if (sInstance != null && sInstance.get() == this) {
             sInstance = null;
         }
