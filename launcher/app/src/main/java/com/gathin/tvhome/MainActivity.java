@@ -1431,7 +1431,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-            lp.bottomMargin = Math.round(16 * density);
+            lp.bottomMargin = edgeHintBottomMargin();
             root.addView(hint, lp);
             edgeHintView = hint;
         }
@@ -1450,23 +1450,30 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Sits the hint just above the dock row, where it cannot cover the shelf's lines. */
     private void placeEdgeHint() {
-        if (edgeHintView == null || root == null || grid == null) return;
+        if (edgeHintView == null) return;
         edgeHintView.post(() -> {
-            if (edgeHintView == null || root == null || grid == null) return;
-            RecyclerView.ViewHolder vh = grid.findViewHolderForAdapterPosition(0);
-            View dock = vh != null ? vh.itemView : null;
-            if (dock == null) return;
-            Rect r = new Rect(0, 0, dock.getWidth(), dock.getHeight());
-            root.offsetDescendantRectToMyCoords(dock, r);
+            if (edgeHintView == null) return;
             ViewGroup.LayoutParams params = edgeHintView.getLayoutParams();
             if (!(params instanceof FrameLayout.LayoutParams)) return;
             FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) params;
-            int margin = Math.max(0, root.getHeight() - r.top + Math.round(10 * density));
+            int margin = edgeHintBottomMargin();
             if (lp.bottomMargin != margin) {
                 lp.bottomMargin = margin;
                 edgeHintView.setLayoutParams(lp);
             }
         });
+    }
+
+    /** The bottom margin that puts the hint 10 dp above the dock, even before it is first drawn. */
+    private int edgeHintBottomMargin() {
+        float density = getResources().getDisplayMetrics().density;
+        if (root == null || grid == null) return Math.round(16 * density);
+        RecyclerView.ViewHolder vh = grid.findViewHolderForAdapterPosition(0);
+        View dock = vh != null ? vh.itemView : null;
+        if (dock == null) return Math.round(16 * density);
+        Rect r = new Rect(0, 0, dock.getWidth(), dock.getHeight());
+        root.offsetDescendantRectToMyCoords(dock, r);
+        return Math.max(0, root.getHeight() - r.top + Math.round(10 * density));
     }
 
     private void hideEdgeHint() {
