@@ -74,6 +74,14 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   blends with the same colour over the same time so it never jumps ahead of the room. The wallpaper
   settings' **App Color Glow** row turns it off and on (default on, stored in `wallpaper_prefs`): off
   means no glow and no glow work at all, on brings it back for the focused app without a restart.
+  The dark **No wallpaper** screen keeps its own switch (`app_color_glow_dark`, also on by default),
+  so turning the glow off over a picture never dims the dark screen, and each mode remembers its
+  own choice when you switch between them.
+- **Image Title & Info.** With it on (the default), the bottom shelf names the picture, its country
+  and a short description. Turned off, the same shelf shows the focused dock app's name instead —
+  exactly the block the dark screen uses — in every wallpaper mode, including uploaded photos and a
+  pinned single photo, with no category or description. The **No wallpaper** dark screen is unchanged
+  and always names the app.
 - **Rain and fog overlays.** **Dynamic Weather** (default On, same stored key) draws drizzle, rain,
   showers and thunderstorms as distinct effects (drizzle is the light one, storms add lightning) and
   adds drifting fog. Fog comes from WMO codes 45/48
