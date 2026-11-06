@@ -3,6 +3,7 @@ package com.gathin.tvhome;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.SystemClock;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -36,6 +37,7 @@ public class WallpaperUploadServer {
         default void onSelected(File file) {}
         default void onSlideshowMode() {}
         default void onCleared() {}
+        default void onIdleTimeout() {}
     }
 
     public interface OnWallpaperUploadedListener extends UploadListener {}
@@ -46,6 +48,8 @@ public class WallpaperUploadServer {
     private ServerSocket serverSocket;
     private volatile boolean running = false;
     private Thread serverThread;
+    private Thread idleThread;
+    private UploadSession session = new UploadSession(0);
 
     public WallpaperUploadServer(Context context, int port, UploadListener listener) {
         this.context = context.getApplicationContext();
@@ -88,6 +92,7 @@ public class WallpaperUploadServer {
             serverSocket.setReuseAddress(true);
             serverSocket.bind(new InetSocketAddress(port));
             running = true;
+            session = new UploadSession(SystemClock.elapsedRealtime());
 
             serverThread = new Thread(() -> {
                 Log.i(TAG, "Server started on port " + port);
@@ -103,6 +108,7 @@ public class WallpaperUploadServer {
             }, "wallpaper-http-server");
             serverThread.setDaemon(true);
             serverThread.start();
+            startIdleWatchdog();
             return true;
         } catch (Exception e) {
             Log.e(TAG, "Failed to start server on port " + port + ": " + e.getMessage());
@@ -112,6 +118,7 @@ public class WallpaperUploadServer {
     }
 
     public synchronized void stop() {
+        session.close();
         running = false;
         try {
             if (serverSocket != null && !serverSocket.isClosed()) {
@@ -122,7 +129,35 @@ public class WallpaperUploadServer {
             serverThread.interrupt();
             serverThread = null;
         }
+        if (idleThread != null) {
+            idleThread.interrupt();
+            idleThread = null;
+        }
         Log.i(TAG, "Server stopped");
+    }
+
+    /**
+     * The server is kept open by the dialog, not by uploads. Ten silent minutes close it and tell
+     * the activity so the QR window goes away too; every request pushes the deadline out.
+     */
+    private void startIdleWatchdog() {
+        idleThread = new Thread(() -> {
+            while (running) {
+                try {
+                    Thread.sleep(UploadSession.IDLE_CHECK_MS);
+                } catch (InterruptedException e) {
+                    return;
+                }
+                if (!running) return;
+                if (session.idleExpired(SystemClock.elapsedRealtime())) {
+                    if (listener != null) listener.onIdleTimeout();
+                    stop();
+                    return;
+                }
+            }
+        }, "wallpaper-upload-idle");
+        idleThread.setDaemon(true);
+        idleThread.start();
     }
 
     private void handleClient(Socket client) {
@@ -152,6 +187,7 @@ public class WallpaperUploadServer {
 
             String requestLine = lines[0];
             Log.d(TAG, "Request: " + requestLine);
+            session.touch(SystemClock.elapsedRealtime());
 
             if (requestLine.startsWith("OPTIONS")) {
                 String response = "HTTP/1.1 204 No Content\r\n" +

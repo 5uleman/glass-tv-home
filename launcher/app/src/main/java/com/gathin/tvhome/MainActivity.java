@@ -5792,6 +5792,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             public void onCleared() {
                 onCustomWallpaperCleared();
             }
+
+            @Override
+            public void onIdleTimeout() {
+                runOnUiThread(() -> {
+                    Toast.makeText(MainActivity.this,
+                            "Upload window closed after 10 minutes with no request",
+                            Toast.LENGTH_LONG).show();
+                    if (qrUploadDialog != null && qrUploadDialog.isShowing()) {
+                        qrUploadDialog.dismiss();
+                    }
+                });
+            }
         };
     }
 
@@ -5821,34 +5833,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             getSharedPreferences("wallpaper", MODE_PRIVATE).edit().putInt("index", -1).apply();
             showNextWallpaper(true);
 
+            // The QR and the server stay live: the phone keeps its page, so more photos, deletes
+            // and locks can follow without scanning again. Closing the dialog ends the server.
             if (qrStatusText != null) {
-                qrStatusText.setText(i18n("🎉 Received & Displayed on TV!", "🎉 Berhasil Diterima & Ditampilkan di TV!", "🎉 Berjaya Diterima & Dipaparkan di TV!"));
+                qrStatusText.setText(i18n(
+                        "Photo received. Still connected — send more from your phone.",
+                        "Foto diterima. Masih bersambung — hantar lagi dari telefon.",
+                        "Foto diterima. Masih terhubung — kirim lagi dari ponsel."));
                 qrStatusText.setTextColor(0xFF4ADE80);
             }
-            if (qrUrlText != null) {
-                qrUrlText.setText(i18n("✅ Active Wallpaper: ", "✅ Wallpaper Aktif: ", "✅ Wallpaper Aktif: ") + file.getName());
-                qrUrlText.setTextColor(0xFF4ADE80);
-            }
-            if (qrImageView != null) {
-                // A small sampled decode off the main thread: it used to decode the full picture
-                // here, a second time, and the home animations paid for it.
-                final ImageView target = qrImageView;
-                wallDecoder.execute(() -> {
-                    Bitmap thumb = UploadWallpapers.thumbnail(file, UploadWallpapers.THUMBNAIL_MAX);
-                    if (thumb == null) return;
-                    handler.post(() -> {
-                        if (isDestroyed()) return;
-                        target.setImageBitmap(thumb);
-                        target.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                    });
-                });
-            }
-
-            handler.postDelayed(() -> {
-                if (qrUploadDialog != null && qrUploadDialog.isShowing()) {
-                    qrUploadDialog.dismiss();
-                }
-            }, 3000);
         });
     }
 

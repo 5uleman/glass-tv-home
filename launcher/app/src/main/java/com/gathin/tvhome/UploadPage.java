@@ -8,7 +8,7 @@ package com.gathin.tvhome;
 final class UploadPage {
 
     /** The raw page must stay under this many UTF-8 bytes. */
-    static final int MAX_BYTES = 16 * 1024;
+    static final int MAX_BYTES = 20 * 1024;
 
     static final String GITHUB_URL = "https://github.com/5uleman";
 
@@ -134,8 +134,8 @@ h2{font-size:16px;margin:0}
 <script>
 (function(){
 var $=function(i){return document.getElementById(i)},C=function(t){return document.createElement(t)};
-var file=null,url=null,xhr=null,lastFocus=null,pending=null,fresh=null;
-var NOPE="Couldn't reach your TV",WIFI='Check that your phone is on the same Wi-Fi.';
+var file=null,url=null,xhr=null,lastFocus=null,pending=null,fresh=null,known={},listOk=false;
+var NOPE="Couldn't reach your TV",WIFI='Check your Wi-Fi, or open the QR code on the TV again.';
 function fmt(b){return b>=1048576?(b/1048576).toFixed(1)+' MB':b>=1024?Math.round(b/1024)+' KB':b+' B'}
 function conn(ok){$('pill').classList.toggle('bad',!ok);$('pillText').textContent=ok?'Connected':"Can't reach TV"}
 function status(k,t,d,act){
@@ -148,17 +148,28 @@ function bar(p){$('bar').style.width=p+'%';$('bar').setAttribute('aria-valuenow'
 function busy(on){$('send').disabled=on||!file;$('send').textContent=on?'Sending to TV…':'Send to TV';$('change').disabled=on;$('panel').hidden=!on;if(on){bar(0);$('ptext').textContent='Sending…'}}
 function fail(){conn(false);status('bad',NOPE,WIFI,'')}
 function post(u){return fetch(u,{method:'POST'}).then(function(r){if(!r.ok)throw 0;return r.json()})}
-function reset(){if(url)URL.revokeObjectURL(url);url=null;file=null;$('file').value='';$('chosen').hidden=true;$('pick').hidden=false;$('send').disabled=true;$('send').textContent='Send to TV';$('panel').hidden=true;hideStatus();fresh=null}
+function copy(o){var r={};for(var k in o)r[k]=1;return r}
+function finishSent(name){bar(100);$('send').hidden=true;status('ok','Sent to your TV',"It's on your screen now.",'again');load(name)}
+function lost(before){
+ if(!listOk){fail();return}
+ fetch('/api/list',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(items){
+  var found=null;for(var i=0;i<items.length;i++){if(!before[items[i].name]){found=items[i].name;break}}
+  if(!found){fail();return}
+  known[found]=1;conn(true);finishSent(found);
+ }).catch(fail);
+}
+function reset(){if(url)URL.revokeObjectURL(url);url=null;file=null;$('file').value='';$('chosen').hidden=true;$('pick').hidden=false;$('send').hidden=false;$('send').disabled=true;$('send').textContent='Send to TV';$('panel').hidden=true;hideStatus();fresh=null}
 function choose(f){
  if(!f)return;if(url)URL.revokeObjectURL(url);file=f;url=URL.createObjectURL(f);
  $('preview').src=url;$('fname').textContent=f.name;$('fmeta').textContent=fmt(f.size)+' · reading size…';
  var probe=new Image();probe.onload=function(){if(file===f)$('fmeta').textContent=fmt(f.size)+' · '+probe.naturalWidth+' × '+probe.naturalHeight};
  probe.onerror=function(){if(file===f)$('fmeta').textContent=fmt(f.size)};
  probe.src=url;
- $('pick').hidden=true;$('chosen').hidden=false;$('send').disabled=false;$('send').textContent='Send to TV';hideStatus();
+ $('pick').hidden=true;$('chosen').hidden=false;$('send').hidden=false;$('send').disabled=false;$('send').textContent='Send to TV';hideStatus();
 }
 function send(){
  if(!file||xhr)return;var f=file;hideStatus();busy(true);
+ var before=copy(known);
  var x=new XMLHttpRequest();xhr=x;
  x.open('POST','/upload?name='+encodeURIComponent(f.name),true);
  x.setRequestHeader('Content-Type',f.type||'image/jpeg');
@@ -167,15 +178,14 @@ function send(){
   xhr=null;busy(false);conn(true);
   if(x.status>=200&&x.status<300){
    var name=null;try{name=JSON.parse(x.responseText).file}catch(e){}
-   bar(100);$('send').disabled=true;$('send').textContent='Sent';
-   status('ok','Sent to your TV',"It's on your screen now.",'again');
-   load(name);
+   if(name)known[name]=1;
+   finishSent(name);
   }else{
    var why=(x.responseText||'').trim().slice(0,160);
    status('bad',"The TV couldn't take that photo",why||('Rejected with HTTP '+x.status+'.'),'retry');
   }
  };
- x.onerror=function(){xhr=null;busy(false);conn(false);status('bad',NOPE,WIFI,'retry')};
+ x.onerror=function(){xhr=null;busy(false);conn(false);lost(before)};
  x.onabort=function(){xhr=null;busy(false);status('bad','Sending cancelled','The photo was not sent to the TV.','retry')};
  x.send(f);
 }
@@ -197,6 +207,7 @@ function row(it,f){
 function render(items){
  var f=fresh;fresh=null;
  var l=$('list');l.textContent='';$('count').textContent=''+items.length;
+ known={};items.forEach(function(it){known[it.name]=1});listOk=true;
  if(!items.length){
   var e=C('div');e.className='empty';
   var p=C('p');p.textContent='No photos on your TV yet.';
