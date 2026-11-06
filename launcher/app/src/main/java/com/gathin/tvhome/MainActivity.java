@@ -315,8 +315,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** The dock's edge double-press, and the last pictures shown that Previous/Next walk. */
     private final EdgeWallpaperSwitch edgeSwitch = new EdgeWallpaperSwitch();
     private final WallpaperHistory<File> wallHistory = new WallpaperHistory<>();
-    private View edgeHintView;
-    /** Three explanations per direction; a fresh process or a screen-off/on refills both. */
+    /** The hint uses the launcher's glass toast; so do the VPN row's messages. */
+    private TextView toastView;
+    /** Two explanations per direction; a fresh process or a screen-off/on refills both. */
     private final EdgeHintLimit edgeHintLimit = new EdgeHintLimit();
     private boolean screenReceiverRegistered;
     private final BroadcastReceiver screenStateReceiver = new BroadcastReceiver() {
@@ -328,12 +329,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         }
     };
-    /** The hint fades in and out; it never scales or slides, so it reads as a toast, not a button. */
+    /** The toast fades in with a small rise, then fades out; it never scales or slides like a button. */
     private static final long TOAST_FADE_MS = 150;
+    /** How long the VPN-row messages stay up: the system's short and long toast times. */
+    private static final long TOAST_HOLD_SHORT_MS = 2000;
+    private static final long TOAST_HOLD_LONG_MS = 3500;
     private final Runnable edgeHintExpiry = () -> {
         edgeSwitch.cancel();
-        hideEdgeHint();
+        hideToast();
     };
+    private final Runnable toastExpiry = this::hideToast;
     /** Dynamic atmospheric weather canvas particle overlay over the wallpaper */
     private WeatherBackgroundView weatherOverlayView;
     private static final long WEATHER_FADE_MS = 1500;
@@ -1463,7 +1468,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void cancelEdgeArm() {
         if (!edgeSwitch.isArmed()) return;
         edgeSwitch.cancel();
-        hideEdgeHint();
+        hideToast();
     }
 
     private void handleEdgeAction(EdgeWallpaperSwitch.Action action) {
@@ -1473,57 +1478,76 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 showEdgeHint(action == EdgeWallpaperSwitch.Action.ARM_NEXT);
                 break;
             case CONFIRM_NEXT:
-                hideEdgeHint();
+                hideToast();
                 showNextWallpaperFromEdge();
                 break;
             case CONFIRM_PREVIOUS:
-                hideEdgeHint();
+                hideToast();
                 showPreviousWallpaper();
                 break;
             default:
-                hideEdgeHint();
+                hideToast();
                 break;
         }
     }
 
-    /** The hint: a dark toast centred over the dock, with no outline, icon or focus of its own. */
+    /** The hint: a glass toast centred over the dock, with no icon, outline or focus of its own. */
     private void showEdgeHint(boolean next) {
+        boolean allowed = next ? edgeHintLimit.allowNext() : edgeHintLimit.allowPrevious();
+        if (allowed) {
+            showToast(next ? "Press \u2192 again for next" : "Press \u2190 again for previous",
+                    0, null);
+        }
         // The arm's two-second window runs whether or not the toast is still allowed to appear.
         handler.removeCallbacks(edgeHintExpiry);
         handler.postDelayed(edgeHintExpiry, EdgeWallpaperSwitch.WINDOW_MS);
-        boolean allowed = next ? edgeHintLimit.allowNext() : edgeHintLimit.allowPrevious();
-        if (!allowed) return;
-        if (edgeHintView == null) {
-            float density = getResources().getDisplayMetrics().density;
+    }
+
+    /**
+     * The launcher's toast, in the glass style of the weather and AQI pill: its radius (14dp), Outfit
+     * at 500 on 14sp, and a hairline border, but with a 45% dark tint in place of the pill's faint
+     * white so white text stays readable on a bright picture. Text only: no icon, chevron or focus
+     * ring, and never focusable. It rises 8dp as it fades in over 150 ms and fades out the same way.
+     *
+     * @param holdMs how long to keep it up; 0 leaves hiding to the caller's own runnable
+     * @param expiry what to run when the hold ends, or null
+     */
+    private void showToast(CharSequence text, long holdMs, Runnable expiry) {
+        float dp = getResources().getDisplayMetrics().density;
+        if (toastView == null) {
             TextView toast = new TextView(this);
-            toast.setTextSize(15);
+            toast.setTextSize(14);
             toast.setTextColor(0xFFFFFFFF);
             toast.setGravity(Gravity.CENTER);
             toast.setIncludeFontPadding(false);
-            toast.setLetterSpacing(0.01f);
-            toast.setPadding(Math.round(18 * density), Math.round(10 * density),
-                    Math.round(18 * density), Math.round(10 * density));
+            toast.setLetterSpacing(0.02f);
+            toast.setPadding(Math.round(16 * dp), Math.round(9 * dp),
+                    Math.round(16 * dp), Math.round(9 * dp));
             GradientDrawable bg = new GradientDrawable();
-            bg.setColor(0xCC000000);   // 80% black, like the system toast
-            bg.setCornerRadius(1000f);  // clamped to half the height: fully rounded
+            bg.setColor(0x73000000);   // 45% black: readable on a bright wallpaper, still glass
+            bg.setCornerRadius(14 * dp);   // the weather / AQI pill's radius
+            bg.setStroke(Math.max(1, Math.round(dp)), 0x40FFFFFF);   // 1dp hairline
             toast.setBackground(bg);
+            toast.setShadowLayer(3 * dp, 0f, dp, 0x99000000);
+            toast.setElevation(4 * dp);
             toast.setFocusable(false);
             toast.setClickable(false);
-            toast.setElevation(3 * density);
-            Fonts.apply(toast, Fonts.BOLD);
-
-            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            root.addView(toast, lp);
-            edgeHintView = toast;
+            toast.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            Fonts.apply(toast, Fonts.MEDIUM);
+            root.addView(toast, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            toastView = toast;
         }
-        ((TextView) edgeHintView).setText(next
-                ? "Press \u2192 again for next" : "Press \u2190 again for previous");
-        edgeHintView.animate().cancel();
-        edgeHintView.setVisibility(View.VISIBLE);
-        edgeHintView.setAlpha(0f);
-        edgeHintView.animate().alpha(1f).setDuration(TOAST_FADE_MS).start();
-        placeEdgeHint();
+        toastView.setText(text);
+        toastView.animate().cancel();
+        toastView.setVisibility(View.VISIBLE);
+        toastView.setAlpha(0f);
+        toastView.setTranslationY(8 * dp);
+        toastView.animate().alpha(1f).translationY(0f).setDuration(TOAST_FADE_MS).start();
+        placeToast();
+        handler.removeCallbacks(edgeHintExpiry);
+        handler.removeCallbacks(toastExpiry);
+        if (holdMs > 0 && expiry != null) handler.postDelayed(expiry, holdMs);
     }
 
     /**
@@ -1531,12 +1555,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * hero text sits 50 dp above the dock, so the toast cannot fit between the two; when it would
      * touch the title or the description it moves above the whole hero block instead.
      */
-    private void placeEdgeHint() {
-        if (edgeHintView == null) return;
-        edgeHintView.post(() -> {
-            if (edgeHintView == null || grid == null) return;
-            if (edgeHintView.getWidth() == 0 || edgeHintView.getHeight() == 0) {
-                edgeHintView.post(this::placeEdgeHint);
+    private void placeToast() {
+        if (toastView == null) return;
+        toastView.post(() -> {
+            if (toastView == null || grid == null) return;
+            if (toastView.getWidth() == 0 || toastView.getHeight() == 0) {
+                toastView.post(this::placeToast);
                 return;
             }
             RecyclerView.ViewHolder vh = grid.findViewHolderForAdapterPosition(0);
@@ -1545,8 +1569,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (card == null || card.getWidth() == 0) return;
             Rect dock = new Rect(0, 0, card.getWidth(), card.getHeight());
             root.offsetDescendantRectToMyCoords(card, dock);
-            float toastW = edgeHintView.getWidth();
-            float toastH = edgeHintView.getHeight();
+            float toastW = toastView.getWidth();
+            float toastH = toastView.getHeight();
             // The tray is the dock cards' bounds plus the decoration's glass margin.
             float trayTop = dock.top - DockDecoration.TRAY_PAD_DP * density;
 
@@ -1562,23 +1586,24 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
             float[] xy = EdgeHintPlacement.place(root.getWidth(), trayTop, hero,
                     toastW, toastH, density);
-            edgeHintView.setX(xy[0]);
-            edgeHintView.setY(xy[1]);
+            toastView.setX(xy[0]);
+            toastView.setY(xy[1]);
         });
     }
 
-    private void hideEdgeHint() {
+    private void hideToast() {
         handler.removeCallbacks(edgeHintExpiry);
-        if (edgeHintView == null) return;
-        edgeHintView.animate().cancel();
-        if (edgeHintView.getVisibility() != View.VISIBLE) {
-            edgeHintView.setAlpha(0f);
+        handler.removeCallbacks(toastExpiry);
+        if (toastView == null) return;
+        toastView.animate().cancel();
+        if (toastView.getVisibility() != View.VISIBLE) {
+            toastView.setAlpha(0f);
             return;
         }
-        edgeHintView.animate().alpha(0f).setDuration(TOAST_FADE_MS)
+        toastView.animate().alpha(0f).setDuration(TOAST_FADE_MS)
                 .withEndAction(() -> {
-                    if (edgeHintView != null && edgeHintView.getAlpha() == 0f) {
-                        edgeHintView.setVisibility(View.GONE);
+                    if (toastView != null && toastView.getAlpha() == 0f) {
+                        toastView.setVisibility(View.GONE);
                     }
                 }).start();
     }
@@ -2849,7 +2874,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                         android.os.SystemClock.uptimeMillis()));
             } else if (outward) {
                 edgeSwitch.onOtherInput();
-                hideEdgeHint();
+                hideToast();
             }
             // A key pointing out of the dock's end never moves focus, held or not: stop it here.
             if (outward) return true;
@@ -3570,7 +3595,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         List<ResolveInfo> services = pm.queryIntentServices(
                 new Intent("android.net.VpnService"), 0);
         if (services.isEmpty()) {
-            Toast.makeText(this, R.string.vpn_app_missing, Toast.LENGTH_SHORT).show();
+            showToast(getString(R.string.vpn_app_missing), TOAST_HOLD_SHORT_MS, toastExpiry);
             return;
         }
         boolean usageAvailable = hasUsageAccess();
@@ -3607,21 +3632,24 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         List<VpnApps.Candidate> ranked = VpnApps.rank(found, getPackageName(),
                 lastOpened, usageAvailable);
         if (ranked.isEmpty()) {
-            Toast.makeText(this, R.string.vpn_cannot_open, Toast.LENGTH_SHORT).show();
+            showToast(getString(R.string.vpn_cannot_open), TOAST_HOLD_SHORT_MS, toastExpiry);
             return;
         }
         VpnApps.Candidate chosen = ranked.get(0);
         Intent launch = launchIntents.get(chosen.packageName);
         if (launch == null) {
-            Toast.makeText(this, R.string.vpn_cannot_open, Toast.LENGTH_SHORT).show();
+            showToast(getString(R.string.vpn_cannot_open), TOAST_HOLD_SHORT_MS, toastExpiry);
             return;
         }
-        open(launch);
         getSharedPreferences("vpn_prefs", MODE_PRIVATE).edit()
                 .putString("last_opened_package", chosen.packageName).apply();
         if (ranked.size() > 1) {
-            Toast.makeText(this, getString(R.string.vpn_multiple_apps, chosen.label),
-                    Toast.LENGTH_LONG).show();
+            // The pill paints for a frame before the VPN app takes the screen.
+            showToast(getString(R.string.vpn_multiple_apps, chosen.label),
+                    TOAST_HOLD_LONG_MS, toastExpiry);
+            root.post(() -> open(launch));
+        } else {
+            open(launch);
         }
     }
 
