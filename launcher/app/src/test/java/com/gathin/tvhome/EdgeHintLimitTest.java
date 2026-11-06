@@ -9,7 +9,7 @@ import org.junit.Test;
 public class EdgeHintLimitTest {
 
     @Test
-    public void showsThreeTimesThenStopsForEachSide() {
+    public void showsTwiceThenStopsForEachSide() {
         EdgeHintLimit limit = new EdgeHintLimit();
         for (int i = 0; i < EdgeHintLimit.MAX_SHOWS; i++) {
             assertTrue("next show " + (i + 1), limit.allowNext());
@@ -17,8 +17,8 @@ public class EdgeHintLimitTest {
         }
         assertFalse(limit.allowNext());
         assertFalse(limit.allowPrevious());
-        assertEquals(3, limit.shownNext());
-        assertEquals(3, limit.shownPrevious());
+        assertEquals(2, limit.shownNext());
+        assertEquals(2, limit.shownPrevious());
     }
 
     @Test
@@ -41,7 +41,7 @@ public class EdgeHintLimitTest {
     }
 
     @Test
-    public void resetGivesBothSidesThreeMoreShows() {
+    public void resetGivesBothSidesTwoMoreShows() {
         EdgeHintLimit limit = new EdgeHintLimit();
         for (int i = 0; i < EdgeHintLimit.MAX_SHOWS; i++) {
             limit.allowNext();
@@ -69,7 +69,7 @@ public class EdgeHintLimitTest {
     }
 
     @Test
-    public void theLimitIsThree() {
-        assertEquals(3, EdgeHintLimit.MAX_SHOWS);
+    public void theLimitIsTwo() {
+        assertEquals(2, EdgeHintLimit.MAX_SHOWS);
     }
 }

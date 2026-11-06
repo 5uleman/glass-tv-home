@@ -1,13 +1,13 @@
 package com.gathin.tvhome;
 
 /**
- * The edge-switch toast's allowance: each direction may be explained three times, counted
- * separately, and then the double-press keeps working in silence. Pure and in memory only; the
- * caller resets it on screen-off/on and a new process starts at zero.
+ * The edge-switch toast's allowance: each direction may be explained twice, counted separately,
+ * and then the double-press keeps working in silence. Pure and in memory only; the caller resets it
+ * on screen-off/on and a new process starts at zero.
  */
 final class EdgeHintLimit {
 
-    static final int MAX_SHOWS = 3;
+    static final int MAX_SHOWS = 2;
 
     private int nextShown;
     private int previousShown;
