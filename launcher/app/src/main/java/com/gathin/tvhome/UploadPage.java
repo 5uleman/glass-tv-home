@@ -94,6 +94,7 @@ h2{font-size:16px;margin:0}
 .sheetcard{position:relative;width:100%;max-width:390px;background:#11141D;border:1px solid #ffffff24;border-bottom:0;border-radius:24px 24px 0 0;padding:20px 20px 28px;text-align:center}
 .sheetcard h3{margin:0 0 6px;font-size:17px}
 :focus-visible{outline:2px solid #3B82F6;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
