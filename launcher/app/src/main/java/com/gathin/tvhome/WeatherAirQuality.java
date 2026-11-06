@@ -26,10 +26,9 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Live weather and air pollutant index (API / IPU) for Malaysia.
- * Fetches official ground-station Air Pollutant Index from Jabatan Alam Sekitar (JAS) Malaysia MyEQMS/APIMS,
- * paired with detailed 7-day and hourly weather forecasts from Open-Meteo.
- * Supports Putrajaya and all official monitoring stations across Malaysia.
+ * Live weather and air quality for the chosen place. Open-Meteo supplies the forecast and its
+ * worldwide US AQI; a nearby Malaysian JAS/APIMS ground station overrides the AQI with the official
+ * local figure only when the place is within the old ~80 km gate. Cached per location.
  */
 final class WeatherAirQuality {
     private static final String TAG = "TvHome.Weather";
@@ -155,15 +154,16 @@ final class WeatherAirQuality {
         new Thread(() -> {
             try {
                 SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-                long last = prefs.getLong(KEY_LAST_UPDATE, 0);
-                long now = System.currentTimeMillis();
-                if (!force && now - last < REFRESH_INTERVAL_MS && prefs.contains(KEY_WEATHER_JSON)) {
-                    return; // Cache is still fresh
-                }
-
                 double lat = AppLocationManager.getLatitude(context);
                 double lon = AppLocationManager.getLongitude(context);
-                String stationId = AppLocationManager.getStationId(context);
+                String prefix = WeatherPlaces.cacheKey(lat, lon);
+                long last = prefs.getLong(k(prefix, KEY_LAST_UPDATE), 0);
+                long now = System.currentTimeMillis();
+                if (!force && now - last < REFRESH_INTERVAL_MS
+                        && prefs.contains(k(prefix, KEY_WEATHER_JSON))) {
+                    return; // Cache is still fresh for this place
+                }
+
                 String defaultPlace = AppLocationManager.getStationPlace(context);
 
                 // 1. Fetch Complete Weather Forecast (Open-Meteo)
@@ -181,9 +181,12 @@ final class WeatherAirQuality {
                     code = curr.optInt("weather_code", 2);
                 }
 
-                // 2. Fetch Official Air Quality from Jabatan Alam Sekitar Malaysia (APIMS)
-                String jasUrl = "https://eqms.doe.gov.my/api3/publicportalapims/currentapicurrentlocation?stationid=" + stationId;
-                JSONObject jasJson = fetchJson(jasUrl);
+                // 2. Official Air Quality from Jabatan Alam Sekitar Malaysia (APIMS), only within
+                // its old ~80 km gate. Everywhere else Open-Meteo's US AQI is used directly.
+                String jasStationId = AppLocationManager.nearestJasStationId(lat, lon);
+                String jasUrl = jasStationId == null ? null
+                        : "https://eqms.doe.gov.my/api3/publicportalapims/currentapicurrentlocation?stationid=" + jasStationId;
+                JSONObject jasJson = jasUrl == null ? null : fetchJson(jasUrl);
 
                 boolean isMalay = !AppLanguage.LANG_EN.equals(AppLanguage.getLanguage(context));
                 int aqi = 50;
@@ -203,14 +206,13 @@ final class WeatherAirQuality {
                         aqiPlace = st.optString("PLACE", defaultPlace);
                         aqiDateTime = st.optString("DATETIME", "");
                         isJas = true;
-                        Log.i(TAG, "Official JAS Malaysia APIMS sync successful for " + stationId + ": IPU=" + aqi + " (" + aqiStatus + ")");
+                        Log.i(TAG, "Official JAS Malaysia APIMS sync successful for " + jasStationId + ": IPU=" + aqi + " (" + aqiStatus + ")");
                     }
                 }
 
-                // Fallback to Open-Meteo Air Quality if JAS Malaysia endpoint is temporarily down
+                // Fallback to Open-Meteo Air Quality when there is no nearby JAS station, or its endpoint is down
                 JSONObject fallbackAqiJson = null;
                 if (!isJas) {
-                    Log.w(TAG, "JAS Malaysia unreachable, falling back to Open-Meteo Air Quality");
                     String aqiUrl = String.format(Locale.ROOT,
                             "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=%.4f&longitude=%.4f&current=pm2_5,pm10,us_aqi",
                             lat, lon);
@@ -227,20 +229,20 @@ final class WeatherAirQuality {
                 }
 
                 SharedPreferences.Editor edit = prefs.edit();
-                if (wJson != null) edit.putString(KEY_WEATHER_JSON, wJson.toString());
-                if (fallbackAqiJson != null) edit.putString(KEY_AQI_JSON, fallbackAqiJson.toString());
-                edit.putInt(KEY_TEMP, temp)
-                    .putInt(KEY_CODE, code)
-                    .putInt(KEY_AQI, aqi)
-                    .putString(KEY_AQI_STATUS, aqiStatus)
-                    .putString(KEY_AQI_PARAM, aqiParam)
-                    .putString(KEY_AQI_STATION_PLACE, aqiPlace)
-                    .putString(KEY_AQI_DATETIME, aqiDateTime)
-                    .putBoolean(KEY_AQI_IS_JAS, isJas)
-                    .putLong(KEY_LAST_UPDATE, now)
+                if (wJson != null) edit.putString(k(prefix, KEY_WEATHER_JSON), wJson.toString());
+                if (fallbackAqiJson != null) edit.putString(k(prefix, KEY_AQI_JSON), fallbackAqiJson.toString());
+                edit.putInt(k(prefix, KEY_TEMP), temp)
+                    .putInt(k(prefix, KEY_CODE), code)
+                    .putInt(k(prefix, KEY_AQI), aqi)
+                    .putString(k(prefix, KEY_AQI_STATUS), aqiStatus)
+                    .putString(k(prefix, KEY_AQI_PARAM), aqiParam)
+                    .putString(k(prefix, KEY_AQI_STATION_PLACE), aqiPlace)
+                    .putString(k(prefix, KEY_AQI_DATETIME), aqiDateTime)
+                    .putBoolean(k(prefix, KEY_AQI_IS_JAS), isJas)
+                    .putLong(k(prefix, KEY_LAST_UPDATE), now)
                     .apply();
 
-                Log.i(TAG, "Full weather & AQI synced successfully (JAS=" + isJas + ", IPU=" + aqi + ")");
+                Log.i(TAG, "Full weather & AQI synced for " + prefix + " (JAS=" + isJas + ", AQI=" + aqi + ")");
 
                 if (onUpdated != null) {
                     new Handler(Looper.getMainLooper()).post(onUpdated);
@@ -251,19 +253,31 @@ final class WeatherAirQuality {
         }, "weather-aqi-sync").start();
     }
 
+    /** The cache-key prefix of the place the app is set to right now. */
+    private static String prefix(Context context) {
+        return WeatherPlaces.cacheKey(AppLocationManager.getLatitude(context),
+                AppLocationManager.getLongitude(context));
+    }
+
+    private static String k(String prefix, String key) {
+        return prefix + ":" + key;
+    }
+
     /** Formats a clean Spannable UI string for the Home screen: "⛅ 29° Cerah  •  IPU 112 Tidak Sihat" */
     static CharSequence getFormatted(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        int temp = prefs.getInt(KEY_TEMP, 29);
-        int code = prefs.getInt(KEY_CODE, 2);
-        int aqi = prefs.getInt(KEY_AQI, 50);
+        String prefix = prefix(context);
+        if (!prefs.contains(k(prefix, KEY_TEMP))) return "";
+        int temp = prefs.getInt(k(prefix, KEY_TEMP), 29);
+        int code = prefs.getInt(k(prefix, KEY_CODE), 2);
+        int aqi = prefs.getInt(k(prefix, KEY_AQI), 50);
 
         boolean isMalay = !AppLanguage.LANG_EN.equals(AppLanguage.getLanguage(context));
 
         String icon = getWeatherIcon(code);
         String condition = getWeatherCondition(code, isMalay);
 
-        String aqiStatus = prefs.getString(KEY_AQI_STATUS, getAqiStatus(aqi, isMalay));
+        String aqiStatus = prefs.getString(k(prefix, KEY_AQI_STATUS), getAqiStatus(aqi, isMalay));
         // Translate status if Malay
         if (isMalay) {
             aqiStatus = translateAqiStatus(aqiStatus);
@@ -285,8 +299,8 @@ final class WeatherAirQuality {
 
         // Air Quality: English "AQI 112 Unhealthy for Sensitive Groups", Malay "IPU 112 ...".
         int startAqi = sb.length();
-        String prefix = isMalay ? "IPU " : "AQI ";
-        sb.append(prefix).append(String.valueOf(aqi)).append(" ").append(aqiStatus);
+        String aqiPrefix = isMalay ? "IPU " : "AQI ";
+        sb.append(aqiPrefix).append(String.valueOf(aqi)).append(" ").append(aqiStatus);
         sb.setSpan(new ForegroundColorSpan(aqiColor), startAqi, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         sb.setSpan(new StyleSpan(Typeface.BOLD), startAqi, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
@@ -299,7 +313,9 @@ final class WeatherAirQuality {
      */
     static String getCachedAqiLabel(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        int aqi = prefs.getInt(KEY_AQI, -1);
+        String prefix = prefix(context);
+        if (!prefs.contains(k(prefix, KEY_AQI))) return "";
+        int aqi = prefs.getInt(k(prefix, KEY_AQI), -1);
         if (aqi < 0) return "";
         boolean isMalay = !AppLanguage.LANG_EN.equals(AppLanguage.getLanguage(context));
         return (isMalay ? "IPU " : "AQI ") + aqi + " " + getAqiStatus(aqi, isMalay);
@@ -308,30 +324,36 @@ final class WeatherAirQuality {
     /** Colour matching getCachedAqiLabel, or 0 when nothing is cached yet. */
     static int getCachedAqiColor(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        int aqi = prefs.getInt(KEY_AQI, -1);
+        String prefix = prefix(context);
+        if (!prefs.contains(k(prefix, KEY_AQI))) return 0;
+        int aqi = prefs.getInt(k(prefix, KEY_AQI), -1);
         return aqi < 0 ? 0 : getAqiColor(aqi);
     }
 
-    /** The cached numeric AQI, or -1 before the first sync. */
+    /** The cached numeric AQI for this place, or -1 before the first sync. */
     static int getCachedAqi(Context context) {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getInt(KEY_AQI, -1);
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String prefix = prefix(context);
+        return prefs.contains(k(prefix, KEY_AQI)) ? prefs.getInt(k(prefix, KEY_AQI), -1) : -1;
     }
 
-    /** The cached weather code, or -1 before the first successful weather sync. */
+    /** The cached weather code for this place, or -1 before the first successful weather sync. */
     static int getCachedWeatherCode(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        return prefs.contains(KEY_CODE) ? prefs.getInt(KEY_CODE, -1) : -1;
+        String prefix = prefix(context);
+        return prefs.contains(k(prefix, KEY_CODE)) ? prefs.getInt(k(prefix, KEY_CODE), -1) : -1;
     }
 
     /** Returns full weather model for WeatherActivity dashboard. */
     static FullWeather getFullWeather(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String wStr = prefs.getString(KEY_WEATHER_JSON, null);
-        String aStr = prefs.getString(KEY_AQI_JSON, null);
+        String prefix = prefix(context);
+        String wStr = prefs.getString(k(prefix, KEY_WEATHER_JSON), null);
+        String aStr = prefs.getString(k(prefix, KEY_AQI_JSON), null);
 
-        int temp = prefs.getInt(KEY_TEMP, 29);
+        int temp = prefs.getInt(k(prefix, KEY_TEMP), 29);
         int apparentTemp = temp + 3;
-        int code = prefs.getInt(KEY_CODE, 2);
+        int code = prefs.getInt(k(prefix, KEY_CODE), 2);
         int highTemp = temp + 3;
         int lowTemp = temp - 4;
         int humidity = 78;
@@ -438,11 +460,12 @@ final class WeatherAirQuality {
         }
 
         // Air Quality
-        int aqi = prefs.getInt(KEY_AQI, 50);
-        boolean isJas = prefs.getBoolean(KEY_AQI_IS_JAS, true);
-        String aqiStatus = prefs.getString(KEY_AQI_STATUS, "Moderate");
-        String aqiParam = prefs.getString(KEY_AQI_PARAM, "PM2.5");
-        String stationPlace = prefs.getString(KEY_AQI_STATION_PLACE, AppLocationManager.getStationPlace(context));
+        int aqi = prefs.getInt(k(prefix, KEY_AQI), 50);
+        boolean isJas = prefs.getBoolean(k(prefix, KEY_AQI_IS_JAS), true);
+        String aqiStatus = prefs.getString(k(prefix, KEY_AQI_STATUS), "Moderate");
+        String aqiParam = prefs.getString(k(prefix, KEY_AQI_PARAM), "PM2.5");
+        String stationPlace = prefs.getString(k(prefix, KEY_AQI_STATION_PLACE),
+                AppLocationManager.getStationPlace(context));
         String stationId = AppLocationManager.getStationId(context);
         String locationName = AppLocationManager.getLocationName(context).toUpperCase(Locale.ROOT);
 
@@ -621,7 +644,13 @@ final class WeatherAirQuality {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 StringBuilder sb = new StringBuilder();
                 String line;
-                while ((line = reader.readLine()) != null) sb.append(line);
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                    if (sb.length() > 512 * 1024) {
+                        reader.close();
+                        throw new IllegalStateException("response too large");
+                    }
+                }
                 reader.close();
                 return new JSONObject(sb.toString());
             }

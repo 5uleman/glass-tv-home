@@ -21,6 +21,7 @@ public class AppLocationManager {
     public static final String KEY_STATION_PLACE = "station_place";
     public static final String KEY_LATITUDE = "latitude";
     public static final String KEY_LONGITUDE = "longitude";
+    public static final String KEY_TIMEZONE = "timezone";
 
     // A fresh install defaults to Lahore, Pakistan (PK01) for weather and AQI.
     public static final String DEFAULT_REGION = "Pakistan";
@@ -245,8 +246,11 @@ public class AppLocationManager {
         return name + ", " + country;
     }
 
-    /** Timezone of the chosen station, for the Open-Meteo forecast times. */
+    /** Timezone of the chosen location, for the Open-Meteo forecast times. */
     public static String getTimezone(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String saved = prefs.getString(KEY_TIMEZONE, null);
+        if (saved != null && !saved.trim().isEmpty()) return saved.trim();
         String id = getStationId(context);
         for (Station s : ALL_STATIONS) {
             if (s.id.equalsIgnoreCase(id)) return s.timezone;
@@ -284,7 +288,7 @@ public class AppLocationManager {
 
     public static void setStation(Context context, Station s) {
         if (s == null) return;
-        setCustomLocation(context, s.id, s.name, s.country, s.place, s.lat, s.lon);
+        setWeatherLocation(context, s.id, s.name, s.country, s.place, s.lat, s.lon, s.timezone);
     }
 
     public static void setCustomLocation(Context context, String stationId, String locationName, String place, double lat, double lon) {
@@ -292,21 +296,69 @@ public class AppLocationManager {
     }
 
     public static void setCustomLocation(Context context, String stationId, String locationName, String country, String place, double lat, double lon) {
+        setWeatherLocation(context, stationId, locationName, country, place, lat, lon, null);
+    }
+
+    /**
+     * Saves the place the weather, AQI and wallpaper effects follow. {@code timezone} is the one the
+     * service returned for that city; when null the old station lookup still applies.
+     */
+    public static void setWeatherLocation(Context context, String stationId, String locationName,
+                                          String country, String place, double lat, double lon,
+                                          String timezone) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        prefs.edit()
+        SharedPreferences.Editor editor = prefs.edit()
                 .putString(KEY_STATION_ID, stationId)
                 .putString(KEY_LOCATION_NAME, locationName)
                 .putString(KEY_REGION, country != null ? country : DEFAULT_REGION)
                 .putString(KEY_STATION_PLACE, place)
                 .putString(KEY_LATITUDE, String.valueOf(lat))
-                .putString(KEY_LONGITUDE, String.valueOf(lon))
-                .apply();
+                .putString(KEY_LONGITUDE, String.valueOf(lon));
+        if (timezone != null && !timezone.trim().isEmpty()) {
+            editor.putString(KEY_TIMEZONE, timezone.trim());
+        } else {
+            editor.remove(KEY_TIMEZONE);
+        }
+        editor.apply();
 
-        Log.i(TAG, "Location set to: " + locationName + " (" + country + ") [" + lat + ", " + lon + "]");
+        Log.i(TAG, "Location set to: " + locationName + " (" + country + ") [" + lat + ", " + lon
+                + "] tz=" + getTimezone(context));
 
         // Trigger immediate sync for Weather & Prayer Times
         WeatherAirQuality.sync(context, null);
         PrayerTimes.sync(context, null);
+    }
+
+    /** The cache key a place's weather is stored under; different cities never share a line. */
+    public static String locationKey(Context context) {
+        return WeatherPlaces.cacheKey(getLatitude(context), getLongitude(context));
+    }
+
+    /** The DOE stations only cover Malaysia; outside this radius the published API says nothing. */
+    private static final double JAS_RADIUS_SQ = 0.5;
+
+    /** The nearest Malaysian DOE station within the old ~80 km gate, or null elsewhere. */
+    public static Station nearestJasStation(double lat, double lon) {
+        List<Station> malaysia = REGION_STATIONS.get("Malaysia");
+        Station best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (Station s : malaysia) {
+            double distance = WeatherPlaces.distanceSq(lat, lon, s.lat, s.lon);
+            if (distance < JAS_RADIUS_SQ && distance < bestDistance) {
+                bestDistance = distance;
+                best = s;
+            }
+        }
+        return best;
+    }
+
+    public static boolean isNearJasStation(double lat, double lon) {
+        return nearestJasStation(lat, lon) != null;
+    }
+
+    public static String nearestJasStationId(double lat, double lon) {
+        Station s = nearestJasStation(lat, lon);
+        return s == null ? null : s.id;
     }
 
     public static Station findStationByQuery(String query) {

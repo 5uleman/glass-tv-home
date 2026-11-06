@@ -43,16 +43,19 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.TextUtils;
+import android.text.InputType;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
 import android.widget.FrameLayout;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -2912,9 +2915,30 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             HomeWeather.Line line = HomeWeather.refresh(getApplicationContext(), lat, lon);
             handler.post(() -> {
                 homeWeatherRunning = false;
-                if (line != null && !isDestroyed()) showHomeWeather(line);
+                if (line != null && !isDestroyed()
+                        && line.locationKey.equals(HomeWeather.locationKey(MainActivity.this))) {
+                    showHomeWeather(line);
+                }
             });
         }, "home-weather").start();
+    }
+
+    /** A location change must not wait for the 15-minute clock, and an old request must not win. */
+    private void refreshHomeWeatherNow() {
+        if (weatherAirQualityView == null) return;
+        homeWeatherRunning = false;
+        HomeWeather.forget(this);
+        final double lat = AppLocationManager.getLatitude(this);
+        final double lon = AppLocationManager.getLongitude(this);
+        new Thread(() -> {
+            HomeWeather.Line line = HomeWeather.refresh(getApplicationContext(), lat, lon);
+            handler.post(() -> {
+                if (line != null && !isDestroyed()
+                        && line.locationKey.equals(HomeWeather.locationKey(MainActivity.this))) {
+                    showHomeWeather(line);
+                }
+            });
+        }, "home-weather-now").start();
     }
 
     private void showHomeWeather(HomeWeather.Line line) {
@@ -3555,6 +3579,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             closeMenu(false);
             showCandyBoxPopup();
         });
+
+        // Row 5: Weather Location — search, the Lahore default, or detect this TV's city.
+        addInputRow(rows, close, R.drawable.ic_location,
+                "Weather Location: " + AppLocationManager.getLocationLabel(this), -1, () -> {
+                    SoundEffects.playSelect();
+                    closeMenu(false);
+                    showWeatherLocationDialog();
+                });
 
         // Row 4: Tetapan & Pilihan Azan
         if (!PrayerTimes.PRAYER_DISABLED) {
@@ -4834,6 +4866,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             showWallpaperDialog();
         });
 
+        rows.add(new GlassDialogs.Row(
+                "Weather Location: " + AppLocationManager.getLocationLabel(this),
+                "Search a city, use the Lahore default, or detect this TV's city", false));
+        actions.add(this::showWeatherLocationDialog);
+
         rows.add(new GlassDialogs.Row("Change Wallpaper Now",
                 "Cycle and display the next wallpaper immediately", false));
         actions.add(() -> {
@@ -5331,7 +5368,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 .setTitle(i18n("🌦️ Smart Weather & Haze Analysis", "🌦️ Analisis Cuaca & Kabut Pintar", "🌦️ Analisis Cuaca & Jerebu Pintar"))
                 .setMessage(i18n("📍 Location: ", "📍 Lokasi: ", "📍 Lokasi: ") + town + "\n\n"
                         + i18n("📊 Latest Status: ", "📊 Status Terkini: ", "📊 Status Terkini: ") + wxStr + "\n\n"
-                        + i18n("ℹ️ Weather data is synced from Open-Meteo and the official Air Pollutant Index (AQI) readings of the Malaysian Department of Environment (APIMS DOE) stations.\n\n", "ℹ️ Data cuaca disinkronkan dari Open-Meteo dan pembacaan Indeks Pencemar Udara (IPU) resmi stasiun Departemen Lingkungan Malaysia (APIMS DOE).\n\n", "ℹ️ Data cuaca disegerakkan daripada Open-Meteo dan bacaan Indeks Pencemar Udara (IPU) rasmi stesen Jabatan Alam Sekitar Malaysia (APIMS DOE).\n\n")
+                        + i18n("ℹ️ Weather comes from Open-Meteo. Air quality uses the nearest Malaysian DOE (APIMS) station only when this place is within about 80 km of it; everywhere else it is Open-Meteo's US AQI.\n\n", "ℹ️ Cuaca daripada Open-Meteo. Kualiti udara menggunakan stesen Jabatan Alam Sekitar Malaysia (APIMS) terdekat hanya jika lokasi dalam kira-kira 80 km; di tempat lain ia menggunakan US AQI Open-Meteo.\n\n", "ℹ️ Cuaca daripada Open-Meteo. Kualiti udara menggunakan stesen Jabatan Alam Sekitar Malaysia (APIMS) terdekat hanya jika lokasi dalam kira-kira 80 km; di tempat lain ia menggunakan US AQI Open-Meteo.\n\n")
                         + i18n("💡 AI Suggestion: Air quality is safe and satisfactory. Great for relaxing with family.", "💡 Saranan AI: Kondisi udara aman dan memuaskan. Sangat cocok untuk bersantai bersama keluarga.", "💡 Saranan AI: Keadaan udara selamat dan memuaskan. Sangat sesuai untuk bersantai bersama keluarga."))
                 .setPositiveButton("OK", null)
                 .show();
@@ -5733,6 +5770,149 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
     private void showHazeLocationDialog() {
         startActivity(new Intent(this, LocationActivity.class));
+    }
+
+    /** The Weather Location row: search a city, use the Lahore default, or detect this TV's city. */
+    private void showWeatherLocationDialog() {
+        String current = AppLocationManager.getLocationLabel(this);
+        List<GlassDialogs.Row> rows = new ArrayList<>();
+        rows.add(new GlassDialogs.Row("Search for a city",
+                "Open-Meteo geocoding; results show city, region and country", false));
+        rows.add(new GlassDialogs.Row("Use default (Lahore)",
+                "31.52\u00b0N, 74.36\u00b0E \u00b7 Asia/Karachi",
+                current.equalsIgnoreCase("Lahore, Pakistan")));
+        rows.add(new GlassDialogs.Row("Detect automatically",
+                "One ipwho.is request from this TV's public IP; no key, 1,000/day per IP", false));
+        GlassDialogs.showList(this, R.drawable.ic_location, "Weather Location: " + current,
+                "Weather, air quality and the wallpaper effects follow this place", rows, 0,
+                AppLanguage.strClose(this), null, index -> {
+                    if (index == 0) showWeatherCitySearchDialog();
+                    else if (index == 1) saveWeatherLocation(WeatherPlaces.DEFAULT);
+                    else if (index == 2) detectWeatherLocation();
+                });
+    }
+
+    /** The city name is typed with the system keyboard; Search is a footer button on the glass. */
+    private void showWeatherCitySearchDialog() {
+        float density = getResources().getDisplayMetrics().density;
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setHint("City name, e.g. Lahore");
+        input.setTextSize(18);
+        input.setTextColor(0xFFFFFFFF);
+        input.setHintTextColor(0x99FFFFFF);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        input.setPadding(Math.round(14 * density), Math.round(10 * density),
+                Math.round(14 * density), Math.round(10 * density));
+        GradientDrawable field = new GradientDrawable();
+        field.setColor(0x1AFFFFFF);
+        field.setCornerRadius(12 * density);
+        field.setStroke(Math.round(1.5f * density), 0x66FFFFFF);
+        input.setBackground(field);
+        content.addView(input, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        TextView note = new TextView(this);
+        note.setText("Results come from Open-Meteo geocoding. Type with the on-screen keyboard.");
+        note.setTextSize(12);
+        note.setTextColor(0x99FFFFFF);
+        note.setPadding(0, Math.round(8 * density), 0, 0);
+        Fonts.apply(note, Fonts.SEMIBOLD);
+        content.addView(note);
+
+        GlassDialogs.showCustom(this, R.drawable.ic_location, "Search for a city", "Weather Location",
+                content, "Search", () -> beginWeatherCitySearch(input.getText().toString()),
+                "Back", this::showWeatherLocationDialog, false, null, null);
+        input.post(() -> {
+            input.requestFocus();
+            InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (imm != null) imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+        });
+    }
+
+    private void beginWeatherCitySearch(String raw) {
+        final String query = raw == null ? "" : raw.trim();
+        if (query.length() < 2) {
+            Toast.makeText(this, "Type at least two letters", Toast.LENGTH_SHORT).show();
+            showWeatherCitySearchDialog();
+            return;
+        }
+        hideKeyboard();
+        Toast.makeText(this, "Searching for " + query + "\u2026", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            List<WeatherPlaces.Place> places = WeatherLocationService.search(query);
+            handler.post(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                if (places.isEmpty()) {
+                    GlassDialogs.show(this, R.drawable.ic_location, "No city found",
+                            "No Open-Meteo result for \"" + query + "\". Check the spelling, or try a nearby larger city.",
+                            "Search again", this::showWeatherCitySearchDialog, "Close", null);
+                } else {
+                    showWeatherCityResults(query, places);
+                }
+            });
+        }, "weather-geocode").start();
+    }
+
+    private void showWeatherCityResults(String query, List<WeatherPlaces.Place> places) {
+        List<GlassDialogs.Row> rows = new ArrayList<>();
+        for (WeatherPlaces.Place place : places) {
+            rows.add(new GlassDialogs.Row(place.title(), place.subtitle(), false));
+        }
+        GlassDialogs.showList(this, R.drawable.ic_location, "Choose a city",
+                "Open-Meteo results for \"" + query + "\"", rows, 0,
+                "Back", this::showWeatherCitySearchDialog,
+                index -> saveWeatherLocation(places.get(index)));
+    }
+
+    /**
+     * One request to ipwho.is, only when this row is pressed, and never saved before the person
+     * confirms the city it found.
+     */
+    private void detectWeatherLocation() {
+        Toast.makeText(this, "Asking ipwho.is for this TV's city\u2026", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            WeatherPlaces.Place place = WeatherLocationService.detect();
+            handler.post(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                if (place == null) {
+                    GlassDialogs.show(this, R.drawable.ic_location, "Could not detect a city",
+                            "ipwho.is returned no city for this connection. Check the internet, or search by name.",
+                            "OK", null, null, null);
+                    return;
+                }
+                GlassDialogs.show(this, R.drawable.ic_location, "Use " + place.name + "?",
+                        place.label() + "\n" + place.timezone
+                                + "\n\nDetected from this TV's public IP with one ipwho.is request"
+                                + " (free limit 1,000 per day per IP). Nothing has been saved yet.",
+                        "Save", () -> saveWeatherLocation(place), "Cancel", null);
+            });
+        }, "weather-detect").start();
+    }
+
+    /** Saves lat, lon, display name and timezone, then refreshes the line, pill and effects at once. */
+    private void saveWeatherLocation(WeatherPlaces.Place place) {
+        if (place == null) return;
+        String stationId = AppLocationManager.nearestJasStationId(place.lat, place.lon);
+        AppLocationManager.setWeatherLocation(this, stationId == null ? "CUSTOM" : stationId,
+                place.name, place.country, place.label(), place.lat, place.lon, place.timezone);
+        if (weatherAirQualityView != null) {
+            weatherAirQualityView.setText(WeatherAirQuality.getFormatted(this));
+        }
+        updateWeatherOverlay(null);
+        refreshHomeWeatherNow();
+        Toast.makeText(this, "Weather location: " + place.name + ", " + place.country,
+                Toast.LENGTH_SHORT).show();
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(), 0);
+        }
     }
 
     private void showBraviaLocationDialog() {

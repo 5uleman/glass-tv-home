@@ -132,7 +132,7 @@ public class WeatherActivity extends Activity {
         String activeRegion = AppLocationManager.getActiveRegion(this);
         CharSequence[] topOptions = new CharSequence[]{
                 i18n("📍 Choose City / Station (", "📍 Pilih Kota / Stasiun (", "📍 Pilih Bandar / Stesen (") + activeRegion + ")",
-                i18n("🌏 Change Country / Asia Region (Default: Malaysia)", "🌏 Ganti Negara / Region Asia (Default: Malaysia)", "🌏 Tukar Negara / Region Asia (Default: Malaysia)"),
+                i18n("🌏 Change Country / Asia Region (Default: Lahore)", "🌏 Ganti Negara / Region Asia (Default: Lahore)", "🌏 Tukar Negara / Region Asia (Default: Lahore)"),
                 i18n("✨ Set Weather Background Atmosphere (Sunny, Rain, Storm, Night)", "✨ Atur Suasana Latar Cuaca (Cerah, Hujan, Badai, Malam)", "✨ Tetapkan Suasana Latar Cuaca (Cerah, Hujan, Ribut, Malam)")
         };
 

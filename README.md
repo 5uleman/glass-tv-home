@@ -67,6 +67,14 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   A bad AQI stays in the text pill and never paints the wallpaper. Long-press **OK** on the Dynamic
   Weather row to preview Rain, light Fog and heavy Fog for 5 s each; a short press still switches the
   setting On or Off.
+- **Weather Location.** A row under Dynamic Weather, in both the wallpaper settings and the settings
+  card, sets the place that weather, AQI and the wallpaper effects follow. Search by city through
+  Open-Meteo geocoding (each result shows city, region and country), use the Lahore default, or
+  detect this TV's city with one ipwho.is request from its public IP (free, no key, 1,000 requests
+  per day per client IP), shown for confirmation before anything is saved. Latitude, longitude,
+  display name and timezone are stored; weather and AQI caches are keyed by location, so one city's
+  figures never appear under another; the Malaysian JAS/APIMS station is used only within its old
+  ~80 km of the chosen point, and Open-Meteo's US AQI everywhere else.
 - **A glass wallpaper dialog.** The category list is frosted glass with a white focus ring, and a dark smoke
   layer keeps the white text readable over bright pictures.
 - **A recent-apps deck.** Double-press Home. Cards scroll horizontally in 16:9, using each app's TV

@@ -15,6 +15,7 @@ import android.widget.Toast;
  * adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.suleman.glasstv --es query "Putrajaya"
  * adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.suleman.glasstv --es station_id "CA17W"
  * adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.suleman.glasstv --ef lat 2.9158 --ef lon 101.6909
+ * adb shell am broadcast -a com.gathin.tvhome.SET_LOCATION -p com.suleman.glasstv --es query "Lahore" --ef lat 31.5204 --ef lon 74.3587 --es timezone "Asia/Karachi"
  */
 public class LocationBroadcastReceiver extends BroadcastReceiver {
     private static final String TAG = "TvHome.LocationReceiver";
@@ -78,7 +79,9 @@ public class LocationBroadcastReceiver extends BroadcastReceiver {
         } else if (lat != 0.0 && lon != 0.0) {
             PrayerTimes.clearManualZone(context);
             String customName = query != null ? query : context.getString(R.string.custom_location);
-            AppLocationManager.setCustomLocation(context, "CUSTOM", customName, customName, lat, lon);
+            String timezone = intent.getStringExtra("timezone");
+            AppLocationManager.setWeatherLocation(context, "CUSTOM", customName, customName,
+                    customName, lat, lon, timezone);
             new Handler(Looper.getMainLooper()).post(() -> {
                 Toast.makeText(context, context.getString(R.string.tv_location_toast, customName), Toast.LENGTH_LONG).show();
             });
