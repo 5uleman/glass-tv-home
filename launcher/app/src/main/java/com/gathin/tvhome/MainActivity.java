@@ -539,10 +539,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (!wallpapers.isEmpty()) showNextWallpaper(false);
             else if (cfg.wallpaper != null && !placesMode) setWallpaper(decodeWallpaper(cfg.wallpaper), false);
         }
-        if (!isNoWallpaper() && !isWallpaperDescEnabled() && heroShelf != null) {
-            heroShelf.setVisibility(View.GONE);
-            heroShelf.setAlpha(0f);
-        }
         // The shelf grows and shrinks with the name and the description, so it hangs from its
         // bottom edge: every time it is measured, its top is worked out again. Positioning it by
         // the height it happened to have beforehand is what let a tall block run into the dock.
@@ -1277,7 +1273,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             wallView.setVisibility(View.GONE);
             wallView.setImageDrawable(null);
         }
-        applyDarkHeroInfo();
+        applyAppNameHero();
         hideWeatherEffectNow();
         root.setBackgroundColor(0xFF000000);
         getWindow().getDecorView().setBackgroundColor(0xFF000000);
@@ -1296,13 +1292,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /**
-     * On the dark "no wallpaper" screen the bottom block shows the focused app's name in place of a
-     * wallpaper title - large, same position and font as the normal title, with the category and
-     * description lines hidden. It keeps the last app's name when focus is on something that is not a
-     * tile (top bar, weather pill) and shows nothing before any app has had focus. showHero() rewrites
-     * it on every dock focus; this only sets it up when the mode is first entered.
+     * Names the focused app in the bottom block in place of a wallpaper title - large, same position
+     * and font as the normal title, with the category and description lines hidden. The dark "no
+     * wallpaper" screen always uses it; with "Image Title & Info" off, every wallpaper mode does too.
+     * It keeps the last app's name when focus is on something that is not a tile (top bar, weather
+     * pill) and shows nothing before any app has had focus. showHero() rewrites it on every dock
+     * focus; this only sets it up when the mode is first entered or the setting is turned off.
      */
-    private void applyDarkHeroInfo() {
+    private void applyAppNameHero() {
         if (heroShelf == null || heroName == null || heroWhere == null || heroDesc == null) return;
         String name = (adapter != null && lastFocused >= 0) ? adapter.labelAt(lastFocused) : null;
         placeName = null;
@@ -2184,9 +2181,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         }
 
-        // When using custom wallpaper or when description is turned off, disable the description part.
-        // The dark screen always keeps its own info block, so it is exempt from this.
-        if (!isNoWallpaper() && (isCustomWallpaper() || !isWallpaperDescEnabled())) {
+        // A user's own picture shows no title; with the setting off, every mode names the app.
+        HeroInfo.Source heroSource = HeroInfo.source(
+                isNoWallpaper(), isWallpaperDescEnabled(), isCustomWallpaper());
+        if (heroSource == HeroInfo.Source.NONE) {
             if (heroShelf != null) {
                 heroShelf.animate().cancel();
                 heroShelf.setAlpha(0f);
@@ -2202,12 +2200,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
 
         // The place the picture is of, when there is one; the app's own name is the fallback for
-        // the user's own wallpapers, which carry no title. On the dark "no wallpaper" screen the
-        // block always shows the focused app's name instead, large, with no category or description.
-        final boolean dark = isNoWallpaper();
-        final String label = (dark || placeName == null) ? adapter.labelAt(position) : placeName;
-        final String desc = (!dark && placeName != null) ? placeText : "";
-        final String where = (!dark && placeName != null) ? placeCountry : "";
+        // the user's own wallpapers, which carry no title. On the dark "no wallpaper" screen and
+        // with "Image Title & Info" off, the block shows the focused app's name instead, large,
+        // with no category or description.
+        final boolean appName = heroSource == HeroInfo.Source.APP;
+        final String label = (appName || placeName == null) ? adapter.labelAt(position) : placeName;
+        final String desc = (!appName && placeName != null) ? placeText : "";
+        final String where = (!appName && placeName != null) ? placeCountry : "";
         float y = heroBottom - heroShelf.getHeight();
         boolean changed = !label.contentEquals(heroName.getText());
 
@@ -2373,11 +2372,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * changes, so the words and the picture never disagree.
      */
     private void setPlace(File picture) {
-        if ((picture != null && picture.getAbsolutePath().contains("custom_wallpapers")) || !isWallpaperDescEnabled()) {
+        boolean custom = picture != null && picture.getAbsolutePath().contains("custom_wallpapers");
+        if (custom || !isWallpaperDescEnabled()) {
             placeName = null;
             placeText = "";
             placeCountry = "";
-            if (heroShelf != null) {
+            // With the setting off the shelf names the focused app, so it is left as it is; only an
+            // upload with the setting on has no text at all, and fades the shelf away.
+            if (custom && isWallpaperDescEnabled() && heroShelf != null) {
                 heroShelf.animate().cancel();
                 heroShelf.animate().alpha(0f).setDuration(reducedMotion ? 100 : 250).withEndAction(() -> {
                     if (heroShelf != null) heroShelf.setVisibility(View.GONE);
@@ -5056,25 +5058,27 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         rows.add(new GlassDialogs.Row("Image Title & Info: " + (isDescOn ? "ON" : "OFF"),
                 isDescOn ? "Show the title and description on Home"
-                        : "Hide the text for a clean screen", false));
+                        : "Show the focused app's name instead", false));
         actions.add(() -> {
             boolean newMode = !isDescOn;
             setWallpaperDescEnabled(newMode);
             if (!newMode) {
-                if (heroShelf != null) {
-                    heroShelf.animate().cancel();
-                    heroShelf.setAlpha(0f);
-                    heroShelf.setVisibility(View.GONE);
-                }
-                Toast.makeText(this, "Wallpaper description turned off (clean look)",
+                // Every mode names the focused app now, through the same shelf the dark screen uses.
+                applyAppNameHero();
+                Toast.makeText(this, "Wallpaper text off: showing the app's name",
                         Toast.LENGTH_SHORT).show();
             } else {
-                if (heroShelf != null && !isCustomWallpaper()) {
-                    heroShelf.setVisibility(View.VISIBLE);
-                    heroShelf.setAlpha(1f);
-                    if (wallpapers != null && !wallpapers.isEmpty()) {
-                        int curIdx = getSharedPreferences("wallpaper", MODE_PRIVATE).getInt("index", 0);
-                        if (curIdx >= 0 && curIdx < wallpapers.size()) setPlace(wallpapers.get(curIdx));
+                if (heroShelf != null) {
+                    if (!isCustomWallpaper()) {
+                        heroShelf.setVisibility(View.VISIBLE);
+                        heroShelf.setAlpha(1f);
+                        if (wallpapers != null && !wallpapers.isEmpty()) {
+                            int curIdx = getSharedPreferences("wallpaper", MODE_PRIVATE).getInt("index", 0);
+                            if (curIdx >= 0 && curIdx < wallpapers.size()) setPlace(wallpapers.get(curIdx));
+                        }
+                    } else {
+                        heroShelf.setAlpha(0f);
+                        heroShelf.setVisibility(View.GONE);
                     }
                 }
                 Toast.makeText(this, "Wallpaper description turned on", Toast.LENGTH_SHORT).show();
