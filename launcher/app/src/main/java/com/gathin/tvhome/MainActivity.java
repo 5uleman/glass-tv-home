@@ -76,6 +76,7 @@ import com.gathin.tvhome.qrcode.QrBitmapUtil;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -1224,19 +1225,23 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (wallpapers == null || wallpapers.isEmpty()) return;
         android.content.SharedPreferences prefs = getSharedPreferences("wallpaper", MODE_PRIVATE);
         int last = prefs.getInt("index", -1);
+        File lastFile = last >= 0 && last < wallpapers.size() ? wallpapers.get(last) : null;
+        List<File> pool = rotationPool();
+        if (pool.isEmpty()) return;
         boolean shuffle = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getBoolean("shuffle_mode", true);
-        int next;
-        if (shuffle && wallpapers.size() > 1) {
+        File chosen;
+        if (shuffle && pool.size() > 1) {
             java.util.Random rnd = new java.util.Random();
             do {
-                next = rnd.nextInt(wallpapers.size());
-            } while (next == last && wallpapers.size() > 1);
+                chosen = pool.get(rnd.nextInt(pool.size()));
+            } while (chosen.equals(lastFile) && pool.size() > 1);
         } else {
-            next = (last + 1) % wallpapers.size();
+            int pos = pool.indexOf(lastFile);
+            chosen = pool.get((pos + 1) % pool.size());
         }
-        prefs.edit().putInt("index", next).apply();
+        prefs.edit().putInt("index", wallpapers.indexOf(chosen)).apply();
         wallShownAt = android.os.SystemClock.elapsedRealtime();
-        final File file = wallpapers.get(next);
+        final File file = chosen;
         // On a cold start, name the place straight away: waiting for the decode showed the app's name
         // at full size and shrank it a moment later. After that the name changes with the picture,
         // or it would name the next place over the last one's picture while that one decodes.
@@ -1256,6 +1261,32 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 setPlace(file);
             });
         });
+    }
+
+    private boolean isDayNightWallpapersEnabled() {
+        return getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+                .getBoolean("day_night_wallpapers", true);
+    }
+
+    /** Online collection rotation follows the day/night switch; uploads, a single wallpaper and places do not. */
+    private boolean dayNightFilterApplies() {
+        return !isNoWallpaper() && !isCustomWallpaper() && !placesMode;
+    }
+
+    /**
+     * The current WallpaperDialog rotation list. The chosen picture is stored as an index into the
+     * full list, so the title and the next sequential step keep working across day and night.
+     */
+    private List<File> rotationPool() {
+        boolean enabled = isDayNightWallpapersEnabled();
+        if (!enabled || !dayNightFilterApplies()) return wallpapers;
+        List<DayNightWallpapers.Photo> tagged = new ArrayList<>();
+        for (File file : wallpapers) tagged.add(OnlineWallpapers.tagged(file));
+        List<File> allowed = new ArrayList<>();
+        for (DayNightWallpapers.Photo photo : DayNightWallpapers.allowed(enabled, LocalTime.now(), tagged)) {
+            allowed.add(photo.file);
+        }
+        return allowed;
     }
 
     /** Switches to the next picture every wallpaper interval while Home is in front. */
@@ -4290,6 +4321,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         boolean isDescOn = isWallpaperDescEnabled();
         boolean isWeatherFxOn = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
                 .getBoolean("dynamic_weather_overlay", true);
+        boolean isDayNightOn = isDayNightWallpapersEnabled();
 
         List<GlassDialogs.Row> rows = new ArrayList<>();
         List<Runnable> actions = new ArrayList<>();
@@ -4404,6 +4436,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 }
                 Toast.makeText(this, "Switching to the next image", Toast.LENGTH_SHORT).show();
             }
+        });
+
+        rows.add(new GlassDialogs.Row("Day/Night Wallpapers: " + (isDayNightOn ? "ON" : "OFF"),
+                isDayNightOn ? "Day photos 06:00-18:00, night photos 18:00-06:00"
+                        : "Off: both day and night photos can rotate", false));
+        actions.add(() -> {
+            boolean newMode = !isDayNightOn;
+            getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
+                    .putBoolean("day_night_wallpapers", newMode).apply();
+            Toast.makeText(this, newMode ? "Day/night wallpapers turned on"
+                    : "Day/night wallpapers turned off", Toast.LENGTH_SHORT).show();
+            showWallpaperDialog();
         });
 
         GlassDialogs.showList(this, R.drawable.ic_wallpaper,
