@@ -13,18 +13,18 @@ city.
 
 ## Download
 
-The current build is **3.7.0** (`versionCode 24`), 661,445 bytes (646 KB), package id
+The current build is **3.7.1** (`versionCode 25`), 678,553 bytes (663 KB), package id
 **`com.suleman.glasstv`**. Download it from the
 [Releases page](https://github.com/5uleman/glass-tv-home/releases/latest) — release binaries are
 attached there, not committed to this repository.
 
-SHA-256 (`glasstv-3.7.0-signed.apk`): `366ab333c0b19d2a52ca102ad5db08bf54884701483f27788f0a1bc9b7c29708`
+SHA-256 (`glasstv-3.7.1-polish2-signed.apk`): `a106c2425261df29a5f32ea3c87a27d2632735abca6254407960fdb9b5188f7a`
 
 > The APKs still under `release/` (`glass-tv-home.apk`, `glass-tv-installer.apk`) are upstream's original
 > builds, kept for reference. Do not install them as this edition — use only the Releases page.
 
 ```bash
-adb install -r glasstv-3.7.0-signed.apk
+adb install -r glasstv-3.7.1-polish2-signed.apk
 ```
 
 The APK is signed with this fork's own key, so it will not install over the original author's build (different
@@ -54,8 +54,19 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   Now), 06:00-18:00 rotates day and both photos, and 18:00-06:00 rotates night and both photos, checked by the
   TV clock at every change. A period always keeps at least five photos, adding the nearest by brightness if
   needed. Uploaded photos and a single pinned wallpaper are never filtered.
-- **Rain and fog overlays.** **Dynamic Weather** (default On, same stored key) keeps the rain,
-  drizzle, showers and thunderstorm animation and adds drifting fog. Fog comes from WMO codes 45/48
+- **Edge wallpaper switching.** At the last dock tile, double-press **Right** (at the first tile, **Left**)
+  to change the wallpaper. A dark toast — "Press → again for next" or "Press ← again for previous" — fades
+  in over 150 ms, centred horizontally 20 dp above the dock tray. If the hero title or description runs under
+  it, the toast moves above the text instead of covering it. A second press within 2 s switches; any other
+  key cancels.
+- **A stronger app-colour glow.** The top edge glows in the focused app's colour: 50% at the very top on a
+  dark picture, fading to nothing by 40% of the screen height, with the middle untouched. Very dark colours
+  are lifted a little so the glow still shows while keeping their hue. On a bright picture the glow is capped
+  at 30% so the white clock, date and weather pill keep their shadow-backed contrast, and focus changes
+  still cross-fade over 450 ms.
+- **Rain and fog overlays.** **Dynamic Weather** (default On, same stored key) draws drizzle, rain,
+  showers and thunderstorms as distinct effects (drizzle is the light one, storms add lightning) and
+  adds drifting fog. Fog comes from WMO codes 45/48
   or visibility below 1,000 m in the existing Open-Meteo request, and thickens as visibility drops
   from 1,000 m to 200 m; a code with no visibility gives a medium veil. Rain wins over fog. The fog
   is three neutral white layers of seamless procedural noise drifting at different speeds (a screen
@@ -64,9 +75,15 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   The 1024x256 texture is built once in the background, about 1 MB, with no bundled image; the
   effect fades in and out over 1.5 s and is a little lighter at night (06:00-18:00 is day). It draws
   only while Home is in front, at no more than 30 fps, and sits below the clock, title and dock.
-  A bad AQI stays in the text pill and never paints the wallpaper. Long-press **OK** on the Dynamic
-  Weather row to preview Rain, light Fog and heavy Fog for 5 s each; a short press still switches the
-  setting On or Off.
+  A bad AQI stays in the text pill and never paints the wallpaper.
+- **Weather Effect Preview.** A visible row directly under **Weather Location** (in the wallpaper
+  settings) cycles with **OK**: Auto, Drizzle, Rain, Thunderstorm, Light fog, Heavy fog, and back to
+  Auto. The chosen effect appears at once through the same classifier and renderer as the real
+  forecast, so the preview is exactly what real weather would paint. It stays until you choose Auto,
+  ten minutes pass, or the launcher restarts; the choice is in memory only and is never stored. The
+  weather text pill always keeps showing the real forecast. With **Dynamic Weather Off** no effect
+  shows and the row reads "Weather Effect Preview: Off" with the pending choice named underneath;
+  the pending choice still applies when the toggle is turned back on.
 - **Weather Location.** A row under Dynamic Weather, in both the wallpaper settings and the settings
   card, sets the place that weather, AQI and the wallpaper effects follow. Search by city through
   Open-Meteo geocoding (each result shows city, region and country), use the Lahore default, or
