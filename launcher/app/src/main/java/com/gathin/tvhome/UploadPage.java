@@ -145,7 +145,7 @@ function E(t,c,x){var e=C(t);if(c)e.className=c;if(x!=null)e.textContent=x;retur
 function ic(i){return $(i).content.firstChild.cloneNode(true)}
 function sz(b){return b>=1048576?(b/1048576).toFixed(1)+' MB':b>=1024?Math.round(b/1024)+' KB':b+' B'}
 var F=[],R=null,O=null,P=null,H=null,K={},ok=false,B=false,X=false,N=0,Z=null,M=false,Q=[],V={};
-var NOPE="Couldn't reach your TV",WIFI='Check your Wi-Fi, or open the QR code on the TV again.',SENT='Sent to your TV',NOW="It's on your screen now.",CAN='Sending cancelled',NOT='The photo was not sent to the TV.',REJ="The TV couldn't take that photo",REJ2='Rejected.',TRY='Try again';
+var NOPE="Couldn't reach your TV.",WIFI='Check your Wi-Fi, or open the QR code on the TV again.',SENT='Sent to your TV',NOW="It's on your screen now.",CAN='Sending cancelled',NOT='The photo was not sent to the TV.',REJ="The TV couldn't take that photo",REJ2='Rejected.',TRY='Try again';
 function net(ok){$('pill').classList.toggle('bad',!ok);$('pillText').textContent=ok?'Connected':"Can't reach TV"}
 function prog(p){var b=$('bar');b.style.width=p+'%';b.setAttribute('aria-valuenow',''+p)}
 function hush(){ST.hidden=true}
