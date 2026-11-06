@@ -25,11 +25,11 @@ public class WeatherEffectsTest {
     }
 
     @Test
-    public void rainCodesAreRain() {
-        assertEquals(WeatherEffects.Effect.RAIN, WeatherEffects.classify(true, DRIZZLE, 10_000));
+    public void everyRainCodeKeepsItsOwnEffect() {
+        assertEquals(WeatherEffects.Effect.DRIZZLE, WeatherEffects.classify(true, DRIZZLE, 10_000));
         assertEquals(WeatherEffects.Effect.RAIN, WeatherEffects.classify(true, RAIN, 10_000));
         assertEquals(WeatherEffects.Effect.RAIN, WeatherEffects.classify(true, SHOWERS, 10_000));
-        assertEquals(WeatherEffects.Effect.RAIN, WeatherEffects.classify(true, STORM, 10_000));
+        assertEquals(WeatherEffects.Effect.THUNDERSTORM, WeatherEffects.classify(true, STORM, 10_000));
         assertTrue(WeatherEffects.isRain(57));
         assertFalse(WeatherEffects.isRain(58));
         assertTrue(WeatherEffects.isRain(82));
@@ -41,7 +41,8 @@ public class WeatherEffectsTest {
     @Test
     public void rainWinsOverFog() {
         assertEquals(WeatherEffects.Effect.RAIN, WeatherEffects.classify(true, RAIN, 100));
-        assertEquals(WeatherEffects.Effect.RAIN, WeatherEffects.classify(true, STORM, 0));
+        assertEquals(WeatherEffects.Effect.DRIZZLE, WeatherEffects.classify(true, DRIZZLE, 100));
+        assertEquals(WeatherEffects.Effect.THUNDERSTORM, WeatherEffects.classify(true, STORM, 0));
     }
 
     @Test

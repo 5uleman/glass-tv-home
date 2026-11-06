@@ -83,6 +83,33 @@ public class GlassDialogLayoutTest {
     }
 
     @Test
+    public void wallpaperDialogWithNineteenRowsKeepsTheFooterReachable() {
+        int rows = 19;
+        int panel = GlassDialogLayout.panelHeight(content(rows), maxPanel());
+        assertEquals(maxPanel(), panel);
+        int viewport = viewportFor(panel);
+        assertTrue(viewport > 0);
+        int listBottom = listTop() + viewport;
+        assertTrue("the list never covers the footer", listBottom <= footerTop(panel));
+
+        int contentHeight = rows * (ROW_PX + ROW_GAP_PX);
+        int lastTop = (rows - 1) * (ROW_PX + ROW_GAP_PX);
+        int target = GlassDialogLayout.scrollTarget(lastTop, lastTop + ROW_PX, 0, viewport,
+                RING_PX, contentHeight);
+        assertTrue("the last row plus ring is reachable",
+                lastTop - RING_PX >= target
+                        && lastTop + ROW_PX + RING_PX <= target + viewport);
+
+        // The preview row sits under Weather Location, one above the last three rows.
+        int previewTop = 15 * (ROW_PX + ROW_GAP_PX);
+        int previewTarget = GlassDialogLayout.scrollTarget(previewTop, previewTop + ROW_PX, 0,
+                viewport, RING_PX, contentHeight);
+        assertTrue("the preview row plus ring is reachable",
+                previewTop - RING_PX >= previewTarget
+                        && previewTop + ROW_PX + RING_PX <= previewTarget + viewport);
+    }
+
+    @Test
     public void maximumPanelLeavesMarginsOnTheRealScreen() {
         assertEquals(856, maxPanel());
         assertEquals(SCREEN_PX - 2 * 112, maxPanel());

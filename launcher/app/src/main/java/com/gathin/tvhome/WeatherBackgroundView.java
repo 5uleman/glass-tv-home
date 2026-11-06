@@ -482,11 +482,6 @@ public class WeatherBackgroundView extends View {
         }
     }
 
-    /** Asks for the texture early, so the first Fog phase of a preview does not wait for it. */
-    public void prepareFogTexture() {
-        ensureFogTexture();
-    }
-
     /** Builds the texture once, off the UI thread; the draw path skips until it is ready. */
     private void ensureFogTexture() {
         int width = lowSpecMode ? FogTexture.WIDTH / 2 : FogTexture.WIDTH;

@@ -4,8 +4,8 @@ package com.gathin.tvhome;
  * Which weather effect the wallpaper should show, from the values the app already has. Pure:
  * no Android, no clock, no network. Missing values use {@link #UNKNOWN}.
  *
- * <p>Rain wins over fog. Air quality is not an input: a bad AQI stays in the text pill and never
- * paints the wallpaper.
+ * <p>Rain in any of its forms (drizzle, rain, showers, thunderstorm) wins over fog. Air quality is
+ * not an input: a bad AQI stays in the text pill and never paints the wallpaper.
  */
 final class WeatherEffects {
 
@@ -31,7 +31,7 @@ final class WeatherEffects {
     private static final int SHOWER_FIRST = 80, SHOWER_LAST = 82;
     private static final int STORM_FIRST = 95, STORM_LAST = 99;
 
-    enum Effect { NONE, RAIN, FOG }
+    enum Effect { NONE, DRIZZLE, RAIN, THUNDERSTORM, FOG }
 
     private WeatherEffects() {
     }
@@ -43,7 +43,10 @@ final class WeatherEffects {
      */
     static Effect classify(boolean enabled, int weatherCode, int visibilityM) {
         if (!enabled) return Effect.NONE;
-        if (isRain(weatherCode)) return Effect.RAIN;
+        if (weatherCode >= STORM_FIRST && weatherCode <= STORM_LAST) return Effect.THUNDERSTORM;
+        if ((weatherCode >= RAIN_FIRST && weatherCode <= RAIN_LAST)
+                || (weatherCode >= SHOWER_FIRST && weatherCode <= SHOWER_LAST)) return Effect.RAIN;
+        if (weatherCode >= DRIZZLE_FIRST && weatherCode <= DRIZZLE_LAST) return Effect.DRIZZLE;
         if (isFog(weatherCode, visibilityM)) return Effect.FOG;
         return Effect.NONE;
     }

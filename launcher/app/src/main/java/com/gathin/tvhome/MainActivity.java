@@ -321,32 +321,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** Dynamic atmospheric weather canvas particle overlay over the wallpaper */
     private WeatherBackgroundView weatherOverlayView;
     private static final long WEATHER_FADE_MS = 1500;
-    private static final long WEATHER_PREVIEW_STEP_MS = 5000;
-    private static final WeatherBackgroundView.ConditionType[] WEATHER_PREVIEW = {
-            WeatherBackgroundView.ConditionType.RAIN,
-            WeatherBackgroundView.ConditionType.FOG,
-            WeatherBackgroundView.ConditionType.FOG
-    };
-    private static final float[] WEATHER_PREVIEW_DENSITY = {
-            0f,
-            WeatherEffects.FOG_LIGHT_DENSITY,
-            WeatherEffects.FOG_HEAVY_DENSITY
-    };
-    private static final String[] WEATHER_PREVIEW_NAMES = {"Rain", "Light fog", "Heavy fog"};
-    private boolean weatherPreviewActive;
-    private int weatherPreviewIndex;
-    private boolean weatherDaytime = true;
-    private final Runnable weatherPreviewAdvance = () -> {
-        if (!weatherPreviewActive) return;
-        weatherPreviewIndex++;
-        if (weatherPreviewIndex < WEATHER_PREVIEW.length) {
-            showWeatherPreviewStep();
-        } else {
-            weatherPreviewActive = false;
-            Toast.makeText(this, "Weather preview ended", Toast.LENGTH_SHORT).show();
+    /** The preview row's choice, in memory only: a restart and ten minutes both return the real weather. */
+    private final WeatherEffectPreview weatherPreview = new WeatherEffectPreview();
+    private final Runnable weatherPreviewExpiry = () -> {
+        if (weatherPreview.modeAt(android.os.SystemClock.elapsedRealtime())
+                == WeatherEffectPreview.Mode.AUTO) {
             updateWeatherOverlay(HomeWeather.last(this));
         }
     };
+    private boolean weatherDaytime = true;
     private String testWeatherOverride = null;
     /** Settings kept for the places refresh, which runs after onCreate. */
     private Config config;
@@ -1292,7 +1275,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             wallView.setImageDrawable(null);
         }
         applyDarkHeroInfo();
-        stopWeatherPreview(false);
         hideWeatherEffectNow();
         root.setBackgroundColor(0xFF000000);
         getWindow().getDecorView().setBackgroundColor(0xFF000000);
@@ -3080,35 +3062,44 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         boolean enabled = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
                 .getBoolean("dynamic_weather_overlay", true);
+        long now = android.os.SystemClock.elapsedRealtime();
+        WeatherEffectPreview.Mode preview = weatherPreview.modeAt(now);
+        handler.removeCallbacks(weatherPreviewExpiry);
+        long remaining = weatherPreview.remainingMs(now);
+        if (remaining > 0) handler.postDelayed(weatherPreviewExpiry, remaining);
         if (isNoWallpaper()) {
-            stopWeatherPreview(false);
             hideWeatherEffectNow();
             return;
         }
-        if (weatherPreviewActive && enabled) return;
-        if (!enabled) stopWeatherPreview(false);
 
-        WeatherEffects.Effect effect;
-        float fogDensity = 0f;
-        if (testWeatherOverride != null && !testWeatherOverride.isEmpty()) {
-            effect = overrideEffect(testWeatherOverride);
-            fogDensity = overrideFogDensity(testWeatherOverride);
+        int code;
+        int visibility;
+        if (preview != WeatherEffectPreview.Mode.AUTO) {
+            // The preview feeds the same classifier as the forecast, so it renders the same way.
+            code = preview.weatherCode;
+            visibility = preview.visibilityM;
+        } else if (testWeatherOverride != null && !testWeatherOverride.isEmpty()) {
+            applyWeatherEffect(overrideEffect(testWeatherOverride),
+                    overrideFogDensity(testWeatherOverride));
+            return;
         } else {
-            int code = line != null ? line.weatherCode : WeatherEffects.UNKNOWN;
-            int visibility = line != null ? line.visibilityM : WeatherEffects.UNKNOWN;
+            code = line != null ? line.weatherCode : WeatherEffects.UNKNOWN;
+            visibility = line != null ? line.visibilityM : WeatherEffects.UNKNOWN;
             if (code == WeatherEffects.UNKNOWN) code = WeatherAirQuality.getCachedWeatherCode(this);
-            effect = WeatherEffects.classify(enabled, code, visibility);
-            fogDensity = WeatherEffects.fogDensity(code, visibility);
         }
-        applyWeatherEffect(effect, fogDensity);
+        WeatherEffects.Effect effect = WeatherEffects.classify(enabled, code, visibility);
+        applyWeatherEffect(effect, WeatherEffects.fogDensity(code, visibility));
     }
 
     /** Test hook (the location broadcast): map a condition word to the effect it previews. */
     private WeatherEffects.Effect overrideEffect(String condition) {
         String text = condition.toLowerCase(Locale.ROOT);
-        if (text.contains("rain") || text.contains("drizzle") || text.contains("storm")
-                || text.contains("thunder") || text.contains("hujan") || text.contains("ribut")
-                || text.contains("petir")) return WeatherEffects.Effect.RAIN;
+        if (text.contains("drizzle") || text.contains("gerimis")) return WeatherEffects.Effect.DRIZZLE;
+        if (text.contains("storm") || text.contains("thunder") || text.contains("ribut")
+                || text.contains("petir")) return WeatherEffects.Effect.THUNDERSTORM;
+        if (text.contains("rain") || text.contains("hujan") || text.contains("shower")) {
+            return WeatherEffects.Effect.RAIN;
+        }
         if (text.contains("fog") || text.contains("kabus") || text.contains("haze")
                 || text.contains("jerebu")) return WeatherEffects.Effect.FOG;
         return WeatherEffects.Effect.NONE;
@@ -3134,7 +3125,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         WeatherBackgroundView.ConditionType condition;
         switch (effect) {
+            case DRIZZLE: condition = WeatherBackgroundView.ConditionType.DRIZZLE; break;
             case RAIN: condition = WeatherBackgroundView.ConditionType.RAIN; break;
+            case THUNDERSTORM: condition = WeatherBackgroundView.ConditionType.THUNDERSTORM; break;
             case FOG:
                 condition = WeatherBackgroundView.ConditionType.FOG;
                 weatherOverlayView.setFogDensity(fogDensity);
@@ -3181,36 +3174,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         return DayNightWallpapers.periodAt(LocalTime.now()) == DayNightWallpapers.Period.DAY;
     }
 
-    /** Long-press on Dynamic Weather: Rain, light Fog and heavy Fog for five seconds each. */
-    private void startWeatherPreview() {
-        ensureWeatherOverlayView();
-        if (weatherOverlayView == null) return;
-        weatherOverlayView.prepareFogTexture();
-        handler.removeCallbacks(weatherPreviewAdvance);
-        weatherPreviewActive = true;
-        weatherPreviewIndex = 0;
-        showWeatherPreviewStep();
-    }
-
-    private void showWeatherPreviewStep() {
-        if (!weatherPreviewActive || weatherOverlayView == null) return;
-        WeatherEffects.Effect effect;
-        switch (WEATHER_PREVIEW[weatherPreviewIndex]) {
-            case FOG: effect = WeatherEffects.Effect.FOG; break;
-            default: effect = WeatherEffects.Effect.RAIN; break;
-        }
-        applyWeatherEffect(effect, WEATHER_PREVIEW_DENSITY[weatherPreviewIndex]);
-        Toast.makeText(this, "Weather preview: " + WEATHER_PREVIEW_NAMES[weatherPreviewIndex],
-                Toast.LENGTH_SHORT).show();
-        handler.removeCallbacks(weatherPreviewAdvance);
-        handler.postDelayed(weatherPreviewAdvance, WEATHER_PREVIEW_STEP_MS);
-    }
-
-    /** Ends a preview; with {@code restore}, puts the real weather effect back. */
-    private void stopWeatherPreview(boolean restore) {
-        weatherPreviewActive = false;
-        handler.removeCallbacks(weatherPreviewAdvance);
-        if (restore) updateWeatherOverlay(HomeWeather.last(this));
+    /** Applies the preview row's choice at once and restarts its ten-minute window. */
+    private void applyWeatherPreview() {
+        WeatherEffectPreview.Mode mode = weatherPreview.next(android.os.SystemClock.elapsedRealtime());
+        updateWeatherOverlay(HomeWeather.last(this));
+        boolean on = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+                .getBoolean("dynamic_weather_overlay", true);
+        Toast.makeText(this, on ? "Weather preview: " + mode.label
+                : "Preview " + mode.label + " (Dynamic Weather is off)", Toast.LENGTH_SHORT).show();
     }
 
     public void setTestWeatherOverride(String condition) {
@@ -3651,7 +3622,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             boolean newMode = !isWeatherFx;
             getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit().putBoolean("dynamic_weather_overlay", newMode).apply();
             testWeatherOverride = null;
-            stopWeatherPreview(false);
             updateWeatherOverlay(HomeWeather.last(this));
             Toast.makeText(this, newMode ? "Dynamic weather turned on" : "Dynamic weather turned off", Toast.LENGTH_SHORT).show();
             closeMenu(false);
@@ -4825,6 +4795,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private TextView qrUrlText;
 
     private void showWallpaperDialog() {
+        showWallpaperDialog(-1);
+    }
+
+    /** With {@code focusRow}, opens on that row instead of the active collection (used by the preview cycle). */
+    private void showWallpaperDialog(int focusRow) {
         File customDir = new File(getFilesDir(), "custom_wallpapers");
         File[] customFiles = customDir.listFiles((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".jpeg"));
         int customCount = (customFiles != null) ? customFiles.length : 0;
@@ -4931,15 +4906,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         rows.add(new GlassDialogs.Row("Dynamic Weather: " + (isWeatherFxOn ? "ON" : "OFF"),
                 isWeatherFxOn ? "Rain and fog on the wallpaper when conditions call for it"
-                        : "Static wallpaper without weather effects", false,
-                this::startWeatherPreview));
+                        : "Static wallpaper without weather effects", false));
         actions.add(() -> {
             boolean newMode = !isWeatherFxOn;
             getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
                     .putBoolean("dynamic_weather_overlay", newMode).apply();
             Toast.makeText(this, newMode ? "Dynamic weather turned on" : "Dynamic weather turned off",
                     Toast.LENGTH_SHORT).show();
-            stopWeatherPreview(false);
             updateWeatherOverlay(HomeWeather.last(this));
             showWallpaperDialog();
         });
@@ -4948,6 +4921,27 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 "Weather Location: " + AppLocationManager.getLocationLabel(this),
                 "Search a city, use the Lahore default, or detect this TV's city", false));
         actions.add(this::showWeatherLocationDialog);
+
+        WeatherEffectPreview.Mode previewMode = weatherPreview.modeAt(
+                android.os.SystemClock.elapsedRealtime());
+        boolean previewing = previewMode != WeatherEffectPreview.Mode.AUTO;
+        String previewSub;
+        if (!isWeatherFxOn) {
+            previewSub = "Dynamic Weather is off, so no effect shows; turn it on to preview "
+                    + previewMode.label;
+        } else if (previewing) {
+            previewSub = "Held for 10 minutes, then the real weather returns";
+        } else {
+            previewSub = "Press OK to cycle Drizzle, Rain, Thunderstorm and fog";
+        }
+        final int previewRow = rows.size();
+        rows.add(new GlassDialogs.Row(
+                "Weather Effect Preview: " + (isWeatherFxOn ? previewMode.label : "Off"),
+                previewSub, previewing && isWeatherFxOn));
+        actions.add(() -> {
+            applyWeatherPreview();
+            showWallpaperDialog(previewRow);
+        });
 
         rows.add(new GlassDialogs.Row("Change Wallpaper Now",
                 "Cycle and display the next wallpaper immediately", false));
@@ -4989,7 +4983,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         GlassDialogs.showList(this, R.drawable.ic_wallpaper,
                 AppLanguage.strWallpaperDialogTitle(this), AppLanguage.strWallpaperDialogSub(this),
-                rows, focus, AppLanguage.strClose(this), null,
+                rows, focusRow >= 0 ? focusRow : focus, AppLanguage.strClose(this), null,
                 index -> {
                     if (index >= 0 && index < actions.size()) actions.get(index).run();
                 });
