@@ -54,6 +54,14 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   Now), 06:00-18:00 rotates day and both photos, and 18:00-06:00 rotates night and both photos, checked by the
   TV clock at every change. A period always keeps at least five photos, adding the nearest by brightness if
   needed. Uploaded photos and a single pinned wallpaper are never filtered.
+- **Rain, fog and smog overlays.** **Dynamic Weather** (default On, same stored key) keeps the rain,
+  drizzle, showers and thunderstorm animation, and adds a cool grey fog and a warm grey-brown smog.
+  Fog comes from WMO codes 45/48 or visibility below 1,000 m in the existing Open-Meteo request; smog
+  starts at AQI 150. Rain wins over smog, and fog wins when both are present. Both new effects drift
+  slowly in low-opacity layers, fade in and out over 1.5 s, and are dimmer at night (06:00-18:00 is
+  day). They draw only while Home is in front, at no more than 30 fps, and sit below the clock, title
+  and dock. Long-press **OK** on the Dynamic Weather row to preview Rain, Fog and Smog for 5 s each;
+  a short press still switches the setting On or Off.
 - **A glass wallpaper dialog.** The category list is frosted glass with a white focus ring, and a dark smoke
   layer keeps the white text readable over bright pictures.
 - **A recent-apps deck.** Double-press Home. Cards scroll horizontally in 16:9, using each app's TV

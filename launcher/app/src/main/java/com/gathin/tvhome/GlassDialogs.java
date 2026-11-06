@@ -38,11 +38,18 @@ final class GlassDialogs {
         final String title;
         final String subtitle;
         final boolean selected;
+        /** Optional long-press action; a short press still uses the list's normal row action. */
+        final Runnable onLongPress;
 
         Row(String title, String subtitle, boolean selected) {
+            this(title, subtitle, selected, null);
+        }
+
+        Row(String title, String subtitle, boolean selected, Runnable onLongPress) {
             this.title = title;
             this.subtitle = subtitle;
             this.selected = selected;
+            this.onLongPress = onLongPress;
         }
     }
 
@@ -135,6 +142,9 @@ final class GlassDialogs {
             View row = row(activity, density, scroll, list, rows.get(i), ringRoom, () -> {
                 if (dialog.isShowing()) dialog.dismiss();
                 if (onRow != null) onRow.onRow(index);
+            }, rows.get(index).onLongPress == null ? null : () -> {
+                if (dialog.isShowing()) dialog.dismiss();
+                rows.get(index).onLongPress.run();
             });
             list.addView(row);
             if (i == (initialFocus >= 0 && initialFocus < rows.size() ? initialFocus : 0)) {
@@ -314,7 +324,7 @@ final class GlassDialogs {
     }
 
     private static View row(Activity activity, float density, ScrollView scroll, ViewGroup list,
-                            Row data, int ringRoom, Runnable onClick) {
+                            Row data, int ringRoom, Runnable onClick, Runnable onLongClick) {
         LinearLayout row = new LinearLayout(activity);
         row.setOrientation(LinearLayout.VERTICAL);
         row.setFocusable(true);
@@ -394,6 +404,13 @@ final class GlassDialogs {
             });
         });
         row.setOnClickListener(v -> onClick.run());
+        if (onLongClick != null) {
+            row.setLongClickable(true);
+            row.setOnLongClickListener(v -> {
+                onLongClick.run();
+                return true;
+            });
+        }
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);

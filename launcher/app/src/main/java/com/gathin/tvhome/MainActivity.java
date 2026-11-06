@@ -312,6 +312,28 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     };
     /** Dynamic atmospheric weather canvas particle overlay over the wallpaper */
     private WeatherBackgroundView weatherOverlayView;
+    private static final long WEATHER_FADE_MS = 1500;
+    private static final long WEATHER_PREVIEW_STEP_MS = 5000;
+    private static final WeatherBackgroundView.ConditionType[] WEATHER_PREVIEW = {
+            WeatherBackgroundView.ConditionType.RAIN,
+            WeatherBackgroundView.ConditionType.FOG,
+            WeatherBackgroundView.ConditionType.SMOG
+    };
+    private static final String[] WEATHER_PREVIEW_NAMES = {"Rain", "Fog", "Smog"};
+    private boolean weatherPreviewActive;
+    private int weatherPreviewIndex;
+    private boolean weatherDaytime = true;
+    private final Runnable weatherPreviewAdvance = () -> {
+        if (!weatherPreviewActive) return;
+        weatherPreviewIndex++;
+        if (weatherPreviewIndex < WEATHER_PREVIEW.length) {
+            showWeatherPreviewStep();
+        } else {
+            weatherPreviewActive = false;
+            Toast.makeText(this, "Weather preview ended", Toast.LENGTH_SHORT).show();
+            updateWeatherOverlay(HomeWeather.last(this));
+        }
+    };
     private String testWeatherOverride = null;
     /** Settings kept for the places refresh, which runs after onCreate. */
     private Config config;
@@ -382,6 +404,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             updateDateAndPeriod();
             updateWifiLabel();
             updateWeatherAqi();
+            if (weatherOverlayView != null && weatherOverlayView.getVisibility() == View.VISIBLE
+                    && isDaytime() != weatherDaytime) {
+                updateWeatherOverlay(HomeWeather.last(MainActivity.this));
+            }
             WeatherAirQuality.syncIfDue(MainActivity.this, MainActivity.this::updateWeatherAqi);
             updateIslamicShelf();
             refreshPlacesIfDue();
@@ -1183,11 +1209,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             wallView.setImageDrawable(null);
         }
         applyDarkHeroInfo();
-        if (weatherOverlayView != null) {
-            weatherOverlayView.setCondition(WeatherBackgroundView.ConditionType.NONE);
-            weatherOverlayView.stopAnimation();
-            weatherOverlayView.setVisibility(View.GONE);
-        }
+        stopWeatherPreview(false);
+        hideWeatherEffectNow();
         root.setBackgroundColor(0xFF000000);
         getWindow().getDecorView().setBackgroundColor(0xFF000000);
         Backdrop.presentSolid(0xFF000000);
@@ -2934,46 +2957,129 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         ensureWeatherOverlayView();
         if (weatherOverlayView == null) return;
 
+        boolean enabled = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+                .getBoolean("dynamic_weather_overlay", true);
         if (isNoWallpaper()) {
-            weatherOverlayView.setCondition(WeatherBackgroundView.ConditionType.NONE);
-            weatherOverlayView.stopAnimation();
-            weatherOverlayView.setVisibility(View.GONE);
+            stopWeatherPreview(false);
+            hideWeatherEffectNow();
             return;
         }
+        if (weatherPreviewActive && enabled) return;
+        if (!enabled) stopWeatherPreview(false);
 
-        boolean enabled = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getBoolean("dynamic_weather_overlay", true);
-        if (!enabled) {
-            weatherOverlayView.setCondition(WeatherBackgroundView.ConditionType.NONE);
-            weatherOverlayView.stopAnimation();
-            weatherOverlayView.setVisibility(View.GONE);
-            return;
-        }
-
-        String wText = "";
+        WeatherEffects.Effect effect;
         if (testWeatherOverride != null && !testWeatherOverride.isEmpty()) {
-            wText = testWeatherOverride.toLowerCase(Locale.ROOT);
-        } else if (line != null && line.weather != null) {
-            wText = line.weather.toLowerCase(Locale.ROOT);
-        }
-
-        WeatherBackgroundView.ConditionType cond = WeatherBackgroundView.ConditionType.NONE;
-        if (wText.contains("thunder") || wText.contains("storm") || wText.contains("ribut") || wText.contains("petir")) {
-            cond = WeatherBackgroundView.ConditionType.THUNDERSTORM;
-        } else if (wText.contains("heavy rain") || wText.contains("lebat") || wText.contains("showers")) {
-            cond = WeatherBackgroundView.ConditionType.RAIN;
-        } else if (wText.contains("rain") || wText.contains("drizzle") || wText.contains("hujan") || wText.contains("renyai")) {
-            cond = WeatherBackgroundView.ConditionType.DRIZZLE;
-        }
-
-        if (cond == WeatherBackgroundView.ConditionType.NONE) {
-            weatherOverlayView.setCondition(WeatherBackgroundView.ConditionType.NONE);
-            weatherOverlayView.stopAnimation();
-            weatherOverlayView.setVisibility(View.GONE);
+            effect = overrideEffect(testWeatherOverride);
         } else {
-            weatherOverlayView.setVisibility(View.VISIBLE);
-            weatherOverlayView.setCondition(cond);
-            weatherOverlayView.startAnimation();
+            int code = line != null ? line.weatherCode : WeatherEffects.UNKNOWN;
+            int visibility = line != null ? line.visibilityM : WeatherEffects.UNKNOWN;
+            int aqi = line != null ? line.aqi : WeatherEffects.UNKNOWN;
+            // The line's own AQI is often empty outside Malaysia; the pill then shows the value cached
+            // by WeatherAirQuality, so smog must use the same number.
+            if (code == WeatherEffects.UNKNOWN) code = WeatherAirQuality.getCachedWeatherCode(this);
+            if (aqi == WeatherEffects.UNKNOWN) aqi = WeatherAirQuality.getCachedAqi(this);
+            effect = WeatherEffects.classify(enabled, code, visibility, aqi);
         }
+        applyWeatherEffect(effect);
+    }
+
+    /** Test hook (the location broadcast): map a condition word to the effect it previews. */
+    private WeatherEffects.Effect overrideEffect(String condition) {
+        String text = condition.toLowerCase(Locale.ROOT);
+        if (text.contains("rain") || text.contains("drizzle") || text.contains("storm")
+                || text.contains("thunder") || text.contains("hujan") || text.contains("ribut")
+                || text.contains("petir")) return WeatherEffects.Effect.RAIN;
+        if (text.contains("fog") || text.contains("kabus")) return WeatherEffects.Effect.FOG;
+        if (text.contains("smog") || text.contains("haze") || text.contains("jerebu")) {
+            return WeatherEffects.Effect.SMOG;
+        }
+        return WeatherEffects.Effect.NONE;
+    }
+
+    private void applyWeatherEffect(WeatherEffects.Effect effect) {
+        if (weatherOverlayView == null) return;
+        if (effect == WeatherEffects.Effect.NONE) {
+            fadeOutWeatherEffect();
+            return;
+        }
+        WeatherBackgroundView.ConditionType condition;
+        switch (effect) {
+            case RAIN: condition = WeatherBackgroundView.ConditionType.RAIN; break;
+            case FOG: condition = WeatherBackgroundView.ConditionType.FOG; break;
+            case SMOG: condition = WeatherBackgroundView.ConditionType.SMOG; break;
+            default: condition = WeatherBackgroundView.ConditionType.NONE; break;
+        }
+        boolean day = isDaytime();
+        weatherDaytime = day;
+        weatherOverlayView.setDaytime(day);
+        weatherOverlayView.setCondition(condition);
+        weatherOverlayView.setVisibility(View.VISIBLE);
+        weatherOverlayView.animate().cancel();
+        if (weatherOverlayView.getAlpha() < 0.99f) {
+            weatherOverlayView.animate().alpha(1f).setDuration(WEATHER_FADE_MS).start();
+        } else {
+            weatherOverlayView.setAlpha(1f);
+        }
+        weatherOverlayView.startAnimation();
+    }
+
+    /** Fades the effect out over 1.5 s, then stops drawing and hides the view. */
+    private void fadeOutWeatherEffect() {
+        if (weatherOverlayView == null) return;
+        weatherOverlayView.animate().cancel();
+        weatherOverlayView.animate().alpha(0f).setDuration(WEATHER_FADE_MS).withEndAction(() -> {
+            if (weatherOverlayView != null && weatherOverlayView.getAlpha() == 0f) {
+                weatherOverlayView.setCondition(WeatherBackgroundView.ConditionType.NONE);
+                weatherOverlayView.stopAnimation();
+                weatherOverlayView.setVisibility(View.GONE);
+            }
+        }).start();
+    }
+
+    private void hideWeatherEffectNow() {
+        if (weatherOverlayView == null) return;
+        weatherOverlayView.animate().cancel();
+        weatherOverlayView.setCondition(WeatherBackgroundView.ConditionType.NONE);
+        weatherOverlayView.stopAnimation();
+        weatherOverlayView.setAlpha(0f);
+        weatherOverlayView.setVisibility(View.GONE);
+    }
+
+    private boolean isDaytime() {
+        return DayNightWallpapers.periodAt(LocalTime.now()) == DayNightWallpapers.Period.DAY;
+    }
+
+    /** Long-press on Dynamic Weather: Rain, Fog, Smog for five seconds each, then the real state. */
+    private void startWeatherPreview() {
+        ensureWeatherOverlayView();
+        if (weatherOverlayView == null) return;
+        weatherOverlayView.prepareHazeTextures();
+        handler.removeCallbacks(weatherPreviewAdvance);
+        weatherPreviewActive = true;
+        weatherPreviewIndex = 0;
+        showWeatherPreviewStep();
+    }
+
+    private void showWeatherPreviewStep() {
+        if (!weatherPreviewActive || weatherOverlayView == null) return;
+        WeatherEffects.Effect effect;
+        switch (WEATHER_PREVIEW[weatherPreviewIndex]) {
+            case FOG: effect = WeatherEffects.Effect.FOG; break;
+            case SMOG: effect = WeatherEffects.Effect.SMOG; break;
+            default: effect = WeatherEffects.Effect.RAIN; break;
+        }
+        applyWeatherEffect(effect);
+        Toast.makeText(this, "Weather preview: " + WEATHER_PREVIEW_NAMES[weatherPreviewIndex],
+                Toast.LENGTH_SHORT).show();
+        handler.removeCallbacks(weatherPreviewAdvance);
+        handler.postDelayed(weatherPreviewAdvance, WEATHER_PREVIEW_STEP_MS);
+    }
+
+    /** Ends a preview; with {@code restore}, puts the real weather effect back. */
+    private void stopWeatherPreview(boolean restore) {
+        weatherPreviewActive = false;
+        handler.removeCallbacks(weatherPreviewAdvance);
+        if (restore) updateWeatherOverlay(HomeWeather.last(this));
     }
 
     public void setTestWeatherOverride(String condition) {
@@ -3414,6 +3520,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             boolean newMode = !isWeatherFx;
             getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit().putBoolean("dynamic_weather_overlay", newMode).apply();
             testWeatherOverride = null;
+            stopWeatherPreview(false);
             updateWeatherOverlay(HomeWeather.last(this));
             Toast.makeText(this, newMode ? "Dynamic weather turned on" : "Dynamic weather turned off", Toast.LENGTH_SHORT).show();
             closeMenu(false);
@@ -4684,14 +4791,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
 
         rows.add(new GlassDialogs.Row("Dynamic Weather: " + (isWeatherFxOn ? "ON" : "OFF"),
-                isWeatherFxOn ? "Rain and lightning on the wallpaper when raining"
-                        : "Static wallpaper without weather effects", false));
+                isWeatherFxOn ? "Rain, fog and smog on the wallpaper when conditions call for it"
+                        : "Static wallpaper without weather effects", false,
+                this::startWeatherPreview));
         actions.add(() -> {
             boolean newMode = !isWeatherFxOn;
             getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
                     .putBoolean("dynamic_weather_overlay", newMode).apply();
             Toast.makeText(this, newMode ? "Dynamic weather turned on" : "Dynamic weather turned off",
                     Toast.LENGTH_SHORT).show();
+            stopWeatherPreview(false);
             updateWeatherOverlay(HomeWeather.last(this));
             showWallpaperDialog();
         });
