@@ -4547,7 +4547,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         try {
             return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
         } catch (Exception e) {
-            return "3.1.4";
+            return "4.0.0";
         }
     }
 

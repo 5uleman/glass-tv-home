@@ -10,8 +10,8 @@ android {
         applicationId 'com.suleman.glasstv'
         minSdk 26
         targetSdk 34
-        versionCode 25
-        versionName '3.7.1'
+        versionCode 26
+        versionName '4.0.0'
     }
 
     signingConfigs {
