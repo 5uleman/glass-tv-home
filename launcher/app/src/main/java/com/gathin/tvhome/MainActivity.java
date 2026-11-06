@@ -305,7 +305,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** The dock's edge double-press, and the last pictures shown that Previous/Next walk. */
     private final EdgeWallpaperSwitch edgeSwitch = new EdgeWallpaperSwitch();
     private final WallpaperHistory<File> wallHistory = new WallpaperHistory<>();
-    private TextView edgeHintView;
+    private View edgeHintView;
+    private ImageView edgeHintArrow;
+    private TextView edgeHintText;
     private final Runnable edgeHintExpiry = () -> {
         edgeSwitch.cancel();
         hideEdgeHint();
@@ -1429,74 +1431,89 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
-    /** The small hint over the dock; the arrow is the physical key that armed it. */
+    /** The small hint over the dock, in the same glass as the top pills. */
     private void showEdgeHint(boolean next) {
         if (edgeHintView == null) {
             float density = getResources().getDisplayMetrics().density;
-            TextView hint = new TextView(this);
-            hint.setTextSize(13);
-            hint.setTextColor(0xFFFFFFFF);
-            Fonts.apply(hint, Fonts.SEMIBOLD);
-            hint.setGravity(Gravity.CENTER);
-            hint.setIncludeFontPadding(false);
-            GradientDrawable bg = new GradientDrawable();
-            bg.setColor(0xD9000000);
-            bg.setCornerRadius(18 * density);
-            bg.setStroke(Math.max(1, Math.round(density)), 0x33FFFFFF);
-            hint.setBackground(bg);
-            int px = Math.round(14 * density), py = Math.round(7 * density);
-            hint.setPadding(px, py, px, py);
-            hint.setElevation(4 * density);
-            hint.setFocusable(false);
-            hint.setClickable(false);
-            hint.setAlpha(0f);
-            hint.setVisibility(View.GONE);
+            LinearLayout pill = new LinearLayout(this);
+            pill.setOrientation(LinearLayout.HORIZONTAL);
+            pill.setGravity(Gravity.CENTER_VERTICAL);
+            pill.setBackground(new GlassDrawable(pill, 21 * density, density, null));
+            Backdrop.watch(pill);
+            int pad = Math.round(13.5f * density);
+            pill.setPadding(pad, 0, pad, 0);
+            pill.setFocusable(false);
+            pill.setClickable(false);
+            pill.setElevation(2 * density);
+
+            ImageView arrow = new ImageView(this);
+            int arrowSize = Math.round(18 * density);
+            LinearLayout.LayoutParams arrowLp = new LinearLayout.LayoutParams(arrowSize, arrowSize);
+            arrowLp.setMarginEnd(Math.round(7 * density));
+            arrow.setLayoutParams(arrowLp);
+            arrow.setColorFilter(0xFFFFFFFF);
+            pill.addView(arrow);
+
+            TextView label = new TextView(this);
+            label.setTextSize(15);
+            label.setTextColor(0xFFFFFFFF);
+            label.setLetterSpacing(0.01f);
+            label.setIncludeFontPadding(false);
+            label.setShadowLayer(4 * density, 0, density, 0x99000000);
+            Fonts.apply(label, Fonts.SEMIBOLD);
+            pill.addView(label);
+
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-            lp.bottomMargin = edgeHintBottomMargin();
-            root.addView(hint, lp);
-            edgeHintView = hint;
+                    ViewGroup.LayoutParams.WRAP_CONTENT, Math.round(42 * density));
+            root.addView(pill, lp);
+            edgeHintView = pill;
+            edgeHintArrow = arrow;
+            edgeHintText = label;
         }
         boolean rtl = isLayoutRtl();
         boolean leftArrow = next == rtl;
-        edgeHintView.setText((leftArrow ? "Press \u2190 again" : "Press \u2192 again")
-                + (next ? " for next wallpaper" : " for previous wallpaper"));
+        edgeHintArrow.setImageResource(leftArrow
+                ? R.drawable.ic_edge_arrow_left : R.drawable.ic_edge_arrow_right);
+        edgeHintText.setText(next ? "Next wallpaper" : "Previous wallpaper");
         handler.removeCallbacks(edgeHintExpiry);
         edgeHintView.animate().cancel();
         edgeHintView.setVisibility(View.VISIBLE);
         edgeHintView.setAlpha(0f);
-        edgeHintView.animate().alpha(1f).setDuration(120).start();
-        placeEdgeHint();
+        edgeHintView.setScaleX(0.92f);
+        edgeHintView.setScaleY(0.92f);
+        edgeHintView.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(150).start();
+        placeEdgeHint(next);
         handler.postDelayed(edgeHintExpiry, EdgeWallpaperSwitch.WINDOW_MS);
     }
 
-    /** Sits the hint just above the dock row, where it cannot cover the shelf's lines. */
-    private void placeEdgeHint() {
+    /** Sits the pill just above the first/last dock tile, on that tile's physical outer edge. */
+    private void placeEdgeHint(boolean next) {
         if (edgeHintView == null) return;
         edgeHintView.post(() -> {
-            if (edgeHintView == null) return;
-            ViewGroup.LayoutParams params = edgeHintView.getLayoutParams();
-            if (!(params instanceof FrameLayout.LayoutParams)) return;
-            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) params;
-            int margin = edgeHintBottomMargin();
-            if (lp.bottomMargin != margin) {
-                lp.bottomMargin = margin;
-                edgeHintView.setLayoutParams(lp);
+            if (edgeHintView == null || grid == null) return;
+            if (edgeHintView.getWidth() == 0 || edgeHintView.getHeight() == 0) {
+                edgeHintView.post(() -> placeEdgeHint(next));
+                return;
             }
+            int count = adapter.getItemCount();
+            int dockCount = Math.min(COLUMNS, count);
+            if (dockCount <= 0) return;
+            int target = next ? dockCount - 1 : 0;
+            RecyclerView.ViewHolder vh = grid.findViewHolderForAdapterPosition(target);
+            View tile = vh != null ? vh.itemView : null;
+            if (tile == null) return;
+            Rect r = new Rect(0, 0, tile.getWidth(), tile.getHeight());
+            root.offsetDescendantRectToMyCoords(tile, r);
+            float gap = 6 * density;
+            float y = Math.max(8 * density, r.top - gap - edgeHintView.getHeight());
+            boolean rtl = isLayoutRtl();
+            float x;
+            if (next) x = rtl ? r.left : r.right - edgeHintView.getWidth();
+            else x = rtl ? r.right - edgeHintView.getWidth() : r.left;
+            x = Math.max(8 * density, Math.min(x, root.getWidth() - edgeHintView.getWidth() - 8 * density));
+            edgeHintView.setX(x);
+            edgeHintView.setY(y);
         });
-    }
-
-    /** The bottom margin that puts the hint 10 dp above the dock, even before it is first drawn. */
-    private int edgeHintBottomMargin() {
-        float density = getResources().getDisplayMetrics().density;
-        if (root == null || grid == null) return Math.round(16 * density);
-        RecyclerView.ViewHolder vh = grid.findViewHolderForAdapterPosition(0);
-        View dock = vh != null ? vh.itemView : null;
-        if (dock == null) return Math.round(16 * density);
-        Rect r = new Rect(0, 0, dock.getWidth(), dock.getHeight());
-        root.offsetDescendantRectToMyCoords(dock, r);
-        return Math.max(0, root.getHeight() - r.top + Math.round(10 * density));
     }
 
     private void hideEdgeHint() {
@@ -1507,11 +1524,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             edgeHintView.setAlpha(0f);
             return;
         }
-        edgeHintView.animate().alpha(0f).setDuration(120).withEndAction(() -> {
-            if (edgeHintView != null && edgeHintView.getAlpha() == 0f) {
-                edgeHintView.setVisibility(View.GONE);
-            }
-        }).start();
+        edgeHintView.animate().alpha(0f).scaleX(0.96f).scaleY(0.96f)
+                .setDuration(150).withEndAction(() -> {
+                    if (edgeHintView != null && edgeHintView.getAlpha() == 0f) {
+                        edgeHintView.setVisibility(View.GONE);
+                    }
+                }).start();
     }
 
     private boolean isDayNightWallpapersEnabled() {
