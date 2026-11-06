@@ -13,18 +13,18 @@ city.
 
 ## Download
 
-The current build is **3.7.1** (`versionCode 25`), 681,461 bytes (665 KB), package id
+The current build is **3.7.1** (`versionCode 25`), 683,485 bytes (667 KB), package id
 **`com.suleman.glasstv`**. Download it from the
 [Releases page](https://github.com/5uleman/glass-tv-home/releases/latest) — release binaries are
 attached there, not committed to this repository.
 
-SHA-256 (`glasstv-3.7.1-polish4-signed.apk`): `37ca274681aec8e8ea69f7100f67ef7126c8257ec2ba2bd5b3211714db9fea22`
+SHA-256 (`glasstv-3.7.1-polish5-signed.apk`): `c30b99ebd09d6ac57385afabf4128d5e2d914a751f7cb7ad5d7c71fa86f35c59`
 
 > The APKs still under `release/` (`glass-tv-home.apk`, `glass-tv-installer.apk`) are upstream's original
 > builds, kept for reference. Do not install them as this edition — use only the Releases page.
 
 ```bash
-adb install -r glasstv-3.7.1-polish4-signed.apk
+adb install -r glasstv-3.7.1-polish5-signed.apk
 ```
 
 The APK is signed with this fork's own key, so it will not install over the original author's build (different
@@ -61,11 +61,12 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   TV clock at every change. A period always keeps at least five photos, adding the nearest by brightness if
   needed. Uploaded photos and a single pinned wallpaper are never filtered.
 - **Edge wallpaper switching.** At the last dock tile, double-press **Right** (at the first tile, **Left**)
-  to change the wallpaper. A glass toast — "Press → again for next" or "Press ← again for previous" — rises
-  8 dp as it fades in over 150 ms, centred horizontally 20 dp above the dock tray. It follows the weather
-  pill's radius, Outfit 500 at 14sp and hairline border, with a 45% dark tint so it stays readable on a
-  bright picture, and it is text only: never focusable, no icon, no focus ring. If the hero title or
-  description runs under it, the toast moves above the text instead of covering it. Each direction is
+  to change the wallpaper. A compact glass capsule — "‹ Previous wallpaper" at the left edge, "Next
+  wallpaper ›" at the right — fades in over 150 ms with a 4 dp rise at the outer edge of the first or last
+  tile, so its chevron points away from the dock. It sits in the band between the hero text and the dock
+  tray: never closer than 3 dp to the hero, 4 dp above the tray border, and inside an 8 dp screen margin,
+  so it covers neither the title nor the tray. It follows the weather pill's look (Outfit at 600 on 12sp,
+  hairline border, 45% dark tint) and is never focusable and has no focus ring. Each direction is
   explained twice in total; after that the double-press keeps working silently, and the counters refill
   when the TV screen goes off and on (and on a fresh launch). A second press within 2 s switches; any
   other key cancels.
@@ -126,8 +127,11 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   left alone, and the deck says when a VPN was kept.
 - **The self-updater is off.** This build never reads a release feed or shows an update prompt; new versions are
   built and installed by hand.
-- **Four-column grid** and a hero title that uses the full width, so a long place name is not cut with an
-  ellipsis.
+- **Four to six apps per row.** The grid starts at four columns, and the wallpaper settings'
+  **Apps per Row** row cycles 4 → 5 → 6 → 4 with **OK**. The choice is stored in `wallpaper_prefs`
+  (key `grid_columns`, clamped to 4-6) and applied immediately by rebuilding the home screen, keeping
+  the wallpaper and restoring focus; the dock shows as many tiles as the chosen column count. A hero
+  title that uses the full width keeps long place names from being cut with an ellipsis.
 - **Media polling is off**, so nothing polls the current track while the launcher is idle.
 
 Everything else is upstream's work: the glass dock and menus, weekly places, the StandBy clock, cache cleaning
