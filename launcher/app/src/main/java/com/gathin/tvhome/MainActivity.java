@@ -319,9 +319,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private static final WeatherBackgroundView.ConditionType[] WEATHER_PREVIEW = {
             WeatherBackgroundView.ConditionType.RAIN,
             WeatherBackgroundView.ConditionType.FOG,
-            WeatherBackgroundView.ConditionType.SMOG
+            WeatherBackgroundView.ConditionType.FOG
     };
-    private static final String[] WEATHER_PREVIEW_NAMES = {"Rain", "Fog", "Smog"};
+    private static final float[] WEATHER_PREVIEW_DENSITY = {
+            0f,
+            WeatherEffects.FOG_LIGHT_DENSITY,
+            WeatherEffects.FOG_HEAVY_DENSITY
+    };
+    private static final String[] WEATHER_PREVIEW_NAMES = {"Rain", "Light fog", "Heavy fog"};
     private boolean weatherPreviewActive;
     private int weatherPreviewIndex;
     private boolean weatherDaytime = true;
@@ -2986,19 +2991,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (!enabled) stopWeatherPreview(false);
 
         WeatherEffects.Effect effect;
+        float fogDensity = 0f;
         if (testWeatherOverride != null && !testWeatherOverride.isEmpty()) {
             effect = overrideEffect(testWeatherOverride);
+            fogDensity = overrideFogDensity(testWeatherOverride);
         } else {
             int code = line != null ? line.weatherCode : WeatherEffects.UNKNOWN;
             int visibility = line != null ? line.visibilityM : WeatherEffects.UNKNOWN;
-            int aqi = line != null ? line.aqi : WeatherEffects.UNKNOWN;
-            // The line's own AQI is often empty outside Malaysia; the pill then shows the value cached
-            // by WeatherAirQuality, so smog must use the same number.
             if (code == WeatherEffects.UNKNOWN) code = WeatherAirQuality.getCachedWeatherCode(this);
-            if (aqi == WeatherEffects.UNKNOWN) aqi = WeatherAirQuality.getCachedAqi(this);
-            effect = WeatherEffects.classify(enabled, code, visibility, aqi);
+            effect = WeatherEffects.classify(enabled, code, visibility);
+            fogDensity = WeatherEffects.fogDensity(code, visibility);
         }
-        applyWeatherEffect(effect);
+        applyWeatherEffect(effect, fogDensity);
     }
 
     /** Test hook (the location broadcast): map a condition word to the effect it previews. */
@@ -3007,14 +3011,24 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (text.contains("rain") || text.contains("drizzle") || text.contains("storm")
                 || text.contains("thunder") || text.contains("hujan") || text.contains("ribut")
                 || text.contains("petir")) return WeatherEffects.Effect.RAIN;
-        if (text.contains("fog") || text.contains("kabus")) return WeatherEffects.Effect.FOG;
-        if (text.contains("smog") || text.contains("haze") || text.contains("jerebu")) {
-            return WeatherEffects.Effect.SMOG;
-        }
+        if (text.contains("fog") || text.contains("kabus") || text.contains("haze")
+                || text.contains("jerebu")) return WeatherEffects.Effect.FOG;
         return WeatherEffects.Effect.NONE;
     }
 
-    private void applyWeatherEffect(WeatherEffects.Effect effect) {
+    /** The broadcast can ask for a light or heavy fog; plain "fog" gets the medium code-only veil. */
+    private float overrideFogDensity(String condition) {
+        String text = condition.toLowerCase(Locale.ROOT);
+        if (text.contains("heavy") || text.contains("tebal")) {
+            return WeatherEffects.FOG_HEAVY_DENSITY;
+        }
+        if (text.contains("light") || text.contains("nipis")) {
+            return WeatherEffects.FOG_LIGHT_DENSITY;
+        }
+        return WeatherEffects.FOG_CODE_ONLY_DENSITY;
+    }
+
+    private void applyWeatherEffect(WeatherEffects.Effect effect, float fogDensity) {
         if (weatherOverlayView == null) return;
         if (effect == WeatherEffects.Effect.NONE) {
             fadeOutWeatherEffect();
@@ -3023,8 +3037,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         WeatherBackgroundView.ConditionType condition;
         switch (effect) {
             case RAIN: condition = WeatherBackgroundView.ConditionType.RAIN; break;
-            case FOG: condition = WeatherBackgroundView.ConditionType.FOG; break;
-            case SMOG: condition = WeatherBackgroundView.ConditionType.SMOG; break;
+            case FOG:
+                condition = WeatherBackgroundView.ConditionType.FOG;
+                weatherOverlayView.setFogDensity(fogDensity);
+                break;
             default: condition = WeatherBackgroundView.ConditionType.NONE; break;
         }
         boolean day = isDaytime();
@@ -3067,11 +3083,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         return DayNightWallpapers.periodAt(LocalTime.now()) == DayNightWallpapers.Period.DAY;
     }
 
-    /** Long-press on Dynamic Weather: Rain, Fog, Smog for five seconds each, then the real state. */
+    /** Long-press on Dynamic Weather: Rain, light Fog and heavy Fog for five seconds each. */
     private void startWeatherPreview() {
         ensureWeatherOverlayView();
         if (weatherOverlayView == null) return;
-        weatherOverlayView.prepareHazeTextures();
+        weatherOverlayView.prepareFogTexture();
         handler.removeCallbacks(weatherPreviewAdvance);
         weatherPreviewActive = true;
         weatherPreviewIndex = 0;
@@ -3083,10 +3099,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         WeatherEffects.Effect effect;
         switch (WEATHER_PREVIEW[weatherPreviewIndex]) {
             case FOG: effect = WeatherEffects.Effect.FOG; break;
-            case SMOG: effect = WeatherEffects.Effect.SMOG; break;
             default: effect = WeatherEffects.Effect.RAIN; break;
         }
-        applyWeatherEffect(effect);
+        applyWeatherEffect(effect, WEATHER_PREVIEW_DENSITY[weatherPreviewIndex]);
         Toast.makeText(this, "Weather preview: " + WEATHER_PREVIEW_NAMES[weatherPreviewIndex],
                 Toast.LENGTH_SHORT).show();
         handler.removeCallbacks(weatherPreviewAdvance);
@@ -4809,7 +4824,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
 
         rows.add(new GlassDialogs.Row("Dynamic Weather: " + (isWeatherFxOn ? "ON" : "OFF"),
-                isWeatherFxOn ? "Rain, fog and smog on the wallpaper when conditions call for it"
+                isWeatherFxOn ? "Rain and fog on the wallpaper when conditions call for it"
                         : "Static wallpaper without weather effects", false,
                 this::startWeatherPreview));
         actions.add(() -> {

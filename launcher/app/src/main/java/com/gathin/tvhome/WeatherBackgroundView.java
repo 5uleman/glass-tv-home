@@ -2,6 +2,7 @@ package com.gathin.tvhome;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -20,10 +21,10 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Hardware-accelerated animated weather background matching Apple Weather's atmospheric canvas.
- * Renders dynamic sky gradients, sun lens flares, multi-layer rainfall, thunderstorm lightning flashes,
- * procedural drifting clouds, twinkling night stars, and slow fog/smog veils. As a wallpaper overlay
- * it is capped at 30 fps and draws only while Home is in front.
+ * Hardware-accelerated animated weather background. Renders dynamic sky gradients, sun lens flares,
+ * multi-layer rainfall, thunderstorm lightning flashes, procedural drifting clouds, twinkling night
+ * stars, and slow drifting fog wisps. As a wallpaper overlay it is capped at 30 fps, draws only
+ * while Home is in front, and keeps at most one 1 MB fog texture.
  */
 public class WeatherBackgroundView extends View {
 
@@ -35,7 +36,6 @@ public class WeatherBackgroundView extends View {
         RAIN,
         THUNDERSTORM,
         FOG,
-        SMOG,
         NIGHT
     }
 
@@ -53,15 +53,33 @@ public class WeatherBackgroundView extends View {
     private final Paint cloudPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint starPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint ripplePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    /** Fog and smog are two prebuilt low-resolution textures, drawn slowly, never made per frame. */
-    private final Paint hazePaint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG);
-    private final Matrix hazeMatrix = new Matrix();
-    private Bitmap fogTexture, smogTexture;
+    /**
+     * Fog is one prebuilt seamless noise texture, drawn three times at different scales, heights
+     * and speeds. The texture is white with alpha only and is built off the UI thread.
+     */
+    private final Paint fogPaint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG);
+    private final Matrix fogMatrix = new Matrix();
+    private Bitmap fogTexture;
+    private BitmapShader fogShader;
+    private volatile boolean fogTextureBuilding;
+    private int fogBuildGeneration;
+    private int fogTextureWidth;
     private boolean daytime = true;
-    private float hazePhase;
-    private static final int FOG_DAY_ALPHA = 120, FOG_NIGHT_ALPHA = 68;
-    private static final int SMOG_DAY_ALPHA = 138, SMOG_NIGHT_ALPHA = 78;
-    private static final float HAZE_SCALE = 1.18f;
+    private float fogDensity = WeatherEffects.FOG_CODE_ONLY_DENSITY;
+    private final float[] fogPhase = new float[FOG_LAYER_COUNT];
+
+    /** The three layer alphas always sum to this, so fog can never wash the wallpaper out. */
+    static final float FOG_OPACITY_CAP = 0.52f;
+    private static final float FOG_NIGHT_SCALE = 0.82f;
+    private static final int FOG_LAYER_COUNT = 3;
+    /** Share of {@link #FOG_OPACITY_CAP} each layer gets, back to front. */
+    private static final float[] FOG_LAYER_WEIGHTS = {0.45f, 0.33f, 0.22f};
+    /** Seconds for one screen width of drift; all three are between 90 s and 180 s. */
+    private static final float[] FOG_LAYER_SECONDS = {170f, 135f, 100f};
+    /** Layer width as a multiple of the screen: wider layers look further away. */
+    private static final float[] FOG_LAYER_WIDTHS = {1.65f, 1.30f, 1.00f};
+    /** Where each layer starts, as a fraction of the screen height; all reach the bottom. */
+    private static final float[] FOG_LAYER_TOPS = {0.12f, 0.34f, 0.55f};
     /** Overlay frames are capped at 30 fps; the rest of the app still runs at display rate. */
     private static final long OVERLAY_FRAME_MS = 33;
 
@@ -151,18 +169,27 @@ public class WeatherBackgroundView extends View {
     public void setCondition(ConditionType condition) {
         if (this.currentCondition != condition) {
             this.currentCondition = condition;
-            if (condition == ConditionType.FOG || condition == ConditionType.SMOG) {
-                ensureHazeTextures();
+            if (condition == ConditionType.FOG) {
+                ensureFogTexture();
             }
             rebuildGradientsAndParticles();
             invalidate();
         }
     }
 
-    /** Fog and smog are dimmer at night; the clock/dock stay above this view either way. */
+    /** Fog and rain are dimmer at night; the clock/dock stay above this view either way. */
     public void setDaytime(boolean daytime) {
         if (this.daytime != daytime) {
             this.daytime = daytime;
+            invalidate();
+        }
+    }
+
+    /** 0 to 1, from {@link WeatherEffects#fogDensity}; ignored unless fog is showing. */
+    public void setFogDensity(float density) {
+        float clamped = density < 0f ? 0f : (density > 1f ? 1f : density);
+        if (this.fogDensity != clamped) {
+            this.fogDensity = clamped;
             invalidate();
         }
     }
@@ -186,9 +213,9 @@ public class WeatherBackgroundView extends View {
     public void setLowSpecMode(boolean lowSpecMode) {
         if (this.lowSpecMode == lowSpecMode) return;
         this.lowSpecMode = lowSpecMode;
-        recycleHazeTextures();
-        if (currentCondition == ConditionType.FOG || currentCondition == ConditionType.SMOG) {
-            ensureHazeTextures();
+        recycleFogTexture();
+        if (currentCondition == ConditionType.FOG) {
+            ensureFogTexture();
         }
         rebuildGradientsAndParticles();
     }
@@ -219,6 +246,7 @@ public class WeatherBackgroundView extends View {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         stopAnimation();
+        recycleFogTexture();
     }
 
     @Override
@@ -271,19 +299,10 @@ public class WeatherBackgroundView extends View {
                 );
                 break;
             case FOG:
-                // Cool grey-white veil.
+                // Cool grey-white veil for the full-screen weather dashboard.
                 bgGradient = new LinearGradient(
                         0, 0, 0, cachedH,
                         new int[]{0xFF6C7780, 0xFF8A949B, 0xFFAAB2B7},
-                        new float[]{0f, 0.5f, 1f},
-                        Shader.TileMode.CLAMP
-                );
-                break;
-            case SMOG:
-                // Warm grey-brown haze.
-                bgGradient = new LinearGradient(
-                        0, 0, 0, cachedH,
-                        new int[]{0xFF4E4438, 0xFF6A5B4A, 0xFF84745E},
                         new float[]{0f, 0.5f, 1f},
                         Shader.TileMode.CLAMP
                 );
@@ -428,10 +447,7 @@ public class WeatherBackgroundView extends View {
                 drawLightning(canvas, now, dt);
                 break;
             case FOG:
-                drawHaze(canvas, dt, false);
-                break;
-            case SMOG:
-                drawHaze(canvas, dt, true);
+                drawFog(canvas, dt);
                 break;
             case NIGHT:
                 if (!overlayMode) drawNightSky(canvas, dt);
@@ -444,83 +460,80 @@ public class WeatherBackgroundView extends View {
         }
     }
 
-    /** Two slowly drifting copies of one small texture; no gradients or bitmaps are made per frame. */
-    private void drawHaze(Canvas canvas, float dt, boolean smog) {
-        ensureHazeTextures();
-        Bitmap texture = smog ? smogTexture : fogTexture;
-        if (texture == null) return;
-        hazePhase += dt * (smog ? 0.07f : 0.10f);
-        int base = smog
-                ? (daytime ? SMOG_DAY_ALPHA : SMOG_NIGHT_ALPHA)
-                : (daytime ? FOG_DAY_ALPHA : FOG_NIGHT_ALPHA);
-        drawHazeLayer(canvas, texture, HAZE_SCALE, hazePhase, base);
-        drawHazeLayer(canvas, texture, HAZE_SCALE + 0.14f, hazePhase * 0.62f + 1.7f,
-                Math.max(8, (int) (base * 0.55f)));
-    }
-
-    private void drawHazeLayer(Canvas canvas, Bitmap texture, float scale, float phase, int alpha) {
-        float width = cachedW * scale, height = cachedH * scale;
-        float dx = (float) Math.sin(phase) * cachedW * 0.045f;
-        float dy = (float) Math.cos(phase * 0.6f) * cachedH * 0.025f;
-        hazeMatrix.setScale(width / texture.getWidth(), height / texture.getHeight());
-        hazeMatrix.postTranslate((cachedW - width) / 2f + dx, (cachedH - height) / 2f + dy);
-        hazePaint.setAlpha(alpha);
-        canvas.drawBitmap(texture, hazeMatrix, hazePaint);
-    }
-
-    private void ensureHazeTextures() {
-        int width = lowSpecMode ? 192 : 384;
-        int height = Math.max(1, Math.round(width * 9f / 16f));
-        if (fogTexture != null && !fogTexture.isRecycled() && fogTexture.getWidth() == width) return;
-        recycleHazeTextures();
-        try {
-            fogTexture = makeHazeTexture(width, height, false);
-            smogTexture = makeHazeTexture(width, height, true);
-        } catch (OutOfMemoryError e) {
-            // A missing veil is better than taking Home down on a nearly full heap.
-            recycleHazeTextures();
+    /**
+     * Three copies of one neutral white textured veil, drifting horizontally at 100–170 s per
+     * screen width. Normal blending at low alpha can only lighten: it never dims or tints.
+     */
+    private void drawFog(Canvas canvas, float dt) {
+        ensureFogTexture();
+        if (fogTexture == null || fogTexture.isRecycled() || fogShader == null) return;
+        float density = Math.max(0f, Math.min(1f, fogDensity)) * (daytime ? 1f : FOG_NIGHT_SCALE);
+        for (int i = 0; i < FOG_LAYER_COUNT; i++) {
+            float width = cachedW * FOG_LAYER_WIDTHS[i];
+            float top = cachedH * FOG_LAYER_TOPS[i];
+            float bandHeight = cachedH - top;
+            fogPhase[i] = (fogPhase[i] + dt / FOG_LAYER_SECONDS[i]) % FOG_LAYER_WIDTHS[i];
+            fogMatrix.setScale(width / fogTexture.getWidth(), bandHeight / fogTexture.getHeight());
+            fogMatrix.postTranslate(-fogPhase[i] * cachedW, top);
+            fogShader.setLocalMatrix(fogMatrix);
+            fogPaint.setAlpha(Math.round(255f * FOG_OPACITY_CAP * density
+                    * FOG_LAYER_WEIGHTS[i]));
+            canvas.drawRect(0, top, cachedW, cachedH, fogPaint);
         }
     }
 
-    /** Builds both haze textures ahead of a preview, so the first Fog phase does not hitch. */
-    public void prepareHazeTextures() {
-        ensureHazeTextures();
+    /** Asks for the texture early, so the first Fog phase of a preview does not wait for it. */
+    public void prepareFogTexture() {
+        ensureFogTexture();
     }
 
-    private void recycleHazeTextures() {
+    /** Builds the texture once, off the UI thread; the draw path skips until it is ready. */
+    private void ensureFogTexture() {
+        int width = lowSpecMode ? FogTexture.WIDTH / 2 : FogTexture.WIDTH;
+        if (fogTexture != null && !fogTexture.isRecycled() && fogTextureWidth == width) return;
+        if (fogTextureBuilding && fogTextureWidth == width) return;
+        recycleFogTexture();
+        fogTextureBuilding = true;
+        fogTextureWidth = width;
+        final int generation = ++fogBuildGeneration;
+        final int height = width / 4;
+        Thread builder = new Thread(() -> {
+            Bitmap built = null;
+            try {
+                built = Bitmap.createBitmap(FogTexture.pixels(width, height), width, height,
+                        Bitmap.Config.ARGB_8888);
+            } catch (OutOfMemoryError ignored) {
+                // A missing veil is better than taking Home down on a nearly full heap.
+            }
+            final Bitmap result = built;
+            post(() -> {
+                if (generation != fogBuildGeneration) {
+                    if (result != null) result.recycle();
+                    return;
+                }
+                fogTextureBuilding = false;
+                if (result == null || !isAttachedToWindow()) {
+                    if (result != null) result.recycle();
+                    return;
+                }
+                fogTexture = result;
+                fogShader = new BitmapShader(result, Shader.TileMode.REPEAT, Shader.TileMode.CLAMP);
+                fogPaint.setShader(fogShader);
+                invalidate();
+            });
+        }, "fog-texture");
+        builder.setDaemon(true);
+        builder.start();
+    }
+
+    private void recycleFogTexture() {
+        fogBuildGeneration++;
+        fogTextureBuilding = false;
+        fogPaint.setShader(null);
+        fogShader = null;
         if (fogTexture != null && !fogTexture.isRecycled()) fogTexture.recycle();
-        if (smogTexture != null && !smogTexture.isRecycled()) smogTexture.recycle();
         fogTexture = null;
-        smogTexture = null;
-    }
-
-    /** Built once on the UI thread when fog or smog first appears: about 0.66 MB for both textures. */
-    private static Bitmap makeHazeTexture(int width, int height, boolean smog) {
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-        int top = smog ? 0x665A4A38 : 0x55E8F0F5;
-        int middle = smog ? 0x3A40362C : 0x2EDCE7EE;
-        int bottom = smog ? 0x66504435 : 0x55E8F0F5;
-        paint.setShader(new LinearGradient(0, 0, 0, height,
-                new int[]{top, middle, bottom}, new float[]{0f, 0.55f, 1f},
-                Shader.TileMode.CLAMP));
-        canvas.drawRect(0, 0, width, height, paint);
-
-        Random random = new Random(smog ? 7L : 3L);
-        int blob = smog ? 0x50B09878 : 0x5AEFF5F8;
-        int clear = smog ? 0x00B09878 : 0x00EFF5F8;
-        for (int i = 0; i < 16; i++) {
-            float cx = random.nextFloat() * width;
-            float cy = random.nextFloat() * height;
-            float radius = width * (0.10f + random.nextFloat() * 0.22f);
-            paint.setShader(new RadialGradient(cx, cy, radius,
-                    new int[]{blob, clear}, new float[]{0f, 1f},
-                    Shader.TileMode.CLAMP));
-            canvas.drawCircle(cx, cy, radius, paint);
-        }
-        paint.setShader(null);
-        return bitmap;
+        fogTextureWidth = 0;
     }
 
     private void drawSunnyAtmosphere(Canvas canvas, float dt) {
