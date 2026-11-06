@@ -49,11 +49,11 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
 - **Two Pakistan wallpaper collections.** *Pakistan Monuments* has 24 photos of Lahore, Islamabad,
   Karachi, the forts and the mosques; *Pakistan Nature* has 10 photos of the Hunza valley, Attabad
   Lake, Nanga Parbat, Swat, the Karakoram, Rawal Lake and Clifton Beach. Credits are below.
-- **Day/night wallpaper rotation.** Each Pakistan photo carries a measured brightness and a day, night or
-  both tag. With **Day/Night Wallpapers** on (the default, right under Change Wallpaper Now), 06:00-18:00
-  rotates day and both photos, and 18:00-06:00 rotates night and both photos, checked by the TV clock at
-  every change. A period always keeps at least five photos, adding the nearest by brightness if needed.
-  Uploaded photos and a single pinned wallpaper are never filtered.
+- **Day/night wallpaper rotation.** Every catalog photo in every online collection carries a measured brightness
+  and a day, night or both tag. With **Day/Night Wallpapers** on (the default, right under Change Wallpaper
+  Now), 06:00-18:00 rotates day and both photos, and 18:00-06:00 rotates night and both photos, checked by the
+  TV clock at every change. A period always keeps at least five photos, adding the nearest by brightness if
+  needed. Uploaded photos and a single pinned wallpaper are never filtered.
 - **A glass wallpaper dialog.** The category list is frosted glass with a white focus ring, and a dark smoke
   layer keeps the white text readable over bright pictures.
 - **A recent-apps deck.** Double-press Home. Cards scroll horizontally in 16:9, using each app's TV
@@ -158,6 +158,21 @@ and fails if the APK grows past 700 KB.
 Release signing is optional. Copy [launcher/keystore.properties.example](launcher/keystore.properties.example)
 to `launcher/keystore.properties` (gitignored), point `storeFile` at a keystore outside the repository and fill
 in the passwords; without that file the build falls back to the debug key, which is what CI uses.
+
+## Adding a wallpaper photo
+
+1. Add the URL exactly as the app should request it (the `w=2560&h=1440&fit=crop` pattern, or the Commons
+   thumbnail width) to `CURATED_CATALOG` in
+   [OnlineWallpapers.java](launcher/app/src/main/java/com/gathin/tvhome/OnlineWallpapers.java), with its title,
+   description and collection.
+2. Measure it with the same method as the catalog:
+   `powershell -File tools/tag-photo.ps1 "<url>"`.
+   The script downloads the exact URL with the app's user agent and prints HTTP status, content type, pixel
+   size, KB, the Rec.601 mean luma, and `DAY` (>= 115), `NIGHT` (<= 85) or `BOTH`.
+3. Put that luma and the explicit tone on the entry. Review sunset, sunrise, indoor and neutral scenes by eye;
+   the measured tag is a starting point, not a substitute for looking at the picture.
+4. Run the tests. The catalog test fails if any entry has no measured luma or no explicit tag, so a photo
+   cannot be added without tagging it.
 
 ## Credits and licence
 
