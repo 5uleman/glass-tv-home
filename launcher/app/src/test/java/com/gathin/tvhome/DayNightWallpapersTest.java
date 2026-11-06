@@ -9,6 +9,7 @@ import org.junit.Test;
 import java.io.File;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class DayNightWallpapersTest {
@@ -136,36 +137,104 @@ public class DayNightWallpapersTest {
     }
 
     @Test
-    public void everyPakistanCatalogPhotoHasLumaAndToneData() {
-        List<OnlineWallpapers.WallpaperItem> all = OnlineWallpapers.catalogItems("Pakistan");
-        assertEquals(34, all.size());
+    public void everyCatalogPhotoHasExplicitLumaAndTag() {
+        List<OnlineWallpapers.WallpaperItem> all = OnlineWallpapers.catalogItems(null);
+        assertEquals(95, all.size());
         for (OnlineWallpapers.WallpaperItem item : all) {
             assertTrue(item.title + " has no luma", item.luma > 0);
             assertTrue(item.title + " has no tone", item.tone != null);
+            assertTrue(item.title + " has no explicit tag", item.explicitTag);
         }
     }
 
     @Test
-    public void eachCollectionOffersEnoughPhotosInBothPeriods() {
+    public void eachCollectionOffersTheExpectedDayAndNightSets() {
+        List<OnlineWallpapers.WallpaperItem> malaysia = OnlineWallpapers.catalogItems("Malaysia");
+        List<OnlineWallpapers.WallpaperItem> landscapes = exactCategories(
+                "Landscape", "Nature", "Forest", "Desert", "Mountains");
+        List<OnlineWallpapers.WallpaperItem> cities = OnlineWallpapers.catalogItems("Skyscraper");
+        List<OnlineWallpapers.WallpaperItem> space = OnlineWallpapers.catalogItems("Space");
+        List<OnlineWallpapers.WallpaperItem> oceans = OnlineWallpapers.catalogItems("Ocean");
+        List<OnlineWallpapers.WallpaperItem> dark = OnlineWallpapers.catalogItems("Minimalist");
         List<OnlineWallpapers.WallpaperItem> monuments = OnlineWallpapers.catalogItems("Pakistan Monuments");
         List<OnlineWallpapers.WallpaperItem> nature = OnlineWallpapers.catalogItems("Pakistan Nature");
         List<OnlineWallpapers.WallpaperItem> legacy = OnlineWallpapers.catalogItems("Pakistan");
+
+        assertEquals(16, malaysia.size());
+        assertEquals(10, landscapes.size());
+        assertEquals(6, cities.size());
+        assertEquals(4, space.size());
+        assertEquals(6, oceans.size());
+        assertEquals(19, dark.size());
         assertEquals(24, monuments.size());
         assertEquals(10, nature.size());
         assertEquals(34, legacy.size());
+        assertEquals(95, OnlineWallpapers.catalogItems(null).size());
 
+        // Tag sets before fallback: the values the owner assigned.
+        assertEquals(13, matchingCount(malaysia, 12));
+        assertEquals(6, matchingCount(malaysia, 21));
+        assertEquals(6, matchingCount(landscapes, 12));
+        assertEquals(4, matchingCount(landscapes, 21));
+        assertEquals(4, matchingCount(cities, 12));
+        assertEquals(2, matchingCount(cities, 21));
+        assertEquals(0, matchingCount(space, 12));
+        assertEquals(4, matchingCount(space, 21));
+        assertEquals(6, matchingCount(oceans, 12));
+        assertEquals(2, matchingCount(oceans, 21));
+        assertEquals(4, matchingCount(dark, 12));
+        assertEquals(15, matchingCount(dark, 21));
+        assertEquals(17, matchingCount(monuments, 12));
+        assertEquals(9, matchingCount(monuments, 21));
+        assertEquals(8, matchingCount(nature, 12));
+        assertEquals(8, matchingCount(nature, 21));
+        assertEquals(25, matchingCount(legacy, 12));
+        assertEquals(17, matchingCount(legacy, 21));
+
+        // What the rotation actually offers after the 5-photo fallback and the under-5 rule.
+        assertEquals(13, allowedCount(malaysia, 12));
+        assertEquals(6, allowedCount(malaysia, 21));
+        assertEquals(6, allowedCount(landscapes, 12));
+        assertEquals(5, allowedCount(landscapes, 21));
+        assertEquals(5, allowedCount(cities, 12));
+        assertEquals(5, allowedCount(cities, 21));
+        assertEquals(4, allowedCount(space, 12));
+        assertEquals(4, allowedCount(space, 21));
+        assertEquals(6, allowedCount(oceans, 12));
+        assertEquals(5, allowedCount(oceans, 21));
+        assertEquals(5, allowedCount(dark, 12));
+        assertEquals(15, allowedCount(dark, 21));
         assertEquals(17, allowedCount(monuments, 12));
-        assertEquals(14, allowedCount(monuments, 21));
-        assertEquals(7, allowedCount(nature, 12));
+        assertEquals(9, allowedCount(monuments, 21));
+        assertEquals(8, allowedCount(nature, 12));
         assertEquals(8, allowedCount(nature, 21));
-        assertEquals(24, allowedCount(legacy, 12));
-        assertEquals(22, allowedCount(legacy, 21));
+        assertEquals(25, allowedCount(legacy, 12));
+        assertEquals(17, allowedCount(legacy, 21));
+    }
+
+    private static List<OnlineWallpapers.WallpaperItem> exactCategories(String... categories) {
+        List<String> wanted = Arrays.asList(categories);
+        List<OnlineWallpapers.WallpaperItem> out = new ArrayList<>();
+        for (OnlineWallpapers.WallpaperItem item : OnlineWallpapers.catalogItems(null)) {
+            if (wanted.contains(item.category)) out.add(item);
+        }
+        return out;
+    }
+
+    private static int matchingCount(List<OnlineWallpapers.WallpaperItem> items, int hour) {
+        DayNightWallpapers.Period period = DayNightWallpapers.periodAt(LocalTime.of(hour, 0));
+        int count = 0;
+        for (OnlineWallpapers.WallpaperItem item : items) {
+            if (DayNightWallpapers.matches(item.tone, period)) count++;
+        }
+        return count;
     }
 
     private static int allowedCount(List<OnlineWallpapers.WallpaperItem> items, int hour) {
         List<DayNightWallpapers.Photo> photos = new ArrayList<>();
+        int index = 0;
         for (OnlineWallpapers.WallpaperItem item : items) {
-            photos.add(photo(item.title + ".jpg", item.luma, item.tone));
+            photos.add(photo("photo" + (index++) + ".jpg", item.luma, item.tone));
         }
         return DayNightWallpapers.allowed(true, LocalTime.of(hour, 0), photos).size();
     }
