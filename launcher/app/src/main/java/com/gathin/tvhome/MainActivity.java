@@ -17,9 +17,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.RadialGradient;
 import android.graphics.Rect;
-import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
@@ -217,6 +215,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private float glowMix = 1f;
     private android.animation.ValueAnimator glowBlend;
     private Bitmap ambientShape;
+    private int ambientShapeHeight;
     /** Where the shelf's bottom edge belongs; its top follows once the lines have been measured. */
     private float heroBottom;
     private View btnInputs;
@@ -2429,21 +2428,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glowBlend.start();
     }
 
-    /** The glow's shape in white, drawn on first use and kept: a tint gives it each app's colour. */
+    /**
+     * The glow's shape in white, drawn on first use and kept: a tint gives it each app's colour.
+     * A one-pixel-wide alpha ramp stretched across the screen is a smooth gradient, not a scaled
+     * picture, so it cannot show the grid the old 480x270 radial bitmap did.
+     */
     private Bitmap ambientShape() {
-        if (ambientShape != null) return ambientShape;
-        int w = 480;
-        int h = 270;
-        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setShader(new RadialGradient(
-                w * 0.32f, h * 0.42f, w * 0.62f,
-                new int[]{0x5CFFFFFF, 0x26FFFFFF, 0x00FFFFFF},
-                new float[]{0f, 0.45f, 1f},
-                Shader.TileMode.CLAMP));
-        new Canvas(bmp).drawRect(0, 0, w, h, paint);
-        ambientShape = bmp;
-        return bmp;
+        int height = Math.max(1, getResources().getDisplayMetrics().heightPixels);
+        if (ambientShape != null && ambientShapeHeight == height) return ambientShape;
+        ambientShapeHeight = height;
+        ambientShape = Bitmap.createBitmap(GlowShape.column(height), 1, height,
+                Bitmap.Config.ARGB_8888);
+        return ambientShape;
     }
 
     /** With crossFade, the old glow fades into the new one (two small textures, one blend). */
