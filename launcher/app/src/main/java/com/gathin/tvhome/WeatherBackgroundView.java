@@ -55,7 +55,7 @@ public class WeatherBackgroundView extends View {
     private final Paint ripplePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     /**
      * Fog is one prebuilt seamless noise texture, drawn three times at different scales, heights
-     * and speeds. The texture is white with alpha only and is built off the UI thread.
+     * and speeds. The texture is neutral grey with alpha only and is built off the UI thread.
      */
     private final Paint fogPaint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG);
     private final Matrix fogMatrix = new Matrix();
@@ -66,20 +66,8 @@ public class WeatherBackgroundView extends View {
     private int fogTextureWidth;
     private boolean daytime = true;
     private float fogDensity = WeatherEffects.FOG_CODE_ONLY_DENSITY;
-    private final float[] fogPhase = new float[FOG_LAYER_COUNT];
+    private final float[] fogPhase = new float[FogLook.LAYERS];
 
-    /** The three layer alphas always sum to this, so fog can never wash the wallpaper out. */
-    static final float FOG_OPACITY_CAP = 0.52f;
-    private static final float FOG_NIGHT_SCALE = 0.82f;
-    private static final int FOG_LAYER_COUNT = 3;
-    /** Share of {@link #FOG_OPACITY_CAP} each layer gets, back to front. */
-    private static final float[] FOG_LAYER_WEIGHTS = {0.45f, 0.33f, 0.22f};
-    /** Seconds for one screen width of drift; all three are between 90 s and 180 s. */
-    private static final float[] FOG_LAYER_SECONDS = {170f, 135f, 100f};
-    /** Layer width as a multiple of the screen: wider layers look further away. */
-    private static final float[] FOG_LAYER_WIDTHS = {1.65f, 1.30f, 1.00f};
-    /** Where each layer starts, as a fraction of the screen height; all reach the bottom. */
-    private static final float[] FOG_LAYER_TOPS = {0.12f, 0.34f, 0.55f};
     /** Overlay frames are capped at 30 fps; the rest of the app still runs at display rate. */
     private static final long OVERLAY_FRAME_MS = 33;
 
@@ -461,23 +449,23 @@ public class WeatherBackgroundView extends View {
     }
 
     /**
-     * Three copies of one neutral white textured veil, drifting horizontally at 100–170 s per
-     * screen width. Normal blending at low alpha can only lighten: it never dims or tints.
+     * Three copies of one neutral grey textured veil, drifting at 70–130 s per screen width.
+     * Normal blending at these alphas lightens a dark picture and softens a bright one; the neutral
+     * grey keeps both visible, with no blue or warm cast.
      */
     private void drawFog(Canvas canvas, float dt) {
         ensureFogTexture();
         if (fogTexture == null || fogTexture.isRecycled() || fogShader == null) return;
-        float density = Math.max(0f, Math.min(1f, fogDensity)) * (daytime ? 1f : FOG_NIGHT_SCALE);
-        for (int i = 0; i < FOG_LAYER_COUNT; i++) {
-            float width = cachedW * FOG_LAYER_WIDTHS[i];
-            float top = cachedH * FOG_LAYER_TOPS[i];
+        float density = Math.max(0f, Math.min(1f, fogDensity));
+        for (int i = 0; i < FogLook.LAYERS; i++) {
+            float width = cachedW * FogLook.WIDTHS[i];
+            float top = FogLook.layerTop(cachedH, density, i);
             float bandHeight = cachedH - top;
-            fogPhase[i] = (fogPhase[i] + dt / FOG_LAYER_SECONDS[i]) % FOG_LAYER_WIDTHS[i];
+            fogPhase[i] = (fogPhase[i] + dt / FogLook.SECONDS[i]) % FogLook.WIDTHS[i];
             fogMatrix.setScale(width / fogTexture.getWidth(), bandHeight / fogTexture.getHeight());
             fogMatrix.postTranslate(-fogPhase[i] * cachedW, top);
             fogShader.setLocalMatrix(fogMatrix);
-            fogPaint.setAlpha(Math.round(255f * FOG_OPACITY_CAP * density
-                    * FOG_LAYER_WEIGHTS[i]));
+            fogPaint.setAlpha(FogLook.layerAlpha(density, i, daytime));
             canvas.drawRect(0, top, cachedW, cachedH, fogPaint);
         }
     }

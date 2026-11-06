@@ -3,9 +3,9 @@ package com.gathin.tvhome;
 import java.util.Random;
 
 /**
- * The fog veil's procedural texture: seamless fractal value noise, white with only the alpha
- * varying. Pure Java, so the renderer, the tests and the preview renderer build identical pixels.
- * White RGB with an alpha ramp means filtered edges never pick up a dark or coloured fringe.
+ * The fog veil's procedural texture: seamless fractal value noise in a neutral light grey, with
+ * only the alpha varying. Pure Java, so the renderer, the tests and the preview renderer build
+ * identical pixels. A single grey RGB means filtered edges never pick up a dark or coloured fringe.
  */
 final class FogTexture {
 
@@ -23,7 +23,7 @@ final class FogTexture {
     private FogTexture() {
     }
 
-    /** ARGB pixels: white, alpha 0 at the top edge growing to full at the bottom. */
+    /** ARGB pixels: {@link FogLook#RGB}, alpha 0 at the top edge growing to full at the bottom. */
     static int[] pixels(int width, int height) {
         float[][] lattices = new float[OCTAVE_CELLS.length][];
         Random random = new Random(SEED);
@@ -36,8 +36,9 @@ final class FogTexture {
         int[] out = new int[width * height];
         for (int y = 0; y < height; y++) {
             float t = y / (float) Math.max(1, height - 1);
-            // Weighted to the lower part of the veil: clear at the top, strongest at the bottom.
-            float envelope = t * t * (0.55f + 0.45f * t);
+            // The band fades in over its top third, then stays strong to the bottom.
+            float fadeIn = clamp01(t / 0.30f);
+            float envelope = fadeIn * fadeIn * (3f - 2f * fadeIn);
             for (int x = 0; x < width; x++) {
                 float sum = 0f;
                 for (int o = 0; o < OCTAVE_CELLS.length; o++) {
@@ -45,11 +46,14 @@ final class FogTexture {
                             OCTAVE_CELLS[o][1], x, y, width, height);
                 }
                 float n = sum / TOTAL_AMPLITUDE;
-                // A soft threshold leaves clear gaps between the wisps instead of a flat wash.
-                n = clamp01((n - 0.30f) / 0.70f);
+                // A hard threshold leaves real gaps, and bright cores between them; the gamma
+                // keeps the cores full without filling those gaps back in.
+                n = clamp01((n - 0.50f) * 3.0f + 0.62f);
                 n = n * n * (3f - 2f * n);
+                n = (float) Math.sqrt(n);
+                n = clamp01((n - 0.12f) / 0.88f);
                 int alpha = Math.round(255f * n * envelope);
-                out[y * width + x] = (alpha << 24) | 0x00FFFFFF;
+                out[y * width + x] = (alpha << 24) | FogLook.RGB;
             }
         }
         return out;

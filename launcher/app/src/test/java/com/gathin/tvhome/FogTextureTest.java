@@ -26,10 +26,35 @@ public class FogTextureTest {
     }
 
     @Test
-    public void everyPixelIsWhiteWithOnlyAlphaVarying() {
+    public void everyPixelIsTheSameNeutralGreyWithOnlyAlphaVarying() {
         for (int pixel : texture()) {
-            assertEquals(0x00FFFFFF, pixel & 0x00FFFFFF);
+            assertEquals(FogLook.RGB, pixel & 0x00FFFFFF);
         }
+    }
+
+    @Test
+    public void textureHasClearGapsAndDenseCores() {
+        int[] pixels = texture();
+        int gaps = 0, cores = 0;
+        for (int pixel : pixels) {
+            int alpha = pixel >>> 24;
+            if (alpha == 0) gaps++;
+            if (alpha >= 200) cores++;
+        }
+        double gapShare = gaps / (double) pixels.length;
+        double coreShare = cores / (double) pixels.length;
+        assertTrue("no real gaps: " + gapShare, gapShare >= 0.08);
+        assertTrue("no dense cores: " + coreShare, coreShare >= 0.20);
+    }
+
+    @Test
+    public void textureIsDenseEnoughToBeVisibleButNotASolidWash() {
+        long sum = 0;
+        int[] pixels = texture();
+        for (int pixel : pixels) sum += pixel >>> 24;
+        double mean = sum / (double) pixels.length / 255.0;
+        assertTrue("too thin: " + mean, mean >= 0.45);
+        assertTrue("a solid wash: " + mean, mean <= 0.62);
     }
 
     @Test
@@ -46,18 +71,18 @@ public class FogTextureTest {
     }
 
     @Test
-    public void lowerHalfIsWeightedMoreThanTheUpperHalf() {
+    public void bottomSliceIsMuchStrongerThanTheTopSlice() {
         int[] pixels = texture();
         int w = FogTexture.WIDTH;
-        long upper = 0, lower = 0;
-        for (int y = 0; y < FogTexture.HEIGHT; y++) {
-            for (int x = 0; x < w; x++) {
-                int alpha = pixels[y * w + x] >>> 24;
-                if (y < FogTexture.HEIGHT / 2) upper += alpha;
-                else lower += alpha;
-            }
+        long top = 0, bottom = 0;
+        int slice = FogTexture.HEIGHT / 10;
+        for (int y = 0; y < slice; y++) {
+            for (int x = 0; x < w; x++) top += pixels[y * w + x] >>> 24;
         }
-        assertTrue(lower > upper * 3);
+        for (int y = FogTexture.HEIGHT - slice; y < FogTexture.HEIGHT; y++) {
+            for (int x = 0; x < w; x++) bottom += pixels[y * w + x] >>> 24;
+        }
+        assertTrue(bottom > top * 3);
     }
 
     @Test

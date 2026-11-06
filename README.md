@@ -69,12 +69,15 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   adds drifting fog. Fog comes from WMO codes 45/48
   or visibility below 1,000 m in the existing Open-Meteo request, and thickens as visibility drops
   from 1,000 m to 200 m; a code with no visibility gives a medium veil. Rain wins over fog. The fog
-  is three neutral white layers of seamless procedural noise drifting at different speeds (a screen
-  width in 100-170 s), weighted to the lower part of the screen and faded out toward the top, at a
-  hard 52% opacity cap, so it only lightens and never dims or tints the wallpaper, pills or tiles.
+  is three neutral light grey-white layers (RGB 242) of seamless procedural noise with dense cores
+  and clear gaps, drifting at different speeds (a screen width in 70-130 s). Light fog reaches the
+  lower 45% of the screen at a 45% summed layer cap; heavy fog reaches the lower 65% at an 80% cap.
+  The light grey softens a bright picture as well as lifting a dark one, so the fog reads on both,
+  and it stays neutral with no blue or warm cast. It sits below the clock, title and dock, so they
+  are never fogged.
   The 1024x256 texture is built once in the background, about 1 MB, with no bundled image; the
   effect fades in and out over 1.5 s and is a little lighter at night (06:00-18:00 is day). It draws
-  only while Home is in front, at no more than 30 fps, and sits below the clock, title and dock.
+  only while Home is in front, at no more than 30 fps.
   A bad AQI stays in the text pill and never paints the wallpaper.
 - **Weather Effect Preview.** A visible row directly under **Weather Location** (in the wallpaper
   settings) cycles with **OK**: Auto, Drizzle, Rain, Thunderstorm, Light fog, Heavy fog, and back to
