@@ -308,8 +308,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private final EdgeWallpaperSwitch edgeSwitch = new EdgeWallpaperSwitch();
     private final WallpaperHistory<File> wallHistory = new WallpaperHistory<>();
     private View edgeHintView;
-    private ImageView edgeHintArrow;
-    private TextView edgeHintText;
+    /** The hint fades in and out; it never scales or slides, so it reads as a toast, not a button. */
+    private static final long TOAST_FADE_MS = 150;
     private final Runnable edgeHintExpiry = () -> {
         edgeSwitch.cancel();
         hideEdgeHint();
@@ -1473,88 +1473,81 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
-    /** The small hint over the dock, in the same glass as the top pills. */
+    /** The hint: a dark toast centred over the dock, with no outline, icon or focus of its own. */
     private void showEdgeHint(boolean next) {
         if (edgeHintView == null) {
             float density = getResources().getDisplayMetrics().density;
-            LinearLayout pill = new LinearLayout(this);
-            pill.setOrientation(LinearLayout.HORIZONTAL);
-            pill.setGravity(Gravity.CENTER_VERTICAL);
-            pill.setBackground(new GlassDrawable(pill, 21 * density, density, null));
-            Backdrop.watch(pill);
-            int pad = Math.round(13.5f * density);
-            pill.setPadding(pad, 0, pad, 0);
-            pill.setFocusable(false);
-            pill.setClickable(false);
-            pill.setElevation(2 * density);
-
-            ImageView arrow = new ImageView(this);
-            int arrowSize = Math.round(18 * density);
-            LinearLayout.LayoutParams arrowLp = new LinearLayout.LayoutParams(arrowSize, arrowSize);
-            arrowLp.setMarginEnd(Math.round(7 * density));
-            arrow.setLayoutParams(arrowLp);
-            arrow.setColorFilter(0xFFFFFFFF);
-            pill.addView(arrow);
-
-            TextView label = new TextView(this);
-            label.setTextSize(15);
-            label.setTextColor(0xFFFFFFFF);
-            label.setLetterSpacing(0.01f);
-            label.setIncludeFontPadding(false);
-            label.setShadowLayer(4 * density, 0, density, 0x99000000);
-            Fonts.apply(label, Fonts.SEMIBOLD);
-            pill.addView(label);
+            TextView toast = new TextView(this);
+            toast.setTextSize(15);
+            toast.setTextColor(0xFFFFFFFF);
+            toast.setGravity(Gravity.CENTER);
+            toast.setIncludeFontPadding(false);
+            toast.setLetterSpacing(0.01f);
+            toast.setPadding(Math.round(18 * density), Math.round(10 * density),
+                    Math.round(18 * density), Math.round(10 * density));
+            GradientDrawable bg = new GradientDrawable();
+            bg.setColor(0xCC000000);   // 80% black, like the system toast
+            bg.setCornerRadius(1000f);  // clamped to half the height: fully rounded
+            toast.setBackground(bg);
+            toast.setFocusable(false);
+            toast.setClickable(false);
+            toast.setElevation(3 * density);
+            Fonts.apply(toast, Fonts.BOLD);
 
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, Math.round(42 * density));
-            root.addView(pill, lp);
-            edgeHintView = pill;
-            edgeHintArrow = arrow;
-            edgeHintText = label;
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            root.addView(toast, lp);
+            edgeHintView = toast;
         }
-        boolean rtl = isLayoutRtl();
-        boolean leftArrow = next == rtl;
-        edgeHintArrow.setImageResource(leftArrow
-                ? R.drawable.ic_edge_arrow_left : R.drawable.ic_edge_arrow_right);
-        edgeHintText.setText(next ? "Next wallpaper" : "Previous wallpaper");
+        ((TextView) edgeHintView).setText(next
+                ? "Press \u2192 again for next" : "Press \u2190 again for previous");
         handler.removeCallbacks(edgeHintExpiry);
         edgeHintView.animate().cancel();
         edgeHintView.setVisibility(View.VISIBLE);
         edgeHintView.setAlpha(0f);
-        edgeHintView.setScaleX(0.92f);
-        edgeHintView.setScaleY(0.92f);
-        edgeHintView.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(150).start();
-        placeEdgeHint(next);
+        edgeHintView.animate().alpha(1f).setDuration(TOAST_FADE_MS).start();
+        placeEdgeHint();
         handler.postDelayed(edgeHintExpiry, EdgeWallpaperSwitch.WINDOW_MS);
     }
 
-    /** Sits the pill just above the first/last dock tile, on that tile's physical outer edge. */
-    private void placeEdgeHint(boolean next) {
+    /**
+     * Centres the toast 20 dp above the dock tray's top border, the same for both directions. The
+     * hero text sits 50 dp above the dock, so the toast cannot fit between the two; when it would
+     * touch the title or the description it moves above the whole hero block instead.
+     */
+    private void placeEdgeHint() {
         if (edgeHintView == null) return;
         edgeHintView.post(() -> {
             if (edgeHintView == null || grid == null) return;
             if (edgeHintView.getWidth() == 0 || edgeHintView.getHeight() == 0) {
-                edgeHintView.post(() -> placeEdgeHint(next));
+                edgeHintView.post(this::placeEdgeHint);
                 return;
             }
-            int count = adapter.getItemCount();
-            int dockCount = Math.min(COLUMNS, count);
-            if (dockCount <= 0) return;
-            int target = next ? dockCount - 1 : 0;
-            RecyclerView.ViewHolder vh = grid.findViewHolderForAdapterPosition(target);
+            RecyclerView.ViewHolder vh = grid.findViewHolderForAdapterPosition(0);
             View tile = vh != null ? vh.itemView : null;
-            if (tile == null) return;
-            Rect r = new Rect(0, 0, tile.getWidth(), tile.getHeight());
-            root.offsetDescendantRectToMyCoords(tile, r);
-            float gap = 6 * density;
-            float y = Math.max(8 * density, r.top - gap - edgeHintView.getHeight());
-            boolean rtl = isLayoutRtl();
-            float x;
-            if (next) x = rtl ? r.left : r.right - edgeHintView.getWidth();
-            else x = rtl ? r.right - edgeHintView.getWidth() : r.left;
-            x = Math.max(8 * density, Math.min(x, root.getWidth() - edgeHintView.getWidth() - 8 * density));
-            edgeHintView.setX(x);
-            edgeHintView.setY(y);
+            View card = tile != null ? tile.findViewById(R.id.card) : null;
+            if (card == null || card.getWidth() == 0) return;
+            Rect dock = new Rect(0, 0, card.getWidth(), card.getHeight());
+            root.offsetDescendantRectToMyCoords(card, dock);
+            float toastW = edgeHintView.getWidth();
+            float toastH = edgeHintView.getHeight();
+            // The tray is the dock cards' bounds plus the decoration's glass margin.
+            float trayTop = dock.top - DockDecoration.TRAY_PAD_DP * density;
+
+            EdgeHintPlacement.Bounds hero = null;
+            if (heroShelf != null && heroShelf.getVisibility() == View.VISIBLE
+                    && heroShelf.getHeight() > 0) {
+                // heroShelf hangs from its bottom edge through setY(), so getX/getY (not the
+                // layout position, which stays at the root's top) are its place on screen.
+                float left = heroShelf.getX();
+                float top = heroShelf.getY();
+                hero = new EdgeHintPlacement.Bounds(left, top,
+                        left + heroShelf.getWidth(), top + heroShelf.getHeight());
+            }
+            float[] xy = EdgeHintPlacement.place(root.getWidth(), trayTop, hero,
+                    toastW, toastH, density);
+            edgeHintView.setX(xy[0]);
+            edgeHintView.setY(xy[1]);
         });
     }
 
@@ -1566,8 +1559,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             edgeHintView.setAlpha(0f);
             return;
         }
-        edgeHintView.animate().alpha(0f).scaleX(0.96f).scaleY(0.96f)
-                .setDuration(150).withEndAction(() -> {
+        edgeHintView.animate().alpha(0f).setDuration(TOAST_FADE_MS)
+                .withEndAction(() -> {
                     if (edgeHintView != null && edgeHintView.getAlpha() == 0f) {
                         edgeHintView.setVisibility(View.GONE);
                     }

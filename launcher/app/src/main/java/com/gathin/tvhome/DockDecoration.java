@@ -15,6 +15,9 @@ import androidx.recyclerview.widget.RecyclerView;
  */
 public class DockDecoration extends RecyclerView.ItemDecoration {
 
+    /** Glass margin around the dock cards; its top edge is the tray's top border. */
+    static final float TRAY_PAD_DP = 14f;
+
     private final int dockSize;
     private final float density;
     private final Paint band = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -74,7 +77,7 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
             }
         }
         if (!any) return;
-        float pad = 14 * density;
+        float pad = TRAY_PAD_DP * density;
         rect.inset(-pad, -pad);
         area.set(rect);
         float radius = 26 * density;
