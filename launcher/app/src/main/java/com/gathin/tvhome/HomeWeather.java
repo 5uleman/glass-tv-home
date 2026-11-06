@@ -31,12 +31,18 @@ final class HomeWeather {
     static final class Line {
         final String weather, api;
         final int apiColor, icon;
+        /** WMO code, visibility in metres, and the AQI used in the label; -1 when unknown. */
+        final int weatherCode, visibilityM, aqi;
 
-        Line(String weather, String api, int apiColor, int icon) {
+        Line(String weather, String api, int apiColor, int icon,
+             int weatherCode, int visibilityM, int aqi) {
             this.weather = weather;
             this.api = api;
             this.apiColor = apiColor;
             this.icon = icon;
+            this.weatherCode = weatherCode;
+            this.visibilityM = visibilityM;
+            this.aqi = aqi;
         }
     }
 
@@ -61,13 +67,14 @@ final class HomeWeather {
             p.edit().putLong("at", 0).putString("weather", "").apply();
         }
         return w == null && a.isEmpty() ? null : new Line(w == null ? "" : w, a, p.getInt("api_color", 0),
-                p.getInt("icon_code", -1) < 0 ? 0 : icon(p.getInt("icon_code", 3), p.getBoolean("icon_day", true)));
+                p.getInt("icon_code", -1) < 0 ? 0 : icon(p.getInt("icon_code", 3), p.getBoolean("icon_day", true)),
+                p.getInt("icon_code", -1), p.getInt("visibility_m", -1), p.getInt("aqi_value", -1));
     }
 
     /** Fetches both parts. Network; never on the UI thread. Returns null when neither could be read. */
     static Line refresh(Context ctx, double lat, double lon) {
         String weather = "", api = "";
-        int color = 0, code = -1;
+        int color = 0, code = -1, visibility = -1;
         boolean day = true;
         boolean isMalay = !AppLanguage.LANG_EN.equals(AppLanguage.getLanguage(ctx));
         // US AQI from Open-Meteo covers the whole world, so it is the base reading; a genuinely nearby
@@ -76,11 +83,12 @@ final class HomeWeather {
         String tz = AppLocationManager.getTimezone(ctx).replace("/", "%2F");
         try {
             JSONObject now = new JSONObject(get("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon
-                    + "&current=temperature_2m,weather_code,is_day,us_aqi&timezone=" + tz)).getJSONObject("current");
-            code = now.optInt("weather_code");
+                    + "&current=temperature_2m,weather_code,is_day,us_aqi,visibility&timezone=" + tz)).getJSONObject("current");
+            code = now.has("weather_code") && !now.isNull("weather_code") ? now.optInt("weather_code") : -1;
             day = now.optInt("is_day", 1) == 1;
             weather = Math.round(now.optDouble("temperature_2m")) + "°  " + describe(code);
-            aqiValue = now.optInt("us_aqi", -1);
+            visibility = now.has("visibility") && !now.isNull("visibility") ? now.optInt("visibility", -1) : -1;
+            aqiValue = now.has("us_aqi") && !now.isNull("us_aqi") ? now.optInt("us_aqi", -1) : -1;
         } catch (Exception e) {
             Log.w(TAG, "weather failed: " + e.getMessage());
         }
@@ -117,8 +125,9 @@ final class HomeWeather {
             return null;
         }
         ed.putString("weather", weather).putString("api", api).putInt("api_color", color)
-                .putInt("icon_code", code).putBoolean("icon_day", day).apply();
-        return new Line(weather, api, color, code < 0 ? 0 : icon(code, day));
+                .putInt("icon_code", code).putBoolean("icon_day", day)
+                .putInt("visibility_m", visibility).putInt("aqi_value", aqiValue).apply();
+        return new Line(weather, api, color, code < 0 ? 0 : icon(code, day), code, visibility, aqiValue);
     }
 
     private static String describe(int code) {

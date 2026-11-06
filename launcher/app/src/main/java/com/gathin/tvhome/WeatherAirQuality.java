@@ -312,6 +312,17 @@ final class WeatherAirQuality {
         return aqi < 0 ? 0 : getAqiColor(aqi);
     }
 
+    /** The cached numeric AQI, or -1 before the first sync. */
+    static int getCachedAqi(Context context) {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getInt(KEY_AQI, -1);
+    }
+
+    /** The cached weather code, or -1 before the first successful weather sync. */
+    static int getCachedWeatherCode(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        return prefs.contains(KEY_CODE) ? prefs.getInt(KEY_CODE, -1) : -1;
+    }
+
     /** Returns full weather model for WeatherActivity dashboard. */
     static FullWeather getFullWeather(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
