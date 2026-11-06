@@ -299,6 +299,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private long wallShownAt;
     private android.widget.ImageView wallView;
     private android.graphics.Bitmap wallBitmap;
+    /** True while a decode or cross-fade is in flight: an edge confirm waits rather than stacking bitmaps. */
+    private boolean wallBusy;
+    private long wallShowSerial;
+    /** The dock's edge double-press, and the last pictures shown that Previous/Next walk. */
+    private final EdgeWallpaperSwitch edgeSwitch = new EdgeWallpaperSwitch();
+    private final WallpaperHistory<File> wallHistory = new WallpaperHistory<>();
+    private TextView edgeHintView;
+    private final Runnable edgeHintExpiry = () -> {
+        edgeSwitch.cancel();
+        hideEdgeHint();
+    };
     /** Dynamic atmospheric weather canvas particle overlay over the wallpaper */
     private WeatherBackgroundView weatherOverlayView;
     private String testWeatherOverride = null;
@@ -1163,6 +1174,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * replaced with a solid colour. Persisted in active_category, so it survives restarts.
      */
     private void applyDarkScreen() {
+        cancelEdgeArm();
+        wallHistory.clear();
         getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit().putString("active_category", "DARK").apply();
         handler.removeCallbacks(wallTick);
         if (wallView != null) {
@@ -1220,14 +1233,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /** Shows the next picture from the wallpapers folder; the position survives restarts. */
-    private void showNextWallpaper(boolean fade) {
-        if (isNoWallpaper()) return;
-        if (wallpapers == null || wallpapers.isEmpty()) return;
-        android.content.SharedPreferences prefs = getSharedPreferences("wallpaper", MODE_PRIVATE);
-        int last = prefs.getInt("index", -1);
-        File lastFile = last >= 0 && last < wallpapers.size() ? wallpapers.get(last) : null;
+    private boolean showNextWallpaper(boolean fade) {
+        if (isNoWallpaper()) return false;
+        cancelEdgeArm();
+        if (wallpapers == null || wallpapers.isEmpty()) return false;
         List<File> pool = rotationPool();
-        if (pool.isEmpty()) return;
+        if (pool.isEmpty()) return false;
+        File lastFile = currentWallpaperFile();
         boolean shuffle = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getBoolean("shuffle_mode", true);
         File chosen;
         if (shuffle && pool.size() > 1) {
@@ -1239,16 +1251,41 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             int pos = pool.indexOf(lastFile);
             chosen = pool.get((pos + 1) % pool.size());
         }
-        prefs.edit().putInt("index", wallpapers.indexOf(chosen)).apply();
+        return showWallpaperFile(chosen, fade, true);
+    }
+
+    /** The picture the wallpaper pref points at, or null when the index is stale. */
+    private File currentWallpaperFile() {
+        int last = getSharedPreferences("wallpaper", MODE_PRIVATE).getInt("index", -1);
+        return last >= 0 && last < wallpapers.size() ? wallpapers.get(last) : null;
+    }
+
+    /**
+     * Shows one picture from the current collection. {@code remember} records it in the in-memory
+     * history; stepping back or forward through that history only moves the cursor.
+     */
+    private boolean showWallpaperFile(File file, boolean fade, boolean remember) {
+        if (file == null || isNoWallpaper()) return false;
+        cancelEdgeArm();
+        int index = wallpapers.indexOf(file);
+        if (index < 0) return false;   // a picture from another collection must not cover this one
+        getSharedPreferences("wallpaper", MODE_PRIVATE).edit().putInt("index", index).apply();
         wallShownAt = android.os.SystemClock.elapsedRealtime();
-        final File file = chosen;
+        wallBusy = true;
+        final long serial = ++wallShowSerial;
+        final boolean firstPicture = wallBitmap == null;
         // On a cold start, name the place straight away: waiting for the decode showed the app's name
         // at full size and shrank it a moment later. After that the name changes with the picture,
         // or it would name the next place over the last one's picture while that one decodes.
         if (placeName == null) setPlace(file);
-        final boolean firstPicture = wallBitmap == null;
         wallDecoder.execute(() -> {
             android.graphics.Bitmap bmp = decodeWallpaper(file);
+            if (bmp == null) {
+                handler.post(() -> {
+                    if (serial == wallShowSerial) wallBusy = false;
+                });
+                return;
+            }
             // After the first picture, the blur is made here, before the picture is shown, so the glass
             // changes with the wallpaper rather than after it. The first picture of a fresh start does
             // not wait for its blur: Home is held for it, and the glass catches up a moment later.
@@ -1256,11 +1293,195 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             android.graphics.Bitmap blur = firstPicture ? null
                     : Backdrop.blur(bmp, dm.widthPixels, dm.heightPixels, placesMode ? 0xFF7A7A7A : 0);
             handler.post(() -> {
-                if (isDestroyed()) return;
+                if (isDestroyed()) {
+                    if (serial == wallShowSerial) wallBusy = false;
+                    return;
+                }
+                boolean crossFading = fade && wallBitmap != null && !reducedMotion;
                 setWallpaper(bmp, fade, blur);
                 setPlace(file);
+                if (remember) wallHistory.record(file);
+                if (crossFading) {
+                    // The old bitmap is dropped 900 ms into the fade; until then both are in memory.
+                    handler.postDelayed(() -> {
+                        if (serial == wallShowSerial) wallBusy = false;
+                    }, 900);
+                } else if (serial == wallShowSerial) {
+                    wallBusy = false;
+                }
             });
         });
+        return true;
+    }
+
+    /** Previous from the dock: back through the shown history, else the picture before this one. */
+    private void showPreviousWallpaper() {
+        if (isNoWallpaper() || wallpapers.isEmpty() || wallBusy) return;
+        File seen = wallHistory.previous(historyAllowed());
+        if (seen != null) {
+            showWallpaperFile(seen, true, false);
+            restartWallpaperTimer();
+            return;
+        }
+        File before = previousInCollection();
+        if (before == null) return;
+        showWallpaperFile(before, true, true);
+        restartWallpaperTimer();
+    }
+
+    /** Next from the dock: forward through the shown history, else a fresh pick like Change Now. */
+    private void showNextWallpaperFromEdge() {
+        if (isNoWallpaper() || wallpapers.isEmpty() || wallBusy) return;
+        File seen = wallHistory.next(historyAllowed());
+        if (seen != null) {
+            showWallpaperFile(seen, true, false);
+            restartWallpaperTimer();
+            return;
+        }
+        if (showNextWallpaper(true)) restartWallpaperTimer();
+    }
+
+    /** The picture before the current one in collection order, inside the day/night pool. */
+    private File previousInCollection() {
+        List<File> pool = rotationPool();
+        if (pool.isEmpty()) return null;
+        File current = currentWallpaperFile();
+        int start = current == null ? 0 : wallpapers.indexOf(current);
+        if (start < 0) start = 0;
+        for (int step = 1; step <= wallpapers.size(); step++) {
+            File candidate = wallpapers.get((start - step + wallpapers.size() * 2) % wallpapers.size());
+            if (!candidate.equals(current) && pool.contains(candidate)) return candidate;
+        }
+        return null;
+    }
+
+    /** History entries must also belong to the current collection, and to the day/night pool. */
+    private java.util.function.Predicate<File> historyAllowed() {
+        if (!isDayNightWallpapersEnabled() || !dayNightFilterApplies()) return wallpapers::contains;
+        Set<File> pool = new HashSet<>(rotationPool());
+        return pool::contains;
+    }
+
+    /** A manual change starts the rotation interval over from zero. */
+    private void restartWallpaperTimer() {
+        handler.removeCallbacks(wallTick);
+        wallShownAt = android.os.SystemClock.elapsedRealtime();
+        if (wallpaperIntervalMs > 0 && wallpapers != null && wallpapers.size() >= 2) {
+            handler.postDelayed(wallTick, wallpaperIntervalMs);
+        }
+    }
+
+    private boolean isEdgeSwitchEnabled() {
+        return getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+                .getBoolean("edge_wallpaper_switch", true);
+    }
+
+    private boolean isLayoutRtl() {
+        return getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
+    }
+
+    private void cancelEdgeArm() {
+        if (!edgeSwitch.isArmed()) return;
+        edgeSwitch.cancel();
+        hideEdgeHint();
+    }
+
+    private void handleEdgeAction(EdgeWallpaperSwitch.Action action) {
+        switch (action) {
+            case ARM_NEXT:
+            case ARM_PREVIOUS:
+                showEdgeHint(action == EdgeWallpaperSwitch.Action.ARM_NEXT);
+                break;
+            case CONFIRM_NEXT:
+                hideEdgeHint();
+                showNextWallpaperFromEdge();
+                break;
+            case CONFIRM_PREVIOUS:
+                hideEdgeHint();
+                showPreviousWallpaper();
+                break;
+            default:
+                hideEdgeHint();
+                break;
+        }
+    }
+
+    /** The small hint over the dock; the arrow is the physical key that armed it. */
+    private void showEdgeHint(boolean next) {
+        if (edgeHintView == null) {
+            float density = getResources().getDisplayMetrics().density;
+            TextView hint = new TextView(this);
+            hint.setTextSize(13);
+            hint.setTextColor(0xFFFFFFFF);
+            Fonts.apply(hint, Fonts.SEMIBOLD);
+            hint.setGravity(Gravity.CENTER);
+            hint.setIncludeFontPadding(false);
+            GradientDrawable bg = new GradientDrawable();
+            bg.setColor(0xD9000000);
+            bg.setCornerRadius(18 * density);
+            bg.setStroke(Math.max(1, Math.round(density)), 0x33FFFFFF);
+            hint.setBackground(bg);
+            int px = Math.round(14 * density), py = Math.round(7 * density);
+            hint.setPadding(px, py, px, py);
+            hint.setElevation(4 * density);
+            hint.setFocusable(false);
+            hint.setClickable(false);
+            hint.setAlpha(0f);
+            hint.setVisibility(View.GONE);
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+            lp.bottomMargin = Math.round(16 * density);
+            root.addView(hint, lp);
+            edgeHintView = hint;
+        }
+        boolean rtl = isLayoutRtl();
+        boolean leftArrow = next == rtl;
+        edgeHintView.setText((leftArrow ? "Press \u2190 again" : "Press \u2192 again")
+                + (next ? " for next wallpaper" : " for previous wallpaper"));
+        handler.removeCallbacks(edgeHintExpiry);
+        edgeHintView.animate().cancel();
+        edgeHintView.setVisibility(View.VISIBLE);
+        edgeHintView.setAlpha(0f);
+        edgeHintView.animate().alpha(1f).setDuration(120).start();
+        placeEdgeHint();
+        handler.postDelayed(edgeHintExpiry, EdgeWallpaperSwitch.WINDOW_MS);
+    }
+
+    /** Sits the hint just above the dock row, where it cannot cover the shelf's lines. */
+    private void placeEdgeHint() {
+        if (edgeHintView == null || root == null || grid == null) return;
+        edgeHintView.post(() -> {
+            if (edgeHintView == null || root == null || grid == null) return;
+            RecyclerView.ViewHolder vh = grid.findViewHolderForAdapterPosition(0);
+            View dock = vh != null ? vh.itemView : null;
+            if (dock == null) return;
+            Rect r = new Rect(0, 0, dock.getWidth(), dock.getHeight());
+            root.offsetDescendantRectToMyCoords(dock, r);
+            ViewGroup.LayoutParams params = edgeHintView.getLayoutParams();
+            if (!(params instanceof FrameLayout.LayoutParams)) return;
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) params;
+            int margin = Math.max(0, root.getHeight() - r.top + Math.round(10 * density));
+            if (lp.bottomMargin != margin) {
+                lp.bottomMargin = margin;
+                edgeHintView.setLayoutParams(lp);
+            }
+        });
+    }
+
+    private void hideEdgeHint() {
+        handler.removeCallbacks(edgeHintExpiry);
+        if (edgeHintView == null) return;
+        edgeHintView.animate().cancel();
+        if (edgeHintView.getVisibility() != View.VISIBLE) {
+            edgeHintView.setAlpha(0f);
+            return;
+        }
+        edgeHintView.animate().alpha(0f).setDuration(120).withEndAction(() -> {
+            if (edgeHintView != null && edgeHintView.getAlpha() == 0f) {
+                edgeHintView.setVisibility(View.GONE);
+            }
+        }).start();
     }
 
     private boolean isDayNightWallpapersEnabled() {
@@ -1719,6 +1940,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     public void onTileFocused(int position, View card) {
+        cancelEdgeArm();
         if (!resuming && hasWindowFocus()) SoundEffects.playNav();
         lastFocused = position;
         lastFocusedKey = adapter.keyAt(position);
@@ -2396,6 +2618,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             return true;
         }
         int code = event.getKeyCode();
+        // Any key other than the two that arm or confirm the edge gesture ends an armed hint.
+        if (event.getAction() == KeyEvent.ACTION_DOWN
+                && code != KeyEvent.KEYCODE_DPAD_LEFT && code != KeyEvent.KEYCODE_DPAD_RIGHT) {
+            cancelEdgeArm();
+        }
         if (wallpaperFullscreen) {
             if (event.getAction() == KeyEvent.ACTION_UP) {
                 setWallpaperFullscreen(false);
@@ -2499,9 +2726,23 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     @Override
-    public boolean onTileVerticalKey(int position, int keyCode) {
+    public boolean onTileVerticalKey(int position, int keyCode, boolean repeat) {
         int count = adapter.getItemCount();
         int target;
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+            int direction = keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : -1;
+            EdgeWallpaperSwitch.Edge edge = dockEdge(position, count);
+            boolean outward = isOutwardEdgeKey(direction, edge);
+            if (isEdgeSwitchEnabled()) {
+                handleEdgeAction(edgeSwitch.onKey(direction, edge, isLayoutRtl(), repeat,
+                        android.os.SystemClock.uptimeMillis()));
+            } else if (outward) {
+                edgeSwitch.onOtherInput();
+                hideEdgeHint();
+            }
+            // A key pointing out of the dock's end never moves focus, held or not: stop it here.
+            if (outward) return true;
+        }
         // Horizontal: swallow the key at a row's ends so focus never wraps to the next row or
         // escapes up into the top bar. Mid-row moves fall through to the default focus search.
         if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
@@ -2526,6 +2767,28 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         focusTile(target);
         return true;
+    }
+
+    /** The edge of the main dock (its first row) that {@code position} sits on. */
+    private EdgeWallpaperSwitch.Edge dockEdge(int position, int count) {
+        int dockCount = Math.min(COLUMNS, count);
+        if (position < 0 || position >= dockCount) return EdgeWallpaperSwitch.Edge.NONE;
+        if (dockCount == 1) return EdgeWallpaperSwitch.Edge.BOTH;
+        if (position == 0) return EdgeWallpaperSwitch.Edge.FIRST;
+        if (position == dockCount - 1) return EdgeWallpaperSwitch.Edge.LAST;
+        return EdgeWallpaperSwitch.Edge.NONE;
+    }
+
+    /**
+     * Whether this physical key points out of the dock: Right at the last item, Left at the first.
+     * In a right-to-left layout the first item is on the right, so the physical keys swap roles.
+     */
+    private boolean isOutwardEdgeKey(int direction, EdgeWallpaperSwitch.Edge edge) {
+        if (edge == EdgeWallpaperSwitch.Edge.BOTH) return true;
+        int forward = isLayoutRtl() ? -1 : 1;
+        if (edge == EdgeWallpaperSwitch.Edge.LAST) return direction == forward;
+        if (edge == EdgeWallpaperSwitch.Edge.FIRST) return direction == -forward;
+        return false;
     }
 
     /** The tile {@link #focusWhenSettled} focuses once the grid stops scrolling to it. */
@@ -4322,6 +4585,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         boolean isWeatherFxOn = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
                 .getBoolean("dynamic_weather_overlay", true);
         boolean isDayNightOn = isDayNightWallpapersEnabled();
+        boolean isEdgeSwitchOn = isEdgeSwitchEnabled();
 
         List<GlassDialogs.Row> rows = new ArrayList<>();
         List<Runnable> actions = new ArrayList<>();
@@ -4447,6 +4711,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     .putBoolean("day_night_wallpapers", newMode).apply();
             Toast.makeText(this, newMode ? "Day/night wallpapers turned on"
                     : "Day/night wallpapers turned off", Toast.LENGTH_SHORT).show();
+            showWallpaperDialog();
+        });
+
+        rows.add(new GlassDialogs.Row("Edge Wallpaper Switch: " + (isEdgeSwitchOn ? "ON" : "OFF"),
+                isEdgeSwitchOn ? "Double-press Right at the dock's end, Left at its start"
+                        : "Edge double-press does nothing", false));
+        actions.add(() -> {
+            boolean newMode = !isEdgeSwitchOn;
+            getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
+                    .putBoolean("edge_wallpaper_switch", newMode).apply();
+            if (!newMode) cancelEdgeArm();
+            Toast.makeText(this, newMode ? "Edge wallpaper switch turned on"
+                    : "Edge wallpaper switch turned off", Toast.LENGTH_SHORT).show();
             showWallpaperDialog();
         });
 
@@ -4645,6 +4922,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void switchWallpaperCategory(String category) {
+        cancelEdgeArm();
+        wallHistory.clear();
         getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit().putString("active_category", category).apply();
         // Picking any real category leaves the "No wallpaper (dark screen)" state: show the picture
         // view and plain background again before the new wallpapers are loaded.

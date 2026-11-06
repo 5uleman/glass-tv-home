@@ -51,7 +51,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         void onTileFocused(int position, View card);
 
         /** Called for a D-pad direction key on a tile. Return true when handled (focus stays put). */
-        boolean onTileVerticalKey(int position, int keyCode);
+        boolean onTileVerticalKey(int position, int keyCode, boolean repeat);
 
         /** OK was held on a tile. Return false to open the app's info page, as before. */
         boolean onTileHeld(int position, View card);
@@ -529,7 +529,8 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
                 if (keyCode != KeyEvent.KEYCODE_DPAD_UP && keyCode != KeyEvent.KEYCODE_DPAD_DOWN
                         && keyCode != KeyEvent.KEYCODE_DPAD_LEFT && keyCode != KeyEvent.KEYCODE_DPAD_RIGHT) return false;
                 int pos = getBindingAdapterPosition();
-                return listener != null && pos != RecyclerView.NO_POSITION && listener.onTileVerticalKey(pos, keyCode);
+                return listener != null && pos != RecyclerView.NO_POSITION
+                        && listener.onTileVerticalKey(pos, keyCode, event.getRepeatCount() > 0);
             });
 
             card.setOnFocusChangeListener((view, focused) -> {
