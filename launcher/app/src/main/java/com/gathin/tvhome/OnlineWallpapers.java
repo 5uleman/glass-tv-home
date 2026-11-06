@@ -34,9 +34,31 @@ final class OnlineWallpapers {
     static final String DIR = "online-wallpapers";
     private static final String PREFS_NAME = "online_wallpapers";
     private static final String PREF_LAST_SYNC = "last_sync_time";
+    private static final String PREF_TIER_UHD = "tier_uhd";
     private static final long REFRESH_INTERVAL_MS = 6L * 60 * 60 * 1000; // 6 hours
     private static final int MAX_CACHE_FILES = 150;
+    /** The 4K tier is capped by total bytes instead of file count: about 85 photos at the measured average. */
+    static final long MAX_UHD_CACHE_BYTES = 96L * 1024 * 1024;
     private static final int MAX_IMAGE_BYTES = 25 * 1024 * 1024; // 25 MB limit per image
+
+    /** Set once at startup from {@link WallpaperQuality#choose}; read by sync and prune threads. */
+    private static volatile boolean uhdTier;
+
+    /**
+     * Applies the tier once per process. When the panel or heap changed the last visit, the next
+     * sync is due immediately and the old tier's cached files are pruned once the new ones arrive.
+     */
+    static void configure(Context ctx, boolean uhd) {
+        uhdTier = uhd;
+        SharedPreferences sp = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        if (sp.getBoolean(PREF_TIER_UHD, false) != uhd) {
+            sp.edit().putBoolean(PREF_TIER_UHD, uhd).putLong(PREF_LAST_SYNC, 0).apply();
+        }
+    }
+
+    static boolean isUhd() {
+        return uhdTier;
+    }
 
     static class WallpaperItem {
         final String url;
@@ -355,12 +377,12 @@ final class OnlineWallpapers {
         return ic.contains(sc);
     }
 
-    /** Cache file names (without extension) the catalog asks for, optionally for one category only. */
+    /** Cache file names (without extension) the catalog asks for at the active tier, optionally one category only. */
     static Set<String> currentNames(String category) {
         Set<String> names = new HashSet<>();
         for (WallpaperItem item : CURATED_CATALOG) {
             if (category == null || matchesCategory(item.category, category)) {
-                names.add(hashFilename(item.url));
+                names.add(hashFilename(WallpaperQuality.tierUrl(item.url, uhdTier)));
             }
         }
         return names;
@@ -376,10 +398,13 @@ final class OnlineWallpapers {
         return item != null ? item.category : null;
     }
 
-    /** The catalog entry a cached file came from, or null for feed pictures and unknown files. */
+    /** The catalog entry a cached file came from, at either tier, or null for feed pictures and unknown files. */
     static WallpaperItem catalogItem(String cacheBaseName) {
         for (WallpaperItem item : CURATED_CATALOG) {
-            if (hashFilename(item.url).equals(cacheBaseName)) return item;
+            if (hashFilename(item.url).equals(cacheBaseName)
+                    || hashFilename(WallpaperQuality.tierUrl(item.url, true)).equals(cacheBaseName)) {
+                return item;
+            }
         }
         return null;
     }
@@ -416,6 +441,16 @@ final class OnlineWallpapers {
         Set<String> validHashes = currentNames(category);
         File[] files = d.listFiles((dir, name) -> name.endsWith(".jpg"));
         if (files == null) return;
+        // After a tier change the cache may still hold only the other tier's files. Keep them as a
+        // fallback until at least one file of the active tier has arrived.
+        boolean anyCurrentTier = false;
+        for (File f : files) {
+            if (validHashes.contains(f.getName().replace(".jpg", ""))) {
+                anyCurrentTier = true;
+                break;
+            }
+        }
+        if (!anyCurrentTier) return;
         for (File f : files) {
             String base = f.getName().replace(".jpg", "");
             if (!validHashes.contains(base)) {
@@ -513,7 +548,8 @@ final class OnlineWallpapers {
 
         for (WallpaperItem item : candidates) {
             if (count >= targetNew) break;
-            String fileName = hashFilename(item.url) + ".jpg";
+            String itemUrl = WallpaperQuality.tierUrl(item.url, uhdTier);
+            String fileName = hashFilename(itemUrl) + ".jpg";
             File targetFile = new File(d, fileName);
             if (targetFile.exists() && targetFile.length() > 50_000) {
                 continue;
@@ -522,7 +558,7 @@ final class OnlineWallpapers {
             File tempFile = new File(d, fileName + ".tmp");
             File tempTxt = new File(d, fileName.replace(".jpg", ".txt") + ".tmp");
             try {
-                if (downloadUrlToFile(item.url, tempFile)) {
+                if (downloadUrlToFile(itemUrl, tempFile)) {
                     String meta = (item.title != null ? item.title : "Wallpaper") + "\n"
                             + (item.description != null ? item.description : "") + "\n"
                             + (item.category != null ? item.category : category)
@@ -545,7 +581,10 @@ final class OnlineWallpapers {
                 if (tempTxt.exists()) tempTxt.delete();
             }
         }
-        if (anyDownloaded) pruneUnreferenced(d);
+        if (anyDownloaded) {
+            pruneUnreferenced(d);
+            pruneCache(d);
+        }
         return anyDownloaded;
     }
 
@@ -635,7 +674,8 @@ final class OnlineWallpapers {
 
         for (WallpaperItem item : pool) {
             if (downloadedCount >= targetNew) break;
-            String fileName = hashFilename(item.url) + ".jpg";
+            String itemUrl = WallpaperQuality.tierUrl(item.url, uhdTier);
+            String fileName = hashFilename(itemUrl) + ".jpg";
             File targetFile = new File(d, fileName);
             if (targetFile.exists() && targetFile.length() > 50_000) {
                 continue; // Already cached
@@ -644,7 +684,7 @@ final class OnlineWallpapers {
             File tempFile = new File(d, fileName + ".tmp");
             File tempTxt = new File(d, fileName.replace(".jpg", ".txt") + ".tmp");
             try {
-                if (downloadUrlToFile(item.url, tempFile)) {
+                if (downloadUrlToFile(itemUrl, tempFile)) {
                     // Write metadata
                     String meta = (item.title != null ? item.title : "Wallpaper") + "\n"
                             + (item.description != null ? item.description : "") + "\n"
@@ -685,7 +725,7 @@ final class OnlineWallpapers {
         return anyDownloaded;
     }
 
-    private static String hashFilename(String url) {
+    static String hashFilename(String url) {
         return "online_" + Math.abs(url.hashCode());
     }
 
@@ -802,6 +842,10 @@ final class OnlineWallpapers {
     }
 
     private static void pruneCache(File dir) {
+        if (uhdTier) {
+            pruneUhdCacheBySize(dir);
+            return;
+        }
         File[] files = dir.listFiles((d, name) -> name.endsWith(".jpg"));
         if (files == null || files.length <= MAX_CACHE_FILES) return;
 
@@ -813,6 +857,24 @@ final class OnlineWallpapers {
         int toRemove = list.size() - MAX_CACHE_FILES;
         for (int i = 0; i < toRemove; i++) {
             File f = list.get(i);
+            File txt = new File(dir, f.getName().replace(".jpg", ".txt"));
+            f.delete();
+            if (txt.exists()) txt.delete();
+        }
+    }
+
+    /** The 4K tier is bounded by total bytes: oldest files go until the folder fits. */
+    private static void pruneUhdCacheBySize(File dir) {
+        File[] files = dir.listFiles((d, name) -> name.endsWith(".jpg"));
+        if (files == null || files.length == 0) return;
+        List<File> list = new ArrayList<>();
+        Collections.addAll(list, files);
+        Collections.sort(list, (a, b) -> Long.compare(a.lastModified(), b.lastModified()));
+        long total = 0;
+        for (File f : list) total += f.length();
+        for (File f : list) {
+            if (total <= MAX_UHD_CACHE_BYTES) break;
+            total -= f.length();
             File txt = new File(dir, f.getName().replace(".jpg", ".txt"));
             f.delete();
             if (txt.exists()) txt.delete();

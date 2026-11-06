@@ -443,6 +443,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         SoundEffects.init(this);
         setContentView(R.layout.activity_main);
         density = getResources().getDisplayMetrics().density;
+        applyWallpaperQuality();
         settingsScancodes = getResources().getIntArray(R.array.settings_key_scancodes);
         // config.xml, overlaid by config.json from a pushed theme (see Config and tools/theme.sh).
         Config cfg = Config.load(this);
@@ -1044,24 +1045,58 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
+    /** Picks the catalog download and decode tier once, from the panel and the app heap. */
+    private void applyWallpaperQuality() {
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        int memoryClass = 256;
+        boolean lowRam = false;
+        try {
+            android.app.ActivityManager am =
+                    (android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE);
+            if (am != null) {
+                memoryClass = am.getMemoryClass();
+                lowRam = am.isLowRamDevice();
+                android.app.ActivityManager.MemoryInfo mi = new android.app.ActivityManager.MemoryInfo();
+                am.getMemoryInfo(mi);
+                if (mi.totalMem > 0 && mi.totalMem <= 1610612736L) lowRam = true;
+            }
+        } catch (Exception ignored) {
+        }
+        WallpaperQuality.Choice choice = WallpaperQuality.choose(dm.widthPixels, dm.heightPixels,
+                memoryClass, lowRam);
+        OnlineWallpapers.configure(this, choice.uhd);
+    }
+
     /**
-     * The picture decoded at most to the screen's 1920x1080, never at the 2560x1440 file size:
-     * a bigger bitmap costs memory and buys nothing once the view scales it down. ARGB_8888 keeps
-     * dusk gradients free of the banding 5-6-5 shows. Decoded once, off the main thread.
+     * The picture decoded at the screen size for the active tier: 1920-class panels keep the old
+     * cover decode, and the 4K tier never upscales a smaller original. ARGB_8888 keeps dusk
+     * gradients free of the banding 5-6-5 shows. Decoded once, off the main thread.
      */
     private android.graphics.Bitmap decodeWallpaper(File file) {
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        int targetW = Math.max(1, dm.widthPixels);
+        int targetH = Math.max(1, dm.heightPixels);
+        boolean uhd = OnlineWallpapers.isUhd();
+        android.graphics.Bitmap decoded = decodeWallpaperAt(file, targetW, targetH, uhd);
+        if (decoded == null && uhd) {
+            // A 4K decode refused (OOM or a very large JPEG): half the screen still covers a
+            // 1080-class surface and keeps Home running.
+            decoded = decodeWallpaperAt(file, Math.max(1, targetW / 2), Math.max(1, targetH / 2), false);
+        }
+        return decoded;
+    }
+
+    private android.graphics.Bitmap decodeWallpaperAt(File file, int targetW, int targetH,
+                                                      boolean noUpscale) {
         try {
-            android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
-            int targetW = Math.max(1, dm.widthPixels);
-            int targetH = Math.max(1, dm.heightPixels);
             if (android.os.Build.VERSION.SDK_INT >= 28) {
                 try {
                     android.graphics.ImageDecoder.Source source =
                             android.graphics.ImageDecoder.createSource(file);
                     android.graphics.Bitmap decoded = android.graphics.ImageDecoder.decodeBitmap(source,
                             (decoder, info, src) -> {
-                                int[] size = WallpaperSizing.coverSize(info.getSize().getWidth(),
-                                        info.getSize().getHeight(), targetW, targetH);
+                                int[] size = WallpaperQuality.decodeSize(info.getSize().getWidth(),
+                                        info.getSize().getHeight(), targetW, targetH, noUpscale);
                                 decoder.setTargetSize(size[0], size[1]);
                                 // Software: the backdrop blurs it into a software Canvas and the view keeps
                                 // it after the crossfade, so it must not be a hardware bitmap.
@@ -1087,8 +1122,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             opts.inPreferredConfig = android.graphics.Bitmap.Config.ARGB_8888;
             android.graphics.Bitmap decoded = android.graphics.BitmapFactory.decodeFile(file.getPath(), opts);
             if (decoded == null) return null;
-            int[] want = WallpaperSizing.coverSize(decoded.getWidth(), decoded.getHeight(),
-                    targetW, targetH);
+            int[] want = WallpaperQuality.decodeSize(decoded.getWidth(), decoded.getHeight(),
+                    targetW, targetH, noUpscale);
             if (decoded.getWidth() == want[0] && decoded.getHeight() == want[1]) {
                 return markOpaqueIfJpeg(file, decoded);
             }

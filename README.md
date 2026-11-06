@@ -75,6 +75,12 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   display name and timezone are stored; weather and AQI caches are keyed by location, so one city's
   figures never appear under another; the Malaysian JAS/APIMS station is used only within its old
   ~80 km of the chosen point, and Open-Meteo's US AQI everywhere else.
+- **Wallpaper quality by display.** A 1080p-or-smaller panel, a low-RAM TV, or a 4K panel whose heap
+  cannot hold two 4K bitmaps plus the blur copies keeps the original 2560x1440 downloads and decode.
+  A 4K panel with enough heap requests 3840x2160 from Pexels, Unsplash and the six Commons photos
+  whose originals are at least 3840 wide; it decodes up to 3840x2160 and never upscales a smaller
+  original. The 4K cache is capped at 96 MB, and cache files are keyed by URL so tiers never mix;
+  after a tier change the old tier's files are pruned once the new ones arrive.
 - **A glass wallpaper dialog.** The category list is frosted glass with a white focus ring, and a dark smoke
   layer keeps the white text readable over bright pictures.
 - **A recent-apps deck.** Double-press Home. Cards scroll horizontally in 16:9, using each app's TV

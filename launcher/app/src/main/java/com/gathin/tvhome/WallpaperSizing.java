@@ -25,4 +25,21 @@ final class WallpaperSizing {
                 Math.max(1, (int) Math.round(srcH * scale))
         };
     }
+
+    /**
+     * The same cover size, but never larger than the source: the UHD tier keeps a smaller original
+     * at its own resolution instead of blowing it up to 3840. A source that already covers the
+     * screen is returned unchanged.
+     */
+    static int[] coverSizeNoUpscale(int srcW, int srcH, int targetW, int targetH) {
+        if (srcW <= 0 || srcH <= 0 || targetW <= 0 || targetH <= 0) {
+            return new int[]{Math.max(1, targetW), Math.max(1, targetH)};
+        }
+        double cover = Math.max(targetW / (double) srcW, targetH / (double) srcH);
+        double scale = Math.min(1.0, cover);
+        return new int[]{
+                Math.max(1, (int) Math.round(srcW * scale)),
+                Math.max(1, (int) Math.round(srcH * scale))
+        };
+    }
 }
