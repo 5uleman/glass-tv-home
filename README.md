@@ -123,11 +123,14 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   left alone, and the deck says when a VPN was kept.
 - **The self-updater is off.** This build never reads a release feed or shows an update prompt; new versions are
   built and installed by hand.
-- **Four to six apps per row.** The grid starts at four columns, and the wallpaper settings'
-  **Apps per Row** row cycles 4 → 5 → 6 → 4 with **OK**. The choice is stored in `wallpaper_prefs`
-  (key `grid_columns`, clamped to 4-6) and applied immediately by rebuilding the home screen, keeping
-  the wallpaper and restoring focus; the dock shows as many tiles as the chosen column count. A hero
-  title that uses the full width keeps long place names from being cut with an ellipsis.
+- **Four or five apps per row.** The grid starts at four columns, and the wallpaper settings'
+  **Apps per Row** row cycles 4 → 5 → 4 with **OK**. The choice is stored in `wallpaper_prefs`
+  (key `grid_columns`, 4 or 5) and applied immediately by rebuilding the home screen, keeping
+  the wallpaper and restoring focus; the dock shows as many tiles as the chosen column count. A
+  stored six-column choice from an earlier build is moved to five on the first start and the
+  setting no longer offers six. At 1080p a tile is 360x202 px with four columns and 283x159 px
+  with five. A hero title that uses the full width keeps long place names from being cut with an
+  ellipsis.
 - **Media polling is off**, so nothing polls the current track while the launcher is idle.
 
 Everything else is upstream's work: the glass dock and menus, weekly places, the StandBy clock, cache cleaning

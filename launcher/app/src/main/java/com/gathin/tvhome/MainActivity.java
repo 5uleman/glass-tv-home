@@ -458,9 +458,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         settingsScancodes = getResources().getIntArray(R.array.settings_key_scancodes);
         // config.xml, overlaid by config.json from a pushed theme (see Config and tools/theme.sh).
         Config cfg = Config.load(this);
-        // The wallpaper settings row can override the config's column count (4 to 6 per row).
-        COLUMNS = GridColumns.clamp(getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
-                .getInt("grid_columns", cfg.columns));
+        // The wallpaper settings row can override the config's column count (4 or 5 per row).
+        // An old stored 6 is brought to 5 here once, so the choice can never show six again.
+        android.content.SharedPreferences wallpaperPrefs =
+                getSharedPreferences("wallpaper_prefs", MODE_PRIVATE);
+        int storedColumns = wallpaperPrefs.getInt("grid_columns", cfg.columns);
+        COLUMNS = GridColumns.migrate(storedColumns);
+        if (storedColumns != COLUMNS) {
+            wallpaperPrefs.edit().putInt("grid_columns", COLUMNS).apply();
+        }
         reducedMotion = cfg.reducedMotion;
         liveTvPkg = cfg.liveTvPackage;
         liveTvAction = cfg.liveTvAction;
@@ -5060,7 +5066,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
 
         rows.add(new GlassDialogs.Row("Apps per Row: " + COLUMNS,
-                "4, 5 or 6 apps in each row; press OK to cycle", false));
+                "4 or 5 apps in each row; press OK to cycle", false));
         actions.add(() -> {
             int next = GridColumns.next(COLUMNS);
             getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
