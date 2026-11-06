@@ -457,7 +457,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         settingsScancodes = getResources().getIntArray(R.array.settings_key_scancodes);
         // config.xml, overlaid by config.json from a pushed theme (see Config and tools/theme.sh).
         Config cfg = Config.load(this);
-        COLUMNS = cfg.columns;
+        // The wallpaper settings row can override the config's column count (4 to 6 per row).
+        COLUMNS = GridColumns.clamp(getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+                .getInt("grid_columns", cfg.columns));
         reducedMotion = cfg.reducedMotion;
         liveTvPkg = cfg.liveTvPackage;
         liveTvAction = cfg.liveTvAction;
@@ -5025,6 +5027,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             Toast.makeText(this, newMode ? "Shuffle mode: images picked randomly"
                     : "Sequential mode: images picked in order", Toast.LENGTH_SHORT).show();
             showWallpaperDialog();
+        });
+
+        rows.add(new GlassDialogs.Row("Apps per Row: " + COLUMNS,
+                "4, 5 or 6 apps in each row; press OK to cycle", false));
+        actions.add(() -> {
+            int next = GridColumns.next(COLUMNS);
+            getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
+                    .putInt("grid_columns", next).apply();
+            // Home rebuilds with the new column count; the wallpaper and the dock come back as they were.
+            recreate();
         });
 
         rows.add(new GlassDialogs.Row("Image Title & Info: " + (isDescOn ? "ON" : "OFF"),

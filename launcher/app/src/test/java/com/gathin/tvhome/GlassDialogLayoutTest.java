@@ -83,8 +83,8 @@ public class GlassDialogLayoutTest {
     }
 
     @Test
-    public void wallpaperDialogWithTwentyRowsKeepsTheFooterAndNewRowsReachable() {
-        int rows = 20;
+    public void wallpaperDialogWithTwentyOneRowsKeepsTheFooterAndNewRowsReachable() {
+        int rows = 21;
         int panel = GlassDialogLayout.panelHeight(content(rows), maxPanel());
         assertEquals(maxPanel(), panel);
         int viewport = viewportFor(panel);
@@ -100,8 +100,16 @@ public class GlassDialogLayoutTest {
                 lastTop - RING_PX >= target
                         && lastTop + ROW_PX + RING_PX <= target + viewport);
 
-        // App Color Glow is the fourteenth row, directly under Image Title & Info.
-        int glowTop = 13 * (ROW_PX + ROW_GAP_PX);
+        // Apps per Row is under Play Order, the thirteenth row.
+        int columnsTop = 12 * (ROW_PX + ROW_GAP_PX);
+        int columnsTarget = GlassDialogLayout.scrollTarget(columnsTop, columnsTop + ROW_PX, 0,
+                viewport, RING_PX, contentHeight);
+        assertTrue("the Apps per Row row plus ring is reachable",
+                columnsTop - RING_PX >= columnsTarget
+                        && columnsTop + ROW_PX + RING_PX <= columnsTarget + viewport);
+
+        // App Color Glow is the fifteenth row, directly under Image Title & Info.
+        int glowTop = 14 * (ROW_PX + ROW_GAP_PX);
         int glowTarget = GlassDialogLayout.scrollTarget(glowTop, glowTop + ROW_PX, 0,
                 viewport, RING_PX, contentHeight);
         assertTrue("the App Color Glow row plus ring is reachable",
@@ -109,7 +117,7 @@ public class GlassDialogLayoutTest {
                         && glowTop + ROW_PX + RING_PX <= glowTarget + viewport);
 
         // The preview row sits under Weather Location, one above the last three rows.
-        int previewTop = 16 * (ROW_PX + ROW_GAP_PX);
+        int previewTop = 17 * (ROW_PX + ROW_GAP_PX);
         int previewTarget = GlassDialogLayout.scrollTarget(previewTop, previewTop + ROW_PX, 0,
                 viewport, RING_PX, contentHeight);
         assertTrue("the preview row plus ring is reachable",
