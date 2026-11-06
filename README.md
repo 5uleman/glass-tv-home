@@ -13,18 +13,18 @@ city.
 
 ## Download
 
-The current build is **3.7.1** (`versionCode 25`), 680,265 bytes (664 KB), package id
+The current build is **3.7.1** (`versionCode 25`), 681,461 bytes (665 KB), package id
 **`com.suleman.glasstv`**. Download it from the
 [Releases page](https://github.com/5uleman/glass-tv-home/releases/latest) — release binaries are
 attached there, not committed to this repository.
 
-SHA-256 (`glasstv-3.7.1-polish3-signed.apk`): `54d25a5bd63cc601d72d6f950bb02bf46ff48554447ecbaa503e4366cd27e725`
+SHA-256 (`glasstv-3.7.1-polish4-signed.apk`): `37ca274681aec8e8ea69f7100f67ef7126c8257ec2ba2bd5b3211714db9fea22`
 
 > The APKs still under `release/` (`glass-tv-home.apk`, `glass-tv-installer.apk`) are upstream's original
 > builds, kept for reference. Do not install them as this edition — use only the Releases page.
 
 ```bash
-adb install -r glasstv-3.7.1-polish3-signed.apk
+adb install -r glasstv-3.7.1-polish4-signed.apk
 ```
 
 The APK is signed with this fork's own key, so it will not install over the original author's build (different
@@ -61,28 +61,35 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   TV clock at every change. A period always keeps at least five photos, adding the nearest by brightness if
   needed. Uploaded photos and a single pinned wallpaper are never filtered.
 - **Edge wallpaper switching.** At the last dock tile, double-press **Right** (at the first tile, **Left**)
-  to change the wallpaper. A dark toast — "Press → again for next" or "Press ← again for previous" — fades
-  in over 150 ms, centred horizontally 20 dp above the dock tray. If the hero title or description runs under
-  it, the toast moves above the text instead of covering it. Each direction is explained three times in total;
-  after that the double-press keeps working silently, and the counters refill when the TV screen goes off and
-  on (and on a fresh launch). A second press within 2 s switches; any other key cancels.
+  to change the wallpaper. A glass toast — "Press → again for next" or "Press ← again for previous" — rises
+  8 dp as it fades in over 150 ms, centred horizontally 20 dp above the dock tray. It follows the weather
+  pill's radius, Outfit 500 at 14sp and hairline border, with a 45% dark tint so it stays readable on a
+  bright picture, and it is text only: never focusable, no icon, no focus ring. If the hero title or
+  description runs under it, the toast moves above the text instead of covering it. Each direction is
+  explained twice in total; after that the double-press keeps working silently, and the counters refill
+  when the TV screen goes off and on (and on a fresh launch). A second press within 2 s switches; any
+  other key cancels.
 - **An app-colour glow.** The wallpaper glows in the focused app's colour from the same soft radial
   shape it has always used, brightest at 32% across and 42% down and fading to nothing by 62% of the
   width. The white shape is rasterised at the screen's own pixel size (capped at 1920x1080) and tinted
   per app, so it is never a magnified 480x270 bitmap; filtering and dithering are on.
   Very dark colours are shown as they are. Focus changes cross-fade over 450 ms, and the glass above
-  blends with the same colour over the same time so it never jumps ahead of the room.
+  blends with the same colour over the same time so it never jumps ahead of the room. The wallpaper
+  settings' **App Color Glow** row turns it off and on (default on, stored in `wallpaper_prefs`): off
+  means no glow and no glow work at all, on brings it back for the focused app without a restart.
 - **Rain and fog overlays.** **Dynamic Weather** (default On, same stored key) draws drizzle, rain,
   showers and thunderstorms as distinct effects (drizzle is the light one, storms add lightning) and
   adds drifting fog. Fog comes from WMO codes 45/48
   or visibility below 1,000 m in the existing Open-Meteo request, and thickens as visibility drops
   from 1,000 m to 200 m; a code with no visibility gives a medium veil. Rain wins over fog. The fog
-  is three neutral light grey-white layers (RGB 242) of seamless procedural noise with dense cores
-  and clear gaps, drifting at different speeds (a screen width in 70-130 s). Light fog reaches the
-  lower 45% of the screen at a 45% summed layer cap; heavy fog reaches the lower 65% at an 80% cap.
-  The light grey softens a bright picture as well as lifting a dark one, so the fog reads on both,
-  and it stays neutral with no blue or warm cast. It sits below the clock, title and dock, so they
-  are never fogged.
+  is a neutral light grey-white veil (RGB 242) of seamless procedural noise with dense cores and
+  clear gaps: light fog draws two layers, heavy fog three. Each layer has its own speed and direction
+  (far 10-12 px/s, near 24-27 px/s at 1080p, crossing), sways ±14-18 px on 9-15 s periods and breathes
+  ±10-11% on 7-11 s periods, all from elapsed time and wrapped seamlessly; heavy fog is a little
+  livelier. Light fog reaches the lower 45% of the screen at a 45% summed layer cap; heavy fog reaches
+  the lower 65% at an 80% cap. The light grey softens a bright picture as well as lifting a dark one,
+  so the fog reads on both, and it stays neutral with no blue or warm cast. It sits below the clock,
+  title and dock, so they are never fogged.
   The 1024x256 texture is built once in the background, about 1 MB, with no bundled image; the
   effect fades in and out over 1.5 s and is a little lighter at night (06:00-18:00 is day). It draws
   only while Home is in front, at no more than 30 fps.
