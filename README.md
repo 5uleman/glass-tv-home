@@ -61,15 +61,11 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   TV clock at every change. A period always keeps at least five photos, adding the nearest by brightness if
   needed. Uploaded photos and a single pinned wallpaper are never filtered.
 - **Edge wallpaper switching.** At the last dock tile, double-press **Right** (at the first tile, **Left**)
-  to change the wallpaper. A compact glass capsule — "‹ Previous wallpaper" at the left edge, "Next
-  wallpaper ›" at the right — fades in over 150 ms with a 4 dp rise at the outer edge of the first or last
-  tile, so its chevron points away from the dock. It sits in the band between the hero text and the dock
-  tray: never closer than 3 dp to the hero, 4 dp above the tray border, and inside an 8 dp screen margin,
-  so it covers neither the title nor the tray. It follows the weather pill's look (Outfit at 600 on 12sp,
-  hairline border, 45% dark tint) and is never focusable and has no focus ring. Each direction is
-  explained twice in total; after that the double-press keeps working silently, and the counters refill
-  when the TV screen goes off and on (and on a fresh launch). A second press within 2 s switches; any
-  other key cancels.
+  to change the wallpaper. The system toast explains it — "Press → again for next wallpaper" or "Press
+  ← again for previous wallpaper" — the same dark box Android uses for its own warnings, placed and
+  faded by the system at the bottom of the screen. Each direction is explained twice in total; after
+  that the double-press keeps working silently, and the counters refill when the TV screen goes off
+  and on (and on a fresh launch). A second press within 2 s switches; any other key cancels.
 - **An app-colour glow.** The wallpaper glows in the focused app's colour from the same soft radial
   shape it has always used, brightest at 32% across and 42% down and fading to nothing by 62% of the
   width. The white shape is rasterised at the screen's own pixel size (capped at 1920x1080) and tinted
