@@ -2479,13 +2479,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glowBlend.start();
     }
 
-    /** The glow's shape in white, drawn on first use and kept: a tint gives it each app's colour. */
+    /**
+     * The glow's shape in white, drawn on first use and kept: a tint gives it each app's colour.
+     * Rasterised at the screen's own pixel size so it is drawn 1:1 on a 1080p panel instead of the
+     * four-times enlargement a 480x270 bitmap needed, which is where a sampling pattern can show.
+     */
     private Bitmap ambientShape() {
         if (ambientShape != null) return ambientShape;
-        int w = 480;
-        int h = 270;
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        int w = Math.max(1, Math.min(dm.widthPixels, 1920));
+        int h = Math.max(1, Math.min(dm.heightPixels, 1080));
         Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setDither(true);
         paint.setShader(new RadialGradient(
                 w * 0.32f, h * 0.42f, w * 0.62f,
                 new int[]{0x5CFFFFFF, 0x26FFFFFF, 0x00FFFFFF},
@@ -2512,6 +2518,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // once every tile, not only the dock, tinted the room.
         BitmapDrawable drawable = new BitmapDrawable(getResources(), ambientShape());
         drawable.setGravity(Gravity.FILL);
+        drawable.setFilterBitmap(true);
+        drawable.setDither(true);
         drawable.setColorFilter(new android.graphics.PorterDuffColorFilter(
                 0xFF000000 | color, android.graphics.PorterDuff.Mode.SRC_IN));
         if (crossFade && old != null) {

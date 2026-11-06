@@ -61,10 +61,11 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   after that the double-press keeps working silently, and the counters refill when the TV screen goes off and
   on (and on a fresh launch). A second press within 2 s switches; any other key cancels.
 - **An app-colour glow.** The wallpaper glows in the focused app's colour from the same soft radial
-  shape it has always used: a 480x270 white radial, brightest at 32% across and 42% down, fading to
-  nothing by 62% of the width, stretched over the screen and tinted per app. Very dark colours are shown
-  as they are. Focus changes cross-fade over 450 ms, and the glass above blends with the same colour
-  over the same time so it never jumps ahead of the room.
+  shape it has always used, brightest at 32% across and 42% down and fading to nothing by 62% of the
+  width. The white shape is rasterised at the screen's own pixel size (capped at 1920x1080) and tinted
+  per app, so it is never a magnified 480x270 bitmap; filtering and dithering are on.
+  Very dark colours are shown as they are. Focus changes cross-fade over 450 ms, and the glass above
+  blends with the same colour over the same time so it never jumps ahead of the room.
 - **Rain and fog overlays.** **Dynamic Weather** (default On, same stored key) draws drizzle, rain,
   showers and thunderstorms as distinct effects (drizzle is the light one, storms add lightning) and
   adds drifting fog. Fog comes from WMO codes 45/48
