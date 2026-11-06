@@ -77,6 +77,11 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
   The dark **No wallpaper** screen keeps its own switch (`app_color_glow_dark`, also on by default),
   so turning the glow off over a picture never dims the dark screen, and each mode remembers its
   own choice when you switch between them.
+- **Uploads are normalised once.** A photo sent from a phone, uploaded, or pinned is sized by
+  reading its bounds first, its EXIF rotation applied, then sampled to this screen's size and
+  centre-cropped to 16:9; the result is stored as one opaque JPEG (quality 90) and reused. The
+  original file is never modified. Photos below 1280x720 are not enlarged and skip the crossfade,
+  and the normalised copy is rebuilt if the file changes and removed when the photo is deleted.
 - **Image Title & Info.** With it on (the default), the bottom shelf names the picture, its country
   and a short description — but only when the picture has a title. A picture without one (photos sent
   from a phone, uploads, a pinned single photo) shows the focused dock app's name instead, in the same

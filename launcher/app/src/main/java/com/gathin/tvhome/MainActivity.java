@@ -545,6 +545,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (!wallpapers.isEmpty()) showNextWallpaper(false);
             else if (cfg.wallpaper != null && !placesMode) setWallpaper(decodeWallpaper(cfg.wallpaper), false);
         }
+        pruneUploadCache();
         // The shelf grows and shrinks with the name and the description, so it hangs from its
         // bottom edge: every time it is measured, its top is worked out again. Positioning it by
         // the height it happened to have beforehand is what let a tall block run into the dock.
@@ -1103,6 +1104,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
         int targetW = Math.max(1, dm.widthPixels);
         int targetH = Math.max(1, dm.heightPixels);
+        // A user's own picture goes through the normaliser first: any shape becomes one opaque
+        // 16:9 bitmap at this screen's size, cached, so odd sizes never reach the GPU whole.
+        if (UploadWallpapers.isUpload(file)) {
+            android.graphics.Bitmap normalised = UploadWallpapers.decode(this, file, targetW, targetH);
+            if (normalised != null) return normalised;
+            // Normalisation failed: the old decode below still gives the picture a chance.
+        }
         boolean uhd = OnlineWallpapers.isUhd();
         android.graphics.Bitmap decoded = decodeWallpaperAt(file, targetW, targetH, uhd);
         if (decoded == null && uhd) {
@@ -1196,7 +1204,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         android.graphics.Bitmap old = wallBitmap;
         wallBitmap = bmp;
-        if (fade && old != null && !reducedMotion) {
+        // A low-resolution picture is not upscaled, so it needs no crossfade between two large
+        // layers: it swaps in one step, and the view scales it for the screen.
+        boolean lowRes = bmp.getWidth() < UploadSizing.LOW_RES_WIDTH
+                || bmp.getHeight() < UploadSizing.LOW_RES_HEIGHT;
+        if (fade && old != null && !reducedMotion && !lowRes) {
             android.graphics.drawable.TransitionDrawable t = new android.graphics.drawable.TransitionDrawable(new android.graphics.drawable.Drawable[]{
                     new android.graphics.drawable.BitmapDrawable(getResources(), old),
                     new android.graphics.drawable.BitmapDrawable(getResources(), bmp)});
@@ -1299,6 +1311,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         getWindow().getDecorView().setBackgroundColor(bg);
         // Back on a picture: the picture mode's own glow choice applies again.
         applyGlowEnabled(currentModeGlowEnabled());
+    }
+
+    /** Removes normalised copies whose upload has been deleted or changed; cheap and off-main. */
+    private void pruneUploadCache() {
+        File customDir = new File(getFilesDir(), "custom_wallpapers");
+        wallDecoder.execute(() -> UploadWallpapers.prune(this, customDir));
     }
 
     /**
@@ -5812,13 +5830,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 qrUrlText.setTextColor(0xFF4ADE80);
             }
             if (qrImageView != null) {
-                try {
-                    Bitmap thumb = decodeWallpaper(file);
-                    if (thumb != null) {
-                        qrImageView.setImageBitmap(thumb);
-                        qrImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                    }
-                } catch (Exception ignored) {}
+                // A small sampled decode off the main thread: it used to decode the full picture
+                // here, a second time, and the home animations paid for it.
+                final ImageView target = qrImageView;
+                wallDecoder.execute(() -> {
+                    Bitmap thumb = UploadWallpapers.thumbnail(file, UploadWallpapers.THUMBNAIL_MAX);
+                    if (thumb == null) return;
+                    handler.post(() -> {
+                        if (isDestroyed()) return;
+                        target.setImageBitmap(thumb);
+                        target.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    });
+                });
             }
 
             handler.postDelayed(() -> {
@@ -5885,6 +5908,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
 
             File customDir = new File(getFilesDir(), "custom_wallpapers");
+            pruneUploadCache();
             File[] files = customDir.listFiles((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".jpeg"));
             String activeCat = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).getString("active_category", "Natural");
 
@@ -5907,6 +5931,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void onCustomWallpaperCleared() {
         runOnUiThread(() -> {
+            pruneUploadCache();
             getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
                     .putBoolean("custom_single_mode", false)
                     .remove("custom_single_file")
@@ -6006,6 +6031,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     if (!f.getName().equals(file.getName())) f.delete();
                 }
             }
+            pruneUploadCache();
             onCustomWallpaperSelected(file);
             Toast.makeText(this, "Other images deleted; this one was kept", Toast.LENGTH_SHORT).show();
         });
