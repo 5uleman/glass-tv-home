@@ -20,6 +20,11 @@ public class UploadPageTest {
     }
 
     @Test
+    public void sizeCapIsTwentyKilobytes() {
+        assertEquals(20_480, UploadPage.MAX_BYTES);
+    }
+
+    @Test
     public void onlyExternalUrlIsTheFooterGitHubLink() {
         Matcher m = Pattern.compile("(?:https?:)?//[^\\s\"'<>]+").matcher(UploadPage.HTML);
         boolean seen = false;
@@ -33,9 +38,26 @@ public class UploadPageTest {
     @Test
     public void footerLinkIsTheRealAccountAndOpensSafely() {
         assertEquals("https://github.com/5uleman", UploadPage.GITHUB_URL);
-        String link = "<a href=\"" + UploadPage.GITHUB_URL + "\""
-                + " target=\"_blank\" rel=\"noopener noreferrer\">5ULEMAN</a>";
-        assertTrue("safe footer link missing", UploadPage.HTML.contains(link));
+        String open = "<a href=\"" + UploadPage.GITHUB_URL + "\""
+                + " target=\"_blank\" rel=\"noopener noreferrer\">";
+        int at = UploadPage.HTML.indexOf(open);
+        assertTrue("safe footer link missing", at >= 0);
+        int end = UploadPage.HTML.indexOf("</a>", at);
+        assertTrue("footer link not closed", end > at);
+        String inner = UploadPage.HTML.substring(at + open.length(), end);
+        assertTrue(inner, inner.startsWith("5ULEMAN"));
+        assertTrue("external-link icon missing", inner.contains("<svg"));
+    }
+
+    @Test
+    public void footerLinkIsAlwaysUnderlinedInAccentBlue() {
+        Matcher m = Pattern.compile("\\.foot a\\{([^}]*)\\}").matcher(UploadPage.HTML);
+        assertTrue("footer link rule missing", m.find());
+        String rule = m.group(1);
+        assertTrue(rule, rule.contains("text-decoration:underline"));
+        assertTrue(rule, rule.contains("color:#3B82F6"));
+        assertTrue("tap target must be 44 px", rule.contains("min-height:44px"));
+        assertFalse("underline must not depend on hover", UploadPage.HTML.contains(".foot a:hover"));
     }
 
     @Test
@@ -47,6 +69,40 @@ public class UploadPageTest {
         for (String endpoint : endpoints) {
             assertTrue(endpoint, UploadPage.HTML.contains(endpoint));
         }
+    }
+
+    @Test
+    public void listRowsShowPhotoDateAndSize() {
+        assertTrue(UploadPage.HTML.contains("'Photo · '+it.date"));
+        assertTrue(UploadPage.HTML.contains("E('span','rsub',it.size)"));
+    }
+
+    @Test
+    public void lockAndDeleteAreIconOnlyButtons() {
+        assertTrue(UploadPage.HTML.contains("'act lock'"));
+        assertTrue(UploadPage.HTML.contains("'act del'"));
+        assertTrue(UploadPage.HTML.contains("setAttribute('aria-pressed'"));
+        assertTrue(UploadPage.HTML.contains("setAttribute('aria-label'"));
+        assertTrue(UploadPage.HTML.contains("id=\"iLock\""));
+        assertTrue(UploadPage.HTML.contains("id=\"iTrash\""));
+    }
+
+    @Test
+    public void lockedListOffersTheCycleAction() {
+        assertTrue(UploadPage.HTML.contains("'Locked on 1 photo'"));
+        assertTrue(UploadPage.HTML.contains("'Cycling through '+items.length"));
+        assertTrue(UploadPage.HTML.contains("Cycle all photos"));
+        assertTrue(UploadPage.HTML.contains("/api/slideshow"));
+    }
+
+    @Test
+    public void selectModeHasCountConfirmationAndDone() {
+        assertTrue(UploadPage.HTML.contains("Select all"));
+        assertTrue(UploadPage.HTML.contains("'Delete ('"));
+        assertTrue(UploadPage.HTML.contains("id=\"selbar\""));
+        assertTrue(UploadPage.HTML.contains("id=\"done\""));
+        assertTrue(UploadPage.HTML.contains("Delete this photo?"));
+        assertTrue(UploadPage.HTML.contains("'/api/delete?file='"));
     }
 
     @Test

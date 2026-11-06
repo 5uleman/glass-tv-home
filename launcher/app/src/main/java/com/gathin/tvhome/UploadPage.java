@@ -87,8 +87,8 @@ h2{font-size:16px;margin:0}
 .empty p{margin:0;font-weight:500}
 .note{color:#9AA0AA;font-size:13px;margin:6px 0 12px;overflow-wrap:anywhere}
 .foot{margin-top:auto;padding:32px 0 8px;text-align:center;color:#6B7280;font-size:12px}
-.foot a{display:inline-flex;align-items:center;min-height:44px;padding:0 8px;color:inherit;text-decoration:none;font-weight:500}
-.foot a:hover,.foot a:focus-visible{text-decoration:underline}
+.foot a{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 8px;color:#3B82F6;text-decoration:underline;text-underline-offset:3px;font-weight:600}
+.foot .i{width:14px;height:14px}
 .sheet{position:fixed;inset:0;z-index:9;display:flex;align-items:flex-end;justify-content:center}
 .sheetbg{position:absolute;inset:0;background:#00000099}
 .sheetcard{position:relative;width:100%;max-width:390px;background:#11141D;border:1px solid #ffffff24;border-bottom:0;border-radius:24px 24px 0 0;padding:20px 20px 28px;text-align:center}
@@ -122,7 +122,7 @@ h2{font-size:16px;margin:0}
 <div class="tools" id="tools" hidden><span id="mode"></span><button class="mini" id="cycle" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v5h5M20 19v-5h-5M5.6 9a8 8 0 0 1 13-2.5M18.4 15a8 8 0 0 1-13 2.5"/></svg>Cycle all photos</button><span id="selbar" hidden><button class="mini" id="selall">Select all</button><button class="mini" id="dsel" disabled>Delete (0)</button><button class="mini" id="done">Done</button></span></div>
 <div class="rows" id="list"><p class="note">Loading photos…</p></div>
 </section>
-<footer class="foot"><a href="https://github.com/5uleman" target="_blank" rel="noopener noreferrer">5ULEMAN</a></footer>
+<footer class="foot"><a href="https://github.com/5uleman" target="_blank" rel="noopener noreferrer">5ULEMAN<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5H5V7h5"/></svg></a></footer>
 </div>
 <div class="sheet" id="sheet" hidden>
 <div class="sheetbg" id="sheetbg"></div>
