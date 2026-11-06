@@ -12,10 +12,19 @@ public class FogLookTest {
 
     private static float compositeOf(float density) {
         float clear = 1f;
-        for (int i = 0; i < FogLook.LAYERS; i++) {
+        for (int i = 0; i < FogLook.layerCount(density); i++) {
             clear *= 1f - FogLook.layerAlpha(density, i, true) / 255f;
         }
         return 1f - clear;
+    }
+
+    @Test
+    public void lightFogUsesTwoLayersAndHeavyFogThree() {
+        assertEquals(2, FogLook.layerCount(LIGHT));
+        assertEquals(3, FogLook.layerCount(HEAVY));
+        assertEquals(2, FogLook.layerCount(WeatherEffects.FOG_CODE_ONLY_DENSITY));
+        assertEquals(3, FogLook.layerCount(WeatherEffects.FOG_HEAVY_DENSITY));
+        assertEquals(3, FogLook.layerCount(2f));
     }
 
     @Test
@@ -44,21 +53,30 @@ public class FogLookTest {
     }
 
     @Test
-    public void everyLayerStaysInsideTheCoveredBand() {
-        for (int i = 0; i < FogLook.LAYERS; i++) {
+    public void everyLayerStaysInsideItsCoveredBand() {
+        for (int i = 0; i < FogLook.layerCount(HEAVY); i++) {
             float top = FogLook.layerTop(1080, HEAVY, i);
             assertTrue(top >= FogLook.bandTop(1080, HEAVY));
             assertTrue(top < 1080f);
+            if (i > 0) assertTrue(top > FogLook.layerTop(1080, HEAVY, i - 1));
+        }
+        for (int i = 0; i < FogLook.layerCount(LIGHT); i++) {
+            float top = FogLook.layerTop(1080, LIGHT, i);
+            assertTrue(top >= FogLook.bandTop(1080, LIGHT));
+            assertTrue(top < 1080f);
+            if (i > 0) assertTrue(top > FogLook.layerTop(1080, LIGHT, i - 1));
         }
         assertEquals(FogLook.bandTop(1080, HEAVY), FogLook.layerTop(1080, HEAVY, 0), 0.001f);
-        assertTrue(FogLook.layerTop(1080, HEAVY, 1) > FogLook.layerTop(1080, HEAVY, 0));
-        assertTrue(FogLook.layerTop(1080, HEAVY, 2) > FogLook.layerTop(1080, HEAVY, 1));
+        assertEquals(FogLook.bandTop(1080, LIGHT), FogLook.layerTop(1080, LIGHT, 0), 0.001f);
     }
 
     @Test
     public void nightIsLighterThanDay() {
-        for (int i = 0; i < FogLook.LAYERS; i++) {
+        for (int i = 0; i < FogLook.layerCount(HEAVY); i++) {
             assertTrue(FogLook.layerAlpha(HEAVY, i, false) < FogLook.layerAlpha(HEAVY, i, true));
+        }
+        for (int i = 0; i < FogLook.layerCount(LIGHT); i++) {
+            assertTrue(FogLook.layerAlpha(LIGHT, i, false) < FogLook.layerAlpha(LIGHT, i, true));
         }
     }
 
@@ -71,13 +89,27 @@ public class FogLookTest {
     }
 
     @Test
-    public void theThreeWeightsSumToOneAndNoLayerIsEmpty() {
-        float sum = 0f;
-        for (float weight : FogLook.WEIGHTS) {
-            assertTrue(weight > 0f);
-            sum += weight;
+    public void everyWeightSetSumsToOneAndNoLayerIsEmpty() {
+        for (int count : new int[]{FogLook.LAYERS_LIGHT, FogLook.LAYERS_HEAVY}) {
+            float sum = 0f;
+            float[] weights = FogLook.weights(count);
+            assertEquals(count, weights.length);
+            for (float weight : weights) {
+                assertTrue(weight > 0f);
+                sum += weight;
+            }
+            assertEquals(1f, sum, 0.0001f);
         }
-        assertEquals(1f, sum, 0.0001f);
-        assertEquals(3, FogLook.LAYERS);
+    }
+
+    @Test
+    public void everyLayerIsWideEnoughToFillTheScreen() {
+        for (int count : new int[]{FogLook.LAYERS_LIGHT, FogLook.LAYERS_HEAVY}) {
+            float[] widths = FogLook.widths(count);
+            assertEquals(count, widths.length);
+            for (float width : widths) {
+                assertTrue("layer narrower than the screen", width >= 1f);
+            }
+        }
     }
 }

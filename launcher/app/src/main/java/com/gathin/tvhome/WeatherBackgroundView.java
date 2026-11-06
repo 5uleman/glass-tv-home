@@ -54,8 +54,8 @@ public class WeatherBackgroundView extends View {
     private final Paint starPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint ripplePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     /**
-     * Fog is one prebuilt seamless noise texture, drawn three times at different scales, heights
-     * and speeds. The texture is neutral grey with alpha only and is built off the UI thread.
+     * Fog is one prebuilt seamless noise texture, drawn as two or three layers at different scales,
+     * heights and speeds. The texture is neutral grey with alpha only and is built off the UI thread.
      */
     private final Paint fogPaint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG);
     private final Matrix fogMatrix = new Matrix();
@@ -66,7 +66,8 @@ public class WeatherBackgroundView extends View {
     private int fogTextureWidth;
     private boolean daytime = true;
     private float fogDensity = WeatherEffects.FOG_CODE_ONLY_DENSITY;
-    private final float[] fogPhase = new float[FogLook.LAYERS];
+    /** Elapsed drift time; every offset is a function of it, never of a frame count. */
+    private float fogClock;
 
     /** Overlay frames are capped at 30 fps; the rest of the app still runs at display rate. */
     private static final long OVERLAY_FRAME_MS = 33;
@@ -449,23 +450,34 @@ public class WeatherBackgroundView extends View {
     }
 
     /**
-     * Three copies of one neutral grey textured veil, drifting at 70–130 s per screen width.
-     * Normal blending at these alphas lightens a dark picture and softens a bright one; the neutral
-     * grey keeps both visible, with no blue or warm cast.
+     * Two or three copies of one neutral grey textured veil. Each layer drifts at its own speed and
+     * direction, sways a little and breathes a little, all from the elapsed time, so wisps cross and
+     * billow instead of moving as one sheet. Normal blending at these alphas lightens a dark picture
+     * and softens a bright one; the neutral grey keeps both visible, with no blue or warm cast.
      */
     private void drawFog(Canvas canvas, float dt) {
         ensureFogTexture();
         if (fogTexture == null || fogTexture.isRecycled() || fogShader == null) return;
         float density = Math.max(0f, Math.min(1f, fogDensity));
-        for (int i = 0; i < FogLook.LAYERS; i++) {
-            float width = cachedW * FogLook.WIDTHS[i];
+        fogClock += dt;
+        int count = FogLook.layerCount(density);
+        FogMotion.Layer[] layers = FogMotion.layers(count);
+        float[] widths = FogLook.widths(count);
+        for (int i = 0; i < count; i++) {
+            FogMotion.Layer layer = layers[i];
+            float width = cachedW * widths[i];
             float top = FogLook.layerTop(cachedH, density, i);
             float bandHeight = cachedH - top;
-            fogPhase[i] = (fogPhase[i] + dt / FogLook.SECONDS[i]) % FogLook.WIDTHS[i];
+            // Scaled from the 1080p reference, then wrapped by the layer's own repeat width.
+            float drift = FogMotion.wrap(
+                    FogMotion.driftPx(layer, fogClock) * cachedW / FogMotion.REFERENCE_W, width);
+            float sway = FogMotion.swayPx(layer, fogClock) * cachedH / FogMotion.REFERENCE_H;
             fogMatrix.setScale(width / fogTexture.getWidth(), bandHeight / fogTexture.getHeight());
-            fogMatrix.postTranslate(-fogPhase[i] * cachedW, top);
+            fogMatrix.postTranslate(drift, top + sway);
             fogShader.setLocalMatrix(fogMatrix);
-            fogPaint.setAlpha(FogLook.layerAlpha(density, i, daytime));
+            int alpha = Math.round(FogLook.layerAlpha(density, i, daytime)
+                    * FogMotion.breathScale(layer, fogClock));
+            fogPaint.setAlpha(Math.max(0, Math.min(255, alpha)));
             canvas.drawRect(0, top, cachedW, cachedH, fogPaint);
         }
     }
