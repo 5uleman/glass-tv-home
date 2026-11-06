@@ -221,6 +221,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean heroShown;
     /** The glow behind the tiles. It follows every app, while the shelf only names dock apps. */
     private boolean ambientShown;
+    /** Wallpaper settings' App Color Glow switch; off means no glow and no work for it. */
+    private boolean glowEnabled = true;
 
     /** The colour the glass is blending from, how far along it is, and the blend itself. */
     private int glowFrom;
@@ -479,6 +481,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         mainContent = findViewById(R.id.mainContent);
         glass = findViewById(R.id.glass);
         ambient = findViewById(R.id.ambient);
+        glowEnabled = isAppColorGlowEnabled();
         Backdrop.setWorker(wallDecoder, handler);
         heroShelf = findViewById(R.id.heroShelf);
         heroName = findViewById(R.id.heroName);
@@ -2487,6 +2490,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Tells the glass the glow's colour and strength, so what shows through matches around it. */
     private void syncGlassGlow() {
+        if (!glowEnabled) return;
         Backdrop.setGlow(ambientShape(), glowFrom, ambientColor, glowMix, ambient.getAlpha());
     }
 
@@ -2529,6 +2533,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** With crossFade, the old glow fades into the new one (two small textures, one blend). */
     private void setAmbient(int color, boolean crossFade) {
+        if (!glowEnabled) return;
         if (color == ambientColor && ambient.getBackground() != null) return;
         android.graphics.drawable.Drawable old = ambient.getBackground();
         if (old instanceof android.graphics.drawable.TransitionDrawable) {
@@ -2586,6 +2591,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * back up again.
      */
     private void showAmbient(int color) {
+        if (!glowEnabled) return;
         if (!ambientShown) {
             setAmbient(color);
             ambient.animate().alpha(1f).setDuration(reducedMotion ? 160 : 600)
@@ -2593,6 +2599,37 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             ambientShown = true;
         } else if (color != ambientColor) {
             setAmbient(color, !reducedMotion);
+        }
+    }
+
+    /** Whether the wallpaper is tinted in the focused app's colour; wallpaper_prefs, default on. */
+    private boolean isAppColorGlowEnabled() {
+        return getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+                .getBoolean("app_color_glow", true);
+    }
+
+    /**
+     * Applies the wallpaper settings' App Color Glow switch. Off removes the room's glow and the
+     * glass's, cancels any blend and stops all glow work; on lights the room again for the app that
+     * has focus, without a restart. The shape bitmap is kept, so turning it back on costs no rebuild.
+     */
+    private void setAppColorGlow(boolean enabled) {
+        if (glowEnabled == enabled) return;
+        glowEnabled = enabled;
+        getSharedPreferences("wallpaper_prefs", MODE_PRIVATE).edit()
+                .putBoolean("app_color_glow", enabled).apply();
+        if (!enabled) {
+            if (glowBlend != null) {
+                glowBlend.cancel();
+                glowBlend = null;
+            }
+            ambientShown = false;
+            ambient.animate().cancel();
+            ambient.setAlpha(0f);
+            ambient.setBackground(null);
+            Backdrop.setGlow(null, 0, 0, 1f, 0f);   // the glass shows no glow either
+        } else if (adapter != null && lastFocused >= 0 && lastFocused < adapter.getItemCount()) {
+            showAmbient(adapter.ambientColorAt(lastFocused));
         }
     }
 
@@ -5015,6 +5052,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 }
                 Toast.makeText(this, "Wallpaper description turned on", Toast.LENGTH_SHORT).show();
             }
+            showWallpaperDialog();
+        });
+
+        rows.add(new GlassDialogs.Row("App Color Glow: " + (glowEnabled ? "ON" : "OFF"),
+                glowEnabled ? "The wallpaper glows in the focused app's colour"
+                        : "Plain wallpaper, with no app-colour glow", false));
+        actions.add(() -> {
+            boolean on = !glowEnabled;
+            setAppColorGlow(on);
+            Toast.makeText(this, on ? "App colour glow turned on" : "App colour glow turned off",
+                    Toast.LENGTH_SHORT).show();
             showWallpaperDialog();
         });
 

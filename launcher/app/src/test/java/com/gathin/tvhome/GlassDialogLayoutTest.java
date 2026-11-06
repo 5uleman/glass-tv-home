@@ -83,8 +83,8 @@ public class GlassDialogLayoutTest {
     }
 
     @Test
-    public void wallpaperDialogWithNineteenRowsKeepsTheFooterReachable() {
-        int rows = 19;
+    public void wallpaperDialogWithTwentyRowsKeepsTheFooterAndNewRowsReachable() {
+        int rows = 20;
         int panel = GlassDialogLayout.panelHeight(content(rows), maxPanel());
         assertEquals(maxPanel(), panel);
         int viewport = viewportFor(panel);
@@ -100,8 +100,16 @@ public class GlassDialogLayoutTest {
                 lastTop - RING_PX >= target
                         && lastTop + ROW_PX + RING_PX <= target + viewport);
 
+        // App Color Glow is the fourteenth row, directly under Image Title & Info.
+        int glowTop = 13 * (ROW_PX + ROW_GAP_PX);
+        int glowTarget = GlassDialogLayout.scrollTarget(glowTop, glowTop + ROW_PX, 0,
+                viewport, RING_PX, contentHeight);
+        assertTrue("the App Color Glow row plus ring is reachable",
+                glowTop - RING_PX >= glowTarget
+                        && glowTop + ROW_PX + RING_PX <= glowTarget + viewport);
+
         // The preview row sits under Weather Location, one above the last three rows.
-        int previewTop = 15 * (ROW_PX + ROW_GAP_PX);
+        int previewTop = 16 * (ROW_PX + ROW_GAP_PX);
         int previewTarget = GlassDialogLayout.scrollTarget(previewTop, previewTop + ROW_PX, 0,
                 viewport, RING_PX, contentHeight);
         assertTrue("the preview row plus ring is reachable",
