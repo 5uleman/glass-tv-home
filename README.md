@@ -49,11 +49,6 @@ Everything is reversible: the launcher is a normal app, and it never roots the T
 - **Two Pakistan wallpaper collections.** *Pakistan Monuments* has 24 photos of Lahore, Islamabad,
   Karachi, the forts and the mosques; *Pakistan Nature* has 10 photos of the Hunza valley, Attabad
   Lake, Nanga Parbat, Swat, the Karakoram, Rawal Lake and Clifton Beach. Credits are below.
-- **Day/night wallpaper rotation.** Each Pakistan photo carries a measured brightness and a day, night or
-  both tag. With **Day/Night Wallpapers** on (the default, right under Change Wallpaper Now), 06:00-18:00
-  rotates day and both photos, and 18:00-06:00 rotates night and both photos, checked by the TV clock at
-  every change. A period always keeps at least five photos, adding the nearest by brightness if needed.
-  Uploaded photos and a single pinned wallpaper are never filtered.
 - **A glass wallpaper dialog.** The category list is frosted glass with a white focus ring, and a dark smoke
   layer keeps the white text readable over bright pictures.
 - **A recent-apps deck.** Double-press Home. Cards scroll horizontally in 16:9, using each app's TV
