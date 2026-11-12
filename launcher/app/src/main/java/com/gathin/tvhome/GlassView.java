@@ -43,8 +43,7 @@ public class GlassView extends View {
         float inset = 6f * density;
         rect.set(inset, inset, getWidth() - inset, getHeight() - inset);
         // A rim only: the slab sits on top of the tile, so any fill would wash the app out.
-        rim.fit(rect);
-        canvas.drawRoundRect(rect, radius, radius, rim.paint);
+        rim.draw(canvas, rect, radius, 1f);
         rim.drawWindowLight(canvas, rect, radius, 1f);
     }
 }

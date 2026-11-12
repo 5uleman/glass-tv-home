@@ -50,6 +50,12 @@ final class GlassRim {
 
     private void buildShader(int accent) {
         builtTint = accent;
+        paint.setShader(rimGradient(accent));
+        windowLightPaint.setShader(windowGradient(accent));
+    }
+
+    /** The nine-stop prismatic edge for one accent, in the unit square. */
+    private LinearGradient rimGradient(int accent) {
         boolean classic = accent == GlareColor.CLASSIC;
 
         int cWhiteGlint = modulateAlpha(0xFFFFFFFF, alphaFactor);
@@ -58,21 +64,18 @@ final class GlassRim {
         int cGoldSheen;
         int cTwilightLilac;
         int cSkyCyan;
-        int windowLightAccent;
         if (classic) {
             cCyanShimmer = modulateAlpha(0xCC67E8F9, alphaFactor);
             cVioletSoap = modulateAlpha(0xB3C084FC, alphaFactor);
             cGoldSheen = modulateAlpha(0x80FDE047, alphaFactor);
             cTwilightLilac = modulateAlpha(0x59818CF8, alphaFactor);
             cSkyCyan = modulateAlpha(0x8038BDF8, alphaFactor);
-            windowLightAccent = 0x8067E8F9;
         } else {
             cCyanShimmer = modulateAlpha(GlareColor.withAlpha(GlareColor.lighten(accent, 0.30f), 0xCC), alphaFactor);
             cVioletSoap = modulateAlpha(GlareColor.withAlpha(GlareColor.lighten(accent, 0.12f), 0xB3), alphaFactor);
             cGoldSheen = modulateAlpha(GlareColor.withAlpha(GlareColor.lighten(accent, 0.55f), 0x80), alphaFactor);
             cTwilightLilac = modulateAlpha(GlareColor.withAlpha(accent, 0x59), alphaFactor);
             cSkyCyan = modulateAlpha(GlareColor.withAlpha(GlareColor.darken(accent, 0.12f), 0x80), alphaFactor);
-            windowLightAccent = GlareColor.withAlpha(GlareColor.lighten(accent, 0.25f), 0x80);
         }
         int cClearWaist = modulateAlpha(clearWaist, alphaFactor);
         int cWhiteRim = modulateAlpha(0xD9FFFFFF, alphaFactor);
@@ -99,7 +102,14 @@ final class GlassRim {
                 1.0f - (0.15f * reach),
                 1.00f
         };
-        paint.setShader(new LinearGradient(0f, 0f, 1f, 1f, colors, stops, Shader.TileMode.CLAMP));
+        return new LinearGradient(0f, 0f, 1f, 1f, colors, stops, Shader.TileMode.CLAMP);
+    }
+
+    /** The overhead window-light glint for one accent. */
+    private LinearGradient windowGradient(int accent) {
+        int windowLightAccent = accent == GlareColor.CLASSIC
+                ? 0x8067E8F9
+                : GlareColor.withAlpha(GlareColor.lighten(accent, 0.25f), 0x80);
 
         int[] wlColors = new int[]{
                 0x00FFFFFF,
@@ -117,8 +127,7 @@ final class GlassRim {
                 0.68f,
                 1.00f
         };
-        windowLightPaint.setShader(new LinearGradient(0f, 0f, 1f, 0f, wlColors, wlStops,
-                Shader.TileMode.CLAMP));
+        return new LinearGradient(0f, 0f, 1f, 0f, wlColors, wlStops, Shader.TileMode.CLAMP);
     }
 
     private static int modulateAlpha(int color, float factor) {
@@ -126,13 +135,18 @@ final class GlassRim {
         return (color & 0x00FFFFFF) | (Math.max(0, Math.min(255, a)) << 24);
     }
 
-    /** Lines the shine up with {@code rect}: brightest at its top-left and bottom-right. */
-    void fit(RectF rect) {
+    /**
+     * Draws the edge in the accent in force. One shader, built when the accent changes and reused
+     * for every frame after it: drawing allocates nothing.
+     */
+    void draw(Canvas canvas, RectF rect, float cornerRadius, float alpha) {
         int tint = GlareColor.current();
         if (tint != builtTint) buildShader(tint);
         matrix.setScale(rect.width(), rect.height());
         matrix.postTranslate(rect.left, rect.top);
         paint.getShader().setLocalMatrix(matrix);
+        paint.setAlpha(Math.round(255f * alpha));
+        canvas.drawRoundRect(rect, cornerRadius, cornerRadius, paint);
     }
 
     /** Draws the overhead window-light glint along the top curve of the glass. */

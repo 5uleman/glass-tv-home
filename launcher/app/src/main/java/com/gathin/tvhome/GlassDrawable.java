@@ -108,9 +108,7 @@ final class GlassDrawable extends Drawable {
             }
             float half = rim.paint.getStrokeWidth() / 2f;
             rect.inset(half, half);
-            rim.fit(rect);
-            rim.paint.setAlpha(Math.round(255 * glass));
-            canvas.drawRoundRect(rect, radius - half, radius - half, rim.paint);
+            rim.draw(canvas, rect, radius - half, glass);
             rim.drawWindowLight(canvas, rect, radius - half, glass);
         }
         // The fill itself is the highlight view behind the pills, showing through as the glass clears;

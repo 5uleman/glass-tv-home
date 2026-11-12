@@ -105,7 +105,6 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
         // spreads over an extra pixel and reads thicker than the pills' edge.
         float half = edge.paint.getStrokeWidth() / 2f;
         rect.inset(half, half);
-        edge.fit(rect);
-        c.drawRoundRect(rect, radius - half, radius - half, edge.paint);
+        edge.draw(c, rect, radius - half, 1f);
     }
 }

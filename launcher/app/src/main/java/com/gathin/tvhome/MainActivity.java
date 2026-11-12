@@ -234,6 +234,45 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private float glowMix = 1f;
     private android.animation.ValueAnimator glowBlend;
     private Bitmap ambientShape;
+
+    /** One cross-fade, and a fast run of moves that lands the last colour in a single redraw. */
+    private static final int GLOW_FADE_MS = 450;
+    private static final long GLOW_FADE_GAP_MS = 150;
+    private static final long GLOW_SETTLE_MS = 120;
+    private int pendingGlowColor;
+    private boolean glowPending;
+    private long lastGlowAt;
+    private final Runnable settleGlow = new Runnable() {
+        @Override
+        public void run() {
+            if (!glowPending) return;
+            glowPending = false;
+            setAmbient(pendingGlowColor);   // no blend: one drawable, one redraw
+        }
+    };
+    /** Drives the blend itself; one instance, so a move allocates no listener. */
+    private final android.animation.ValueAnimator.AnimatorUpdateListener blendTick =
+            new android.animation.ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(android.animation.ValueAnimator a) {
+                    glowMix = (Float) a.getAnimatedValue();
+                    syncGlassGlow();
+                }
+            };
+    /** Follows an alpha or scale animation that leaves the blend's colour alone. */
+    private final android.animation.ValueAnimator.AnimatorUpdateListener followTick =
+            new android.animation.ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(android.animation.ValueAnimator a) {
+                    syncGlassGlow();
+                }
+            };
+
+    /** Tinted glow layers kept per app colour, so a move reuses one instead of building it. */
+    private final int[] glowTints = new int[6];
+    private final BitmapDrawable[] glowLayers = new BitmapDrawable[6];
+    private int glowNext;
+    private BitmapDrawable glowCurrent;
     /** Where the shelf's bottom edge belongs; its top follows once the lines have been measured. */
     private float heroBottom;
     private View btnInputs;
@@ -1271,6 +1310,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         refreshGlare();
     }
 
+    /** The glass pills, kept as one array so a redraw request allocates nothing. */
+    private static final int[] GLASS_PILLS = {R.id.btnInputs, R.id.btnWifi, R.id.btnAssistant,
+            R.id.btnCandyBox, R.id.btnSettings, R.id.weatherAirQuality};
+
     /** Re-reads the active glare on the glass already on screen. One pass, only when the tint changes. */
     private void refreshGlare() {
         if (grid != null) {
@@ -1281,8 +1324,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 if (ring != null) ring.invalidate();
             }
         }
-        for (int id : new int[]{R.id.btnInputs, R.id.btnWifi, R.id.btnAssistant,
-                R.id.btnCandyBox, R.id.btnSettings, R.id.weatherAirQuality}) {
+        for (int id : GLASS_PILLS) {
             View pill = findViewById(id);
             if (pill != null) pill.invalidate();
         }
@@ -1290,10 +1332,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Applies the Auto/Classic choice to the picture on screen, from the cached sample. */
     private void applyGlareNow(boolean auto) {
-        android.graphics.Bitmap bmp = wallBitmap;
-        int accent = GlareColor.CLASSIC;
-        if (auto && bmp != null && !bmp.isRecycled() && !isNoWallpaper()) {
-            accent = GlareColor.accentFor(bmp, wallGlareKey);
+        int accent;
+        if (!auto) {
+            accent = GlareColor.CLASSIC;
+        } else if (isNoWallpaper()) {
+            accent = GlareColor.NEUTRAL_LIGHT;   // no picture to read: the dark screen's neutral
+        } else {
+            android.graphics.Bitmap bmp = wallBitmap;
+            accent = bmp != null && !bmp.isRecycled()
+                    ? GlareColor.accentFor(bmp, wallGlareKey)
+                    : GlareColor.NEUTRAL_MID;    // nothing loaded yet: a neutral that suits most art
         }
         GlareColor.setActive(accent);
         refreshGlare();
@@ -1339,6 +1387,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         return "DARK".equalsIgnoreCase(activeCategory());
     }
 
+    /** The dark screen's edge in the Glare Color setting currently chosen (Auto is the default). */
+    private int darkScreenGlare() {
+        boolean auto = getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
+                .getBoolean(GlareColor.AUTO_KEY, true);
+        return auto ? GlareColor.NEUTRAL_LIGHT : GlareColor.CLASSIC;
+    }
+
     /**
      * The plain dark home screen: a solid black background with no picture, no slideshow, no
      * wallpaper fetching or loading, and no title / category / description plate at the bottom.
@@ -1361,7 +1416,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         root.setBackgroundColor(0xFF000000);
         getWindow().getDecorView().setBackgroundColor(0xFF000000);
         Backdrop.presentSolid(0xFF000000);
-        GlareColor.setActive(GlareColor.CLASSIC);   // no picture, no wallpaper tint
+        GlareColor.setActive(darkScreenGlare());    // one fixed edge: Auto neutral, Classic blue
         refreshGlare();
     }
 
@@ -1555,6 +1610,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean isEdgeSwitchEnabled() {
         return getSharedPreferences("wallpaper_prefs", MODE_PRIVATE)
                 .getBoolean("edge_wallpaper_switch", true);
+    }
+
+    /**
+     * The dock's edge double-press is a wallpaper control, so the dark screen never arms it: no hint,
+     * no two-second window, and none of the hint allowance used up for the pictures after it.
+     */
+    private boolean isEdgeSwitchActive() {
+        return !isNoWallpaper() && isEdgeSwitchEnabled();
     }
 
     private boolean isLayoutRtl() {
@@ -2393,7 +2456,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** The shelf's two lines. An empty description takes no room, so the title keeps its place. */
     private void setHeroText(String title, String where, String desc) {
         if (heroName == null || heroWhere == null || heroDesc == null) return;
-        heroName.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, titleSizeSp(title));
+        // Same length, same size: setting it again costs a requestLayout on every dock move.
+        float sp = titleSizeSp(title);
+        float sizePx = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP,
+                sp, getResources().getDisplayMetrics());
+        if (Math.abs(heroName.getTextSize() - sizePx) > 0.01f) {
+            heroName.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, sp);
+        }
         heroName.setText(title);
         heroWhere.setText(where);
         heroWhere.setVisibility(where == null || where.isEmpty() ? View.GONE : View.VISIBLE);
@@ -2594,6 +2663,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void syncGlassGlow() {
         if (!glowEnabled) return;
         Backdrop.setGlow(ambientShape(), glowFrom, ambientColor, glowMix, ambient.getAlpha());
+        if (glowMix >= 1f) collapseGlow();
     }
 
     /** Runs the glass through the same colour blend as the room's TransitionDrawable. */
@@ -2603,10 +2673,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glowMix = 0f;
         glowBlend = android.animation.ValueAnimator.ofFloat(0f, 1f);
         glowBlend.setDuration(ms);
-        glowBlend.addUpdateListener(a -> {
-            glowMix = (float) a.getAnimatedValue();
-            syncGlassGlow();
-        });
+        glowBlend.addUpdateListener(blendTick);
         glowBlend.start();
     }
 
@@ -2644,24 +2711,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         int previous = ambientColor;
         ambientColor = color;
-        // Every app's glow is the same shape in a different colour, so the shape is drawn once and
-        // each app only tints it. Drawing a fresh bitmap per move cost a CPU fill, half a megabyte
-        // and a texture upload every time focus moved, which is what made moving around feel heavy
-        // once every tile, not only the dock, tinted the room.
-        BitmapDrawable drawable = new BitmapDrawable(getResources(), ambientShape());
-        drawable.setGravity(Gravity.FILL);
-        drawable.setFilterBitmap(true);
-        drawable.setDither(true);
-        drawable.setColorFilter(new android.graphics.PorterDuffColorFilter(
-                0xFF000000 | color, android.graphics.PorterDuff.Mode.SRC_IN));
+        BitmapDrawable drawable = glowLayer(0xFF000000 | color);
+        glowCurrent = drawable;
         if (crossFade && old != null) {
             android.graphics.drawable.TransitionDrawable t = new android.graphics.drawable.TransitionDrawable(
                     new android.graphics.drawable.Drawable[]{old, drawable});
             t.setCrossFadeEnabled(true);
             ambient.setBackground(t);
-            t.startTransition(450);
+            t.startTransition(GLOW_FADE_MS);
             // The glass blends with the room, over the same 450 ms, instead of jumping ahead of it.
-            blendGlassGlow(previous, 450);
+            blendGlassGlow(previous, GLOW_FADE_MS);
         } else {
             ambient.setBackground(drawable);
             if (glowBlend != null) glowBlend.cancel();
@@ -2671,13 +2730,49 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
+    /**
+     * The room glow for one colour. Every app is the same white shape in another colour, so the
+     * shape is rasterised once and each colour keeps a layer over it: a focus move then takes a
+     * layer, not a drawable, a colour filter and a bitmap each time.
+     */
+    private BitmapDrawable glowLayer(int argb) {
+        for (int i = 0; i < glowTints.length; i++) {
+            if (glowTints[i] == argb) {
+                glowLayers[i].setAlpha(255);   // a blend may have left it transparent
+                return glowLayers[i];
+            }
+        }
+        BitmapDrawable d = new BitmapDrawable(getResources(), ambientShape());
+        d.setGravity(Gravity.FILL);
+        d.setFilterBitmap(true);
+        d.setDither(true);
+        d.setColorFilter(new android.graphics.PorterDuffColorFilter(
+                argb, android.graphics.PorterDuff.Mode.SRC_IN));
+        glowTints[glowNext] = argb;
+        glowLayers[glowNext] = d;
+        glowNext = (glowNext + 1) % glowTints.length;
+        return d;
+    }
+
+    /**
+     * The fade is over: put the one layer back in place of the two-layer blend. A finished
+     * TransitionDrawable keeps both full-screen layers and blends them on every redraw.
+     */
+    private void collapseGlow() {
+        if (ambient.getBackground() instanceof android.graphics.drawable.TransitionDrawable
+                && glowCurrent != null) {
+            glowCurrent.setAlpha(255);
+            ambient.setBackground(glowCurrent);
+        }
+    }
+
     /** Focus has left the apps altogether: both the shelf and the glow go. */
     private void hideHero() {
         hideShelf();
         if (!ambientShown) return;
         ambientShown = false;
         ambient.animate().alpha(0f).setDuration(reducedMotion ? 140 : 300)
-                .setUpdateListener(a -> syncGlassGlow()).start();
+                .setUpdateListener(followTick).start();
     }
 
     private void hideShelf() {
@@ -2697,11 +2792,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (!ambientShown) {
             setAmbient(color);
             ambient.animate().alpha(1f).setDuration(reducedMotion ? 160 : 600)
-                    .setUpdateListener(a -> syncGlassGlow()).start();
+                    .setUpdateListener(followTick).start();
             ambientShown = true;
-        } else if (color != ambientColor) {
-            setAmbient(color, !reducedMotion);
+            return;
         }
+        if (color == ambientColor) return;
+        long now = android.os.SystemClock.uptimeMillis();
+        if (now - lastGlowAt > GLOW_FADE_GAP_MS) {
+            glowPending = false;
+            handler.removeCallbacks(settleGlow);
+            setAmbient(color, !reducedMotion);   // one step: the 450 ms blend, as before
+        } else {
+            // A held key or a fast run: the room keeps its colour until the movement stops, then
+            // lands the last app's in one redraw instead of blending again on every key.
+            pendingGlowColor = color;
+            glowPending = true;
+            handler.removeCallbacks(settleGlow);
+            handler.postDelayed(settleGlow, GLOW_SETTLE_MS);
+        }
+        lastGlowAt = now;
     }
 
     /**
@@ -3017,7 +3126,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             int direction = keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : -1;
             EdgeWallpaperSwitch.Edge edge = dockEdge(position, count);
             boolean outward = isOutwardEdgeKey(direction, edge);
-            if (isEdgeSwitchEnabled()) {
+            if (isEdgeSwitchActive()) {
                 handleEdgeAction(edgeSwitch.onKey(direction, edge, isLayoutRtl(), repeat,
                         android.os.SystemClock.uptimeMillis()));
             } else if (outward) {
@@ -4620,7 +4729,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         try {
             return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
         } catch (Exception e) {
-            return "4.0.0";
+            return "4.0.1";
         }
     }
 
