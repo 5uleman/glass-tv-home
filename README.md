@@ -1,7 +1,7 @@
 # Glass TV — Clean English Edition
 
 <p align="center">
-  <img src="docs/screenshots/home-badshahi.jpg" width="100%" alt="Home screen with Badshahi Mosque at night, the glass dock and the clock">
+  <img src="docs/screenshots/home-hunza-autumn.jpg" width="100%" alt="Home screen with Hunza Valley in autumn, the glass dock, the clock and the weather and AQI pill">
 </p>
 
 **A quiet, ad-free Android TV launcher in frosted glass — English UI, weekly places, and a phone upload page that stays connected.**
@@ -45,11 +45,16 @@
 
 ## Screenshots
 
-Screenshots from an Android TV at 1920×1080.
+Screenshots from an Android TV at 1920×1080, captured on 12 November 2026 with the fix10 build (4.0.0, version code 26).
 
 | | |
 |---|---|
-| ![Home with five columns and the Pakistan Monument at night](docs/screenshots/home-five-columns.jpg)<br>*Home with five columns* | ![The wallpaper glowing in the focused app's colour](docs/screenshots/app-color-glow.jpg)<br>*The app-colour glow over Badshahi Mosque* |
+| ![Home with five columns and Alamgiri Gate, Lahore Fort](docs/screenshots/home-five-columns.jpg)<br>*Home with five columns* | ![Home at night with Badshahi Mosque, the glass dock and the clock](docs/screenshots/home-badshahi.jpg)<br>*Badshahi Mosque at night* |
+| ![The wallpaper glowing in the focused app's colour](docs/screenshots/app-color-glow.jpg)<br>*The app-colour glow over Badshahi Mosque* | ![Attractions in Pakistan: the white domes of Abbasi Mosque](docs/screenshots/home-abbasi-mosque.jpg)<br>*Attractions in Pakistan* |
+| ![Attabad Lake between the Karakoram slopes](docs/screenshots/home-attabad-lake.jpg)<br>*Nature in Pakistan* | ![Dark Minimalist wallpaper: a night sky over a sailboat](docs/screenshots/home-oled-dark.jpg)<br>*Dark Minimalist (OLED)* |
+| ![Rain drawn over the Hunza wallpaper](docs/screenshots/home-rain.jpg)<br>*Dynamic Weather: rain* | ![No wallpaper mode, with the app name where the title goes](docs/screenshots/home-no-wallpaper.jpg)<br>*No wallpaper* |
+| ![The weather and AQI pill focused, with a white glare border](docs/screenshots/weather-pill-aqi.jpg)<br>*Weather and AQI pill* | ![Top bar with the Inputs pill focused](docs/screenshots/inputs.jpg)<br>*Top bar* |
+| ![The launcher toast that explains the second press](docs/screenshots/edge-hint-toast.jpg)<br>*Edge hint at the last dock tile* | ![The collections dialog with the new collection names](docs/screenshots/settings-collections.jpg)<br>*Collections dialog* |
 | ![Edge Wallpaper Switch set to ON](docs/screenshots/settings-edge-switch.jpg)<br>*Edge wallpaper switching* | ![Weather Effect Preview set to Auto](docs/screenshots/settings-weather-preview.jpg)<br>*Weather Effect Preview and location* |
 | ![Weather Location set to Lahore, Pakistan](docs/screenshots/settings-weather-location.jpg)<br>*Weather Location* | ![App Color Glow set to ON](docs/screenshots/settings-app-color-glow.jpg)<br>*App Color Glow* |
 | ![Image Title & Info set to ON](docs/screenshots/settings-image-title.jpg)<br>*Image Title & Info* | ![Apps per Row set to 4](docs/screenshots/settings-apps-per-row.jpg)<br>*Apps per Row* |
@@ -178,18 +183,18 @@ Screenshots from an Android TV at 1920×1080.
 
 ## Install
 
-**Download** [glasstv-4.0.0-signed.apk](https://github.com/5uleman/glass-tv-home/releases/download/v4.0.0/glasstv-4.0.0-signed.apk)
+**Download** [glasstv-4.0.0-fix10-signed.apk](https://github.com/5uleman/glass-tv-home/releases/download/v4.0.0/glasstv-4.0.0-fix10-signed.apk)
 from the [v4.0.0 release](https://github.com/5uleman/glass-tv-home/releases/tag/v4.0.0).
-It is 690,261 bytes (674 KB), package `com.suleman.glasstv`, version **4.0.0 (26)**.
+It is 690,373 bytes (674 KB), package `com.suleman.glasstv`, version **4.0.0 (26)**.
 
 SHA-256:
 
 ```
-08f7f8d368de83bef174fb19e83c6311611817c7f0075416c919696fe3786a74
+cf865804e5dd046f782db402d0effbff072172030cd47986a3385a888ca16646
 ```
 
 ```bash
-adb install -r glasstv-4.0.0-signed.apk
+adb install -r glasstv-4.0.0-fix10-signed.apk
 ```
 
 No computer? Copy the APK to a USB drive or download it with a file manager on the TV, open it, and allow installs
@@ -203,13 +208,13 @@ and Samsung (Tizen) TVs cannot run an Android launcher; an Android TV box in an 
 
 ```bash
 # Linux or macOS
-sha256sum glasstv-4.0.0-signed.apk
+sha256sum glasstv-4.0.0-fix10-signed.apk
 
 # Windows (Command Prompt or PowerShell)
-certutil -hashfile glasstv-4.0.0-signed.apk SHA256
+certutil -hashfile glasstv-4.0.0-fix10-signed.apk SHA256
 ```
 
-The output must start with `08f7f8d3…`.
+The output must start with `cf865804…`.
 
 **First run.** Two TV-side steps make the launcher complete:
 
@@ -257,7 +262,7 @@ cd launcher
 ./gradlew :app:testDebugUnitTest
 ```
 
-CI runs the tests and the release build and fails if the APK grows past 716,800 bytes; this build is 690,261 bytes.
+CI runs the tests and the release build and fails if the APK grows past 716,800 bytes; this build is 690,373 bytes.
 
 ## Credits
 
