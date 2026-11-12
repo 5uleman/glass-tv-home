@@ -112,6 +112,8 @@ Screenshots from an Android TV at 1920×1080, captured on 12 November 2026 with 
 - **Dynamic Weather** draws drizzle, rain, showers and thunderstorms as distinct effects, and drifting fog from
   WMO codes 45/48 or visibility below 1,000 m. Fog thickens as visibility drops, is neutral grey-white, sits below
   the clock, title and dock, and fades in and out over 1.5 s at no more than 30 fps.
+- **No wallpaper (dark screen) shows no weather effects.** The dark mode draws no overlay of any kind, rain or fog,
+  and keeps its own App Color Glow switch instead.
 - **Weather Effect Preview** cycles with OK: Auto, Drizzle, Rain, Thunderstorm, Light fog, Heavy fog. The chosen
   effect is what the real classifier and renderer would paint, stays for ten minutes or until Auto, and is kept in
   memory only. With Dynamic Weather off, the row reads "Off" and names the pending choice.
@@ -183,7 +185,7 @@ Screenshots from an Android TV at 1920×1080, captured on 12 November 2026 with 
 
 ## Install
 
-**Download** [glasstv-4.0.0-fix10-signed.apk](https://github.com/5uleman/glass-tv-home/releases/download/v4.0.0/glasstv-4.0.0-fix10-signed.apk)
+**Download** [glasstv-4.0.0-signed.apk](https://github.com/5uleman/glass-tv-home/releases/download/v4.0.0/glasstv-4.0.0-signed.apk)
 from the [v4.0.0 release](https://github.com/5uleman/glass-tv-home/releases/tag/v4.0.0).
 It is 690,373 bytes (674 KB), package `com.suleman.glasstv`, version **4.0.0 (26)**.
 
@@ -194,7 +196,7 @@ cf865804e5dd046f782db402d0effbff072172030cd47986a3385a888ca16646
 ```
 
 ```bash
-adb install -r glasstv-4.0.0-fix10-signed.apk
+adb install -r glasstv-4.0.0-signed.apk
 ```
 
 No computer? Copy the APK to a USB drive or download it with a file manager on the TV, open it, and allow installs
@@ -208,10 +210,10 @@ and Samsung (Tizen) TVs cannot run an Android launcher; an Android TV box in an 
 
 ```bash
 # Linux or macOS
-sha256sum glasstv-4.0.0-fix10-signed.apk
+sha256sum glasstv-4.0.0-signed.apk
 
 # Windows (Command Prompt or PowerShell)
-certutil -hashfile glasstv-4.0.0-fix10-signed.apk SHA256
+certutil -hashfile glasstv-4.0.0-signed.apk SHA256
 ```
 
 The output must start with `cf865804…`.
@@ -248,7 +250,8 @@ restore notes and per-model guidance are in [docs/CLEANYOURTV-README.md](docs/CL
 
 ## Build from source
 
-Requirements: JDK 17 or newer (built here with JDK 21) and Android SDK platform 34.
+Requirements: JDK 17 to 21 (built here with JDK 21) and Android SDK platform 34. Newer JDKs, such as 25, are
+rejected by the Gradle 8.9 and Android Gradle plugin versions this project uses.
 
 ```bash
 cd launcher
