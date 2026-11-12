@@ -7,10 +7,10 @@
 **A quiet, ad-free Android TV launcher in frosted glass — English UI, weekly places, and a phone upload page that stays connected.**
 
 <p align="center">
-  <a href="https://github.com/5uleman/glass-tv-home/releases/tag/v4.0.0"><img src="https://img.shields.io/badge/version-4.0.0-3B82F6?style=flat-square" alt="Version 4.0.0"></a>
+  <a href="https://github.com/5uleman/glass-tv-home/releases/tag/v4.0.1"><img src="https://img.shields.io/badge/version-4.0.1-3B82F6?style=flat-square" alt="Version 4.0.1"></a>
   <img src="https://img.shields.io/badge/platform-Android%20TV-34D399?style=flat-square" alt="Android TV">
   <img src="https://img.shields.io/badge/licence-MIT-9AA0AA?style=flat-square" alt="MIT licence">
-  <img src="https://img.shields.io/badge/APK-674%20KB-0284C7?style=flat-square" alt="APK size 674 KB">
+  <img src="https://img.shields.io/badge/APK-675%20KB-0284C7?style=flat-square" alt="APK size 675 KB">
 </p>
 
 > **A fork.** This is [5uleman](https://github.com/5uleman)'s modified fork of
@@ -38,14 +38,16 @@
 |---|---|
 | **Two Pakistan collections.** | *Attractions in Pakistan* has 24 photos of Lahore, Islamabad, Karachi, the forts and the mosques; *Nature in Pakistan* has 10 from Hunza, Attabad Lake, Nanga Parbat, Swat, the Karakoram, Rawal Lake and Clifton Beach. |
 | <img src="docs/screenshots/settings-day-night.jpg" width="260" alt="Day/Night Wallpapers row set to ON"> | **Day and night rotation.** With Day/Night on, 06:00–18:00 rotates day and both-tone photos, and 18:00–06:00 rotates night and both-tone photos. Uploaded and pinned photos are never filtered. |
-| <img src="docs/screenshots/settings-edge-switch.jpg" width="260" alt="Edge Wallpaper Switch row set to ON"> | **Edge wallpaper switching.** At the last dock tile, double-press Right (at the first tile, Left) to change the wallpaper. The system toast explains the second press, twice per side. |
+| <img src="docs/screenshots/settings-edge-switch.jpg" width="260" alt="Edge Wallpaper Switch row set to ON"> | **Edge wallpaper switching.** At the last dock tile, double-press Right (at the first tile, Left) to change the wallpaper. The system toast explains the second press, twice per side. In No wallpaper mode the switch is off: those keys do nothing. |
 | <img src="docs/screenshots/settings-weather-preview.jpg" width="260" alt="Weather Effect Preview and Weather Location rows"> | **Weather on the wallpaper.** Rain, drizzle, thunderstorms and drifting fog come from the real forecast; the preview row cycles every effect, and the location row finds any city. |
 | <img src="docs/screenshots/settings-app-color-glow.jpg" width="260" alt="App Color Glow row set to ON"> | **App-colour glow.** The wallpaper glows in the focused app's colour, rasterised at the screen's own size and cross-faded over 450 ms. The switch is per mode. |
 | <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16.5V4m0 0L8 8m4-4 4 4M4.5 19.5h15"/></svg> | **Send photos from your phone.** Open the QR code on the TV, scan it once, and send up to 10 photos from the phone page. The page stays connected while the window is open. |
 
 ## Screenshots
 
-Screenshots from an Android TV at 1920×1080, captured on 12 November 2026 with the fix10 build (4.0.0, version code 26).
+Screenshots from an Android TV at 1920×1080, captured on 12 November 2026 with the 4.0.0 build (version code 26).
+The ring, rim and glow look is unchanged in 4.0.1, except that No wallpaper mode and gray or dark pictures now
+use a neutral glare instead of the classic blue.
 
 | | |
 |---|---|
@@ -59,6 +61,21 @@ Screenshots from an Android TV at 1920×1080, captured on 12 November 2026 with 
 | ![Weather Location set to Lahore, Pakistan](docs/screenshots/settings-weather-location.jpg)<br>*Weather Location* | ![App Color Glow set to ON](docs/screenshots/settings-app-color-glow.jpg)<br>*App Color Glow* |
 | ![Image Title & Info set to ON](docs/screenshots/settings-image-title.jpg)<br>*Image Title & Info* | ![Apps per Row set to 4](docs/screenshots/settings-apps-per-row.jpg)<br>*Apps per Row* |
 
+## What's new in 4.0.1
+
+- **No wallpaper mode has a static neutral glare.** The dark screen's glass edge is one soft gray-white
+  (`#DDE3EA`) chosen once when the mode is applied; it does not follow the focused app. **App Color Glow** is
+  still the only thing that changes colour with focus there, and it is lighter on the TV while the edge stays put.
+- **The glare no longer falls back to blue.** A gray or black-and-white picture, a very dark picture or a failed
+  sample now gets a neutral shade picked from the picture's mean brightness (light gray-white on dark art, mid
+  gray on bright art). Blue is only ever **Classic**, the fixed colour you choose, or a picture that really is blue.
+- **The edge wallpaper switch is inactive in No wallpaper mode.** Right on the last dock tile and Left on the
+  first are plain D-pad keys there: no toast, no two-second window, and none of the "explained twice per
+  screen-on" allowance used up. Photo modes keep the switch exactly as before.
+- **The glass focus and glare look is unchanged.** The static double ring on the focused tile, the prismatic rim
+  on the dock, pills and panels, and the 450 ms app-colour glow are as they were in 4.0.0; the room glow now
+  skips its cross-fade while focus is moving quickly and lands the last app's colour once.
+
 ## What's new in 4.0.0
 
 ### Look and feel
@@ -71,8 +88,8 @@ Screenshots from an Android TV at 1920×1080, captured on 12 November 2026 with 
 - **Wallpaper-tinted glare.** One accent is sampled from the decoded wallpaper (a vivid, bright sample,
   brightened and with its saturation capped) and cached per file. It tints the glass edge and the selected
   tile's ring. **Glare Color** in the wallpaper settings offers **Auto (from wallpaper)**, the default, or
-  **Classic** (the fixed blue). No wallpaper, a dark or gray photo, or a failed sample falls back to the
-  classic blue.
+  **Classic** (the fixed blue). No wallpaper, a dark or gray photo, or a failed sample fell back to the
+  classic blue in 4.0.0; 4.0.1 gives them a neutral shade instead.
 - **Weather and AQI pill.** The combined weather/AQI pill focuses with a plain white glare border, not the
   AQI state colour and not the wallpaper tint, over the light translucent focused glass. The AQI state colour
   stays on the wording inside the pill.
@@ -185,18 +202,18 @@ Screenshots from an Android TV at 1920×1080, captured on 12 November 2026 with 
 
 ## Install
 
-**Download** [glasstv-4.0.0-signed.apk](https://github.com/5uleman/glass-tv-home/releases/download/v4.0.0/glasstv-4.0.0-signed.apk)
-from the [v4.0.0 release](https://github.com/5uleman/glass-tv-home/releases/tag/v4.0.0).
-It is 690,373 bytes (674 KB), package `com.suleman.glasstv`, version **4.0.0 (26)**.
+**Download** [glasstv-4.0.1-signed.apk](https://github.com/5uleman/glass-tv-home/releases/download/v4.0.1/glasstv-4.0.1-signed.apk)
+from the [v4.0.1 release](https://github.com/5uleman/glass-tv-home/releases/tag/v4.0.1).
+It is 691,149 bytes (675 KB), package `com.suleman.glasstv`, version **4.0.1 (27)**.
 
 SHA-256:
 
 ```
-cf865804e5dd046f782db402d0effbff072172030cd47986a3385a888ca16646
+bfc54cef82bb4023957c2c13b9617132a8390fae85722016e7acd3ada161ceba
 ```
 
 ```bash
-adb install -r glasstv-4.0.0-signed.apk
+adb install -r glasstv-4.0.1-signed.apk
 ```
 
 No computer? Copy the APK to a USB drive or download it with a file manager on the TV, open it, and allow installs
@@ -210,13 +227,13 @@ and Samsung (Tizen) TVs cannot run an Android launcher; an Android TV box in an 
 
 ```bash
 # Linux or macOS
-sha256sum glasstv-4.0.0-signed.apk
+sha256sum glasstv-4.0.1-signed.apk
 
 # Windows (Command Prompt or PowerShell)
-certutil -hashfile glasstv-4.0.0-signed.apk SHA256
+certutil -hashfile glasstv-4.0.1-signed.apk SHA256
 ```
 
-The output must start with `cf865804…`.
+The output must start with `bfc54cef…`.
 
 **First run.** Two TV-side steps make the launcher complete:
 
@@ -265,7 +282,7 @@ cd launcher
 ./gradlew :app:testDebugUnitTest
 ```
 
-CI runs the tests and the release build and fails if the APK grows past 716,800 bytes; this build is 690,373 bytes.
+CI runs the tests and the release build and fails if the APK grows past 716,800 bytes; this build is 691,149 bytes.
 
 ## Credits
 
