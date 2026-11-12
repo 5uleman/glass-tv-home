@@ -592,10 +592,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 }
                 return false;
             });
-            weatherAirQualityView.setOnFocusChangeListener((v, hasFocus) -> {
-                float scale = hasFocus ? 1.05f : 1.0f;
-                v.animate().scaleX(scale).scaleY(scale).setDuration(150).start();
-            });
         }
         updateWeatherAqi();
         WeatherAirQuality.syncIfDue(this, this::updateWeatherAqi);
@@ -794,6 +790,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             glider.addCompanion(pill);
             Backdrop.watch(pill);
             pill.setOnFocusChangeListener((v, has) -> {
+                if (has) moveTopHighlight(v);
+            });
+        }
+        if (weatherAirQualityView != null) {
+            // The same blurred backdrop, veil, rim and dark focus fill as the top-bar pills; with
+            // focus the glass and rim fade under the dark fill exactly as they do on a button. The
+            // pill does not scale, so the blurred patch stays aligned with the wallpaper behind it.
+            GlassDrawable glass = new GlassDrawable(weatherAirQualityView, 18f * density, density, glider);
+            Backdrop.watch(weatherAirQualityView);
+            weatherAirQualityView.setBackground(glass);
+            glider.addCompanion(weatherAirQualityView);
+            weatherAirQualityView.setOnFocusChangeListener((v, has) -> {
                 if (has) moveTopHighlight(v);
             });
         }
@@ -1274,7 +1282,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         }
         for (int id : new int[]{R.id.btnInputs, R.id.btnWifi, R.id.btnAssistant,
-                R.id.btnCandyBox, R.id.btnSettings}) {
+                R.id.btnCandyBox, R.id.btnSettings, R.id.weatherAirQuality}) {
             View pill = findViewById(id);
             if (pill != null) pill.invalidate();
         }
@@ -2363,7 +2371,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private boolean isTopPill(View v) {
         int id = v.getId();
-        return id == R.id.btnInputs || id == R.id.btnWifi || id == R.id.btnAssistant || id == R.id.btnCandyBox || id == R.id.btnSettings;
+        return id == R.id.btnInputs || id == R.id.btnWifi || id == R.id.btnAssistant
+                || id == R.id.btnCandyBox || id == R.id.btnSettings || id == R.id.weatherAirQuality;
     }
 
     /** Sends the focus shape onto a pill: from a tile it glides up and narrows into the pill. */
